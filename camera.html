@@ -3,52 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Stream Player</title>
+    <title>Multi-Stream Player</title>
     <style>
-        /* Basic styling to make the video player look good */
+        /* Basic styling for the layout */
         body {
             font-family: sans-serif;
             background-color: #f0f0f0;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 20px;
         }
-        #video-container {
-            width: 90%;
-            max-width: 960px;
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        /* Flexbox container to hold the players */
+        #container {
+            display: flex;
+            flex-wrap: wrap; /* Allows players to stack on smaller screens */
+            gap: 20px; /* Space between the video players */
+            justify-content: center;
+        }
+        .player-wrapper {
+            flex: 1; /* Allows players to grow and shrink */
+            min-width: 350px; /* Minimum width before stacking */
+            max-width: 800px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         video {
             width: 100%;
             display: block;
+            background-color: #000;
         }
     </style>
 </head>
 <body>
 
-    <div id="video-container">
-        <video id="video" controls></video>
+    <h1>Multi-Stream View</h1>
+
+    <div id="container">
+        <div class="player-wrapper">
+            <video id="video1" controls></video>
+        </div>
+
+        <div class="player-wrapper">
+            <video id="video2" controls></video>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        const video = document.getElementById('video');
-        const videoSrc = 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8';
+        // --- Setup for the FIRST video player ---
+        const video1 = document.getElementById('video1');
+        const videoSrc1 = 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8';
 
         if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(videoSrc);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                // You can uncomment the line below to make the video autoplay
-                // video.play();
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // HLS is natively supported on some browsers (like Safari)
-            video.src = videoSrc;
+            const hls1 = new Hls();
+            hls1.loadSource(videoSrc1);
+            hls1.attachMedia(video1);
+        } else if (video1.canPlayType('application/vnd.apple.mpegurl')) {
+            video1.src = videoSrc1;
+        }
+
+        // --- Setup for the SECOND video player ---
+        const video2 = document.getElementById('video2');
+        const videoSrc2 = 'https://s20.us-east-1.skyvdn.com/rtplive/30054/chunklist_w1763131792.m3u8';
+
+        if (Hls.isSupported()) {
+            // It's important to create a new Hls instance for each video
+            const hls2 = new Hls();
+            hls2.loadSource(videoSrc2);
+            hls2.attachMedia(video2);
+        } else if (video2.canPlayType('application/vnd.apple.mpegurl')) {
+            video2.src = videoSrc2;
         }
     </script>
 
