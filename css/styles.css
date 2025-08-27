@@ -126,48 +126,78 @@ aside svg { height: 4.5rem; }
 
 #search input {
     background-color: transparent;
-    background-position: right 1.25rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5rem 1.5rem;
     border-radius: 0.5rem;
     color: var(--primary-font-color);
     font-family: var(--font-sans-serif);
     line-height: 1.5;
     outline: 0.25rem solid transparent;
     padding: var(--spacing-m);
+    padding-right: 3.5rem; /* Make space for button */
     width: 100%;
 }
 
 @media (prefers-color-scheme: dark) {
     #search input {
-        background-image: var(--svg-search-gray);
         border: 0.125rem solid hsl(var(--color-white-hsl) / 0.25);
     }
-    
-    #search input:hover { border-color: hsl(var(--color-white-hsl) / 0.5); }    
-
+    #search input:hover { border-color: hsl(var(--color-white-hsl) / 0.5); }
     #bookmarks a:focus,
     #bookmarks a:hover { background-color: hsl(var(--color-white-hsl) / 0.05); }
+    #search .search-container button::after {
+        background-image: var(--svg-search-gray);
+    }
 }
 
 @media (prefers-color-scheme: light) {
     #weather img { filter: drop-shadow(0 0 0 hsl(var(--color-black-hsl) / 0.75)); }
-
     #search input {
-        background-image: var(--svg-search-light-gray);
         border: 0.125rem solid hsl(var(--color-black-hsl) / 0.25);
-    } 
-
+    }
     #search input:hover { border-color: hsl(var(--color-black-hsl) / 0.5); }
-
     #bookmarks a:focus,
     #bookmarks a:hover { background-color: hsl(var(--color-black-hsl) / 0.05); }
+    #search .search-container button::after {
+        background-image: var(--svg-search-light-gray);
+    }
 }
 
 #search input:focus {
     background-color: hsl(var(--color-white-hsl) / 0.025);
     border-color: var(--color-orange);
     outline-color: hsl(var(--color-orange-hsl) / 0.25);
+}
+
+/* New Search Bar Styles */
+#search .search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+#search .search-container button {
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 90%;
+    width: 3.5rem;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    border-radius: 0.5rem;
+}
+
+#search .search-container button::after {
+    content: '';
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0 auto;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }
 
 #bookmarks {
@@ -223,7 +253,7 @@ aside svg { height: 4.5rem; }
 /*
     Accessible hiding for screen readers
     https://webaim.org/techniques/css/invisiblecontent/#techniques
-*/ 
+*/
 .sr-only {
     height: 1px;
     left: -10000px;
@@ -236,7 +266,7 @@ aside svg { height: 4.5rem; }
 /* Responsive Media Queries */
 @media screen and (min-width: 48em) {
     header { display: flex; }
-    
+
     #traichu {
         padding: 0;
         width: 45rem; /* 720px */
@@ -251,11 +281,11 @@ aside svg { height: 4.5rem; }
         padding: 0;
     }
 
-    #bookmarks { 
-        flex-direction: row; 
+    #bookmarks {
+        flex-direction: row;
         justify-content: center;
     }
-    
+
     #bookmarks ul {
         align-items: center;
         margin: 0 1rem;
