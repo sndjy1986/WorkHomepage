@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <script src="js/main.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <title>Arianna's Homepage</title>
+<style>
+    body {
+        margin: 0;
+        /* === FIX: Removed padding-top to allow content to go to the top === */
+        padding: 0;
+        background-image: url('https://raw.githubusercontent.com/asanders29625/homepage/refs/heads/main/StockCake-Moonlit%20Night%20Sky_1754595354.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+
+    main {
+        position: relative !important;
+        /* Add a semi-transparent overlay to the main content for readability */
+        background-color: rgba(0, 0, 0, 0.2); /* Darker overlay for better contrast with light text */
+        backdrop-filter: blur(1px); /* Adds a frosted glass effect */
+        border-radius: 15px;
+    }
+
+    /* Greeting Message Style */
+    #greeting {
+        text-align: center;
+        font-size: 2.5em; /* Large text */
+        font-weight: bold;
+        color: white;
+        text-shadow: 2px 2px 4px #000000; /* Makes text pop against the background */
+        margin-bottom: 20px;
+    }
+
+    /* === DOCK STYLES FOR ICON SIZING AND ANIMATION === */
+    #dock ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        justify-content: center; /* Center the icons */
+        align-items: flex-end;
+        height: 60px;
+    }
+
+    #dock li {
+        margin: 0 10px; /* Increased spacing a bit */
+    }
+
+    #dock li a {
+        display: inline-block;
+        transition: transform 0.2s ease-out;
+    }
+
+    #dock li img {
+        width: 48px;
+        height: 48px;
+        vertical-align: middle;
+    }
+
+    #dock li a:hover {
+        transform: scale(1.3) translateY(-10px);
+    }
+
+    /* LIGHT/DARK MODE SUPPORT */
+    :root {
+        --text-color: #333;
+        --link-color: #0066cc;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --text-color: #ffffff;
+            --link-color: #66b3ff;
+        }
+        main {
+             background-color: rgba(0, 0, 0, 0.2);
+        }
+    }
+</style>
+</head>
+<body>
+
+    <main>
+        <header>
+            <section id="date-time">
+                <h2 class="sr-only">Date & Time</h2>
+            </section>
+            <section id="weather">
+                <h2 class="sr-only">Location & Weather</h2>
+            </section>
+        </header>
+        <section id="traichu">
+            <h1 class="sr-only">Joey's Homepage</h1>
+
+            <div id="greeting"></div>
+
+            <nav id="dock">
+                <ul>
+                    <li><a href="https://vanguard.emsanyware.com/" title="Vanguard"><img src="https://icons.duckduckgo.com/ip3/gmail.google.com.ico" alt="Gmail"></a></li>
+                    <li><a href="https://scheduling.esosuite.net/Default.aspx?DB=priorityambulance" title="ESO Suite"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Apple_Journal_-_App_Icon_-_iOS17.png/1024px-Apple_Journal_-_App_Icon_-_iOS17.png" alt="Journal"></a></li>
+                    <li><a href="https://andersoncounty911_sc.transport.net/#/login" title="Med-Trans Helo"><img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Google Drive"></a></li>
+                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?gid=0#gid=0" title="Shift Report"><img src="https://icons.duckduckgo.com/ip3/github.com.ico" alt="GitHub" style="filter: invert(100%);"></a></li>
+                </ul>
+            </nav>
+
+            <section id="search">
+                <h2 class="sr-only">Search</h2>
+                <form action="https://www.google.com/search" method="get">
+                <input type="text" id="q" name="q" autofocus>
+                <button class="sr-only" tabindex="-1">Search</button>
+                </form>
+            </section>
+            <section id="bookmarks">
+                <h2 class="sr-only">Bookmarks</h2>
+                <ul>
+                    <li><a href="https://truck-5c2f62a8549e.herokuapp.com/" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/network_normal_two_pcs.ico" class="favicon" alt="ESO">Dispatch Timers</a></li>
+                    <li><a href="https://scheduling.esosuite.net/Login.aspx?DB=priorityambulance" target="_blank"><img src="https://icons.duckduckgo.com/ip3/eso.org.ico" class="favicon" alt="ESO">ESO Suite</a></li>
+                    <li><a href="https://vanguard.emsanyware.com/" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emsanyware.com.ico" class="favicon" alt="Vanguard">EMS Anyware</a></li>
+                    <li><a href="https://drive.google.com/file/d/1i2Pybwtw5h-tDiBGzM1QLVQumYZx0Ubz/view?usp=drive_link" target="_blank"><img src="https://icons.duckduckgo.com/ip3/dead.net.ico" class="favicon" alt="Coroner Schedule">Coroner Schedule</a></li>
+                    <li><a href="https://learn.emergencydispatch.org/academy/my_learning/dashboard" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emergencydispatch.org.ico" class="favicon" alt="EMD Training">PRO-QA Class</a></li>
+                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" class="favicon" alt="Daily WorkSheet">Daily WorkSheet</a></li>
+                    <li><a href="https://forms.microsoft.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9Zi2FaRW6gaHhKjeF02t2Aq8tURFAwVDVVUEVVRzZRODNTNkgyUFJNMDBHSS4u" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/ram_drive.ico" class="favicon" alt="Daily WorkSheet">Daily Truck Form</a></li>
+                    </li>
+                </ul>
+            </section>
+        </section>
+    </main>
+
+<script>
+    // This function sets the greeting based on the time of day.
+    function setGreeting() {
+        const greetingElement = document.getElementById('greeting');
+        const currentHour = new Date().getHours();
+        let greetingText = '';
+
+        if (currentHour < 12) {
+            greetingText = 'Good morning, Arianna';
+        } else if (currentHour < 18) {
+            greetingText = 'Good afternoon, Arianna';
+        } else {
+            greetingText = 'Good evening, Arianna';
+        }
+        greetingElement.textContent = greetingText;
+    }
+
+    // Call the function when the page loads
+    document.addEventListener('DOMContentLoaded', setGreeting);
+</script>
+</body>
+</html>
