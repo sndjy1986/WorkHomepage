@@ -171,19 +171,21 @@ aside svg { height: 4.5rem; }
 }
 
 #bookmarks {
-    align-items: flex-start;
+    align-items: center;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: center;
 }
 
 #bookmarks ul {
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: center;
+    align-items: center;
     list-style-type: none;
     margin: 0;
     padding: 0;
+    width: 100%;
 }
 
 #bookmarks li {
@@ -192,11 +194,13 @@ aside svg { height: 4.5rem; }
     flex-direction: row;
     line-height: 1;
     margin-bottom: var(--spacing-xs);
+    justify-content: center;
 }
 
 .favicon {
     margin-right: var(--spacing-s);
-    height: 1rem;
+    height: 1.5rem;
+    width: 1.5rem;
 }
 
 #bookmarks a {
@@ -204,8 +208,10 @@ aside svg { height: 4.5rem; }
     border-radius: 0.25rem;
     display: flex;
     color: var(--primary-link-color);
-    padding: var(--spacing-s);
+    padding: calc(var(--spacing-s) * 1.5);
     text-decoration: none;
+    font-size: 1.5rem;
+    justify-content: center;
 }
 
 #bookmarks a:focus,
@@ -245,70 +251,13 @@ aside svg { height: 4.5rem; }
         padding: 0;
     }
 
-    #bookmarks { flex-direction: row; }
-}
-
-/* Updated bookmark styles - add this to your CSS */
-
-#bookmarks {
-    align-items: center; /* Center the bookmark section */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-#bookmarks ul {
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Center the list items */
-    align-items: center; /* Center horizontally */
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    width: 100%; /* Full width for better centering */
-}
-
-#bookmarks li {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    line-height: 1;
-    margin-bottom: var(--spacing-xs);
-    justify-content: center; /* Center each bookmark item */
-}
-
-.favicon {
-    margin-right: var(--spacing-s);
-    height: 1.5rem; /* 50% larger than original 1rem */
-    width: 1.5rem; /* Maintain aspect ratio */
-}
-
-#bookmarks a {
-    align-items: center;
-    border-radius: 0.25rem;
-    display: flex;
-    color: var(--primary-link-color);
-    padding: calc(var(--spacing-s) * 1.5); /* 50% larger padding */
-    text-decoration: none;
-    font-size: 1.5rem; /* 50% larger text (was implicitly 1rem) */
-    justify-content: center; /* Center content within each link */
-}
-
-#bookmarks a:focus,
-#bookmarks a:hover {
-    color: var(--primary-link-hover-color);
-    outline: none;
-}
-
-/* Update the responsive behavior for larger screens */
-@media screen and (min-width: 48em) {
     #bookmarks { 
         flex-direction: row; 
-        justify-content: center; /* Center the row layout too */
+        justify-content: center;
     }
     
     #bookmarks ul {
-        align-items: center; /* Keep items centered in row layout */
-        margin: 0 1rem; /* Add some spacing between columns */
+        align-items: center;
+        margin: 0 1rem;
     }
 }
