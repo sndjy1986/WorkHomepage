@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quad-Stream 2x2 Player</title>
+    <title>4 Camera View</title>
     <style>
         body {
             font-family: sans-serif;
@@ -15,47 +15,62 @@
         h1 {
             text-align: center;
         }
-        /* This is the key change for the 2x2 layout */
         #container {
             display: grid;
-            /* This line creates exactly two equal-width columns */
             grid-template-columns: 1fr 1fr;
-            gap: 20px; /* Space between video players */
+            gap: 20px;
             max-width: 1800px;
             margin: 0 auto;
         }
         .player-wrapper {
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             background-color: #000;
-            /* This helps maintain a 16:9 aspect ratio for the player area */
             aspect-ratio: 16 / 9;
+            position: relative; /* Needed for the status overlay */
         }
         video {
             width: 100%;
             height: 100%;
             display: block;
         }
+        /* Styling for the status message overlay */
+        .status-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Quad-Stream View (2x2)</h1>
+    <h1>Quad-Stream View (Auto-Restart)</h1>
 
     <div id="container">
         <div class="player-wrapper">
-            <video id="video1" controls muted></video>
+            <div id="status1" class="status-overlay"></div>
+            <video id="video1" controls muted autoplay playsinline></video>
         </div>
 
         <div class="player-wrapper">
-            <video id="video2" controls muted></video>
+            <div id="status2" class="status-overlay"></div>
+            <video id="video2" controls muted autoplay playsinline></video>
         </div>
 
         <div class="player-wrapper">
-            <video id="video3" controls muted></video>
+            <div id="status3" class="status-overlay"></div>
+            <video id="video3" controls muted autoplay playsinline></video>
         </div>
         
         <div class="player-wrapper">
-            <video id="video4" controls muted></video>
+            <div id="status4" class="status-overlay"></div>
+            <video id="video4" controls muted autoplay playsinline></video>
         </div>
     </div>
 
@@ -64,24 +79,74 @@
     <script>
         function setupPlayer(videoId, sourceUrl) {
             const videoElement = document.getElementById(videoId);
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(sourceUrl);
-                hls.attachMedia(videoElement);
-            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-                videoElement.src = sourceUrl;
+            const statusElement = document.getElementById(videoId.replace('video', 'status'));
+            let hls = new Hls();
+            let stallTimer;
+
+            // --- Function to show a status message over the video ---
+            function showStatus(message) {
+                console.log(`[${videoId}] ${message}`);
+                statusElement.textContent = message;
+                statusElement.style.opacity = '1';
+                setTimeout(() => { statusElement.style.opacity = '0'; }, 4000);
             }
+
+            // --- Function to handle restarting the stream ---
+            function restartStream() {
+                showStatus('Stream failed. Restarting in 5s...');
+                clearTimeout(stallTimer);
+                hls.destroy(); // Clean up the old HLS instance
+                setTimeout(() => {
+                    showStatus('Attempting to reconnect...');
+                    setupPlayer(videoId, sourceUrl); // Recursively call setup
+                }, 5000);
+            }
+
+            hls.loadSource(sourceUrl);
+            hls.attachMedia(videoElement);
+
+            // --- 1. AUTOPLAY ---
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                videoElement.play().catch(e => console.error(`[${videoId}] Autoplay was blocked.`));
+                showStatus('Stream loaded. Playing...');
+            });
+
+            // --- 2. ERROR HANDLING ---
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    console.error(`[${videoId}] Fatal error:`, data);
+                    restartStream();
+                }
+            });
+
+            // --- 3. STALL DETECTION ---
+            let lastTime = 0;
+            stallTimer = setInterval(() => {
+                if (videoElement.paused) {
+                    lastTime = videoElement.currentTime; // Reset if paused by user
+                    return;
+                }
+                // If video time has not changed in 10 seconds, it's stalled
+                if (Math.abs(videoElement.currentTime - lastTime) < 1) {
+                    showStatus('Stream stalled. Attempting to recover.');
+                    restartStream();
+                }
+                lastTime = videoElement.currentTime;
+            }, 10000); // Check every 10 seconds
         }
 
-        const stream1_url = 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8';
-        const stream2_url = 'https://s20.us-east-1.skyvdn.com/rtplive/30054/chunklist_w1763131792.m3u8';
-        const stream3_url = 'https://s20.us-east-1.skyvdn.com/rtplive/30057/chunklist_w2092101538.m3u8';
-        const stream4_url = 'https://s20.us-east-1.skyvdn.com/rtplive/30051/chunklist_w766310199.m3u8';
+        // --- Stream URLs ---
+        const streams = {
+            'video1': 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8',
+            'video2': 'https://s20.us-east-1.skyvdn.com/rtplive/30054/chunklist_w1763131792.m3u8',
+            'video3': 'https://s20.us-east-1.skyvdn.com/rtplive/30057/chunklist_w2092101538.m3u8',
+            'video4': 'https://s19.us-east-1.skyvdn.com/rtplive/30051/chunklist_w1657963390.m3u8'
+        };
 
-        setupPlayer('video1', stream1_url);
-        setupPlayer('video2', stream2_url);
-        setupPlayer('video3', stream3_url);
-        setupPlayer('video4', stream4_url);
+        // --- Initialize all players ---
+        for (const videoId in streams) {
+            setupPlayer(videoId, streams[videoId]);
+        }
     </script>
 
 </body>
