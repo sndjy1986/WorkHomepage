@@ -37,7 +37,8 @@
     :root {
         --primary-background-color: var(--color-black);
         --primary-font-color: var(--color-white);
-        --primary-link-color: hsl(var(--color-white-hsl) / 0.5);
+        /* Changed opacity from 0.5 to 0.85 for a whiter look */
+        --primary-link-color: hsl(var(--color-white-hsl) / 0.85);
         --primary-link-hover-color: var(--color-white);
     }
 }
