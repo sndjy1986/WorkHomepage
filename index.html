@@ -116,8 +116,10 @@
             <section id="search">
                 <h2 class="sr-only">Search</h2>
                 <form action="https://www.google.com/search" method="get">
-                <input type="text" id="q" name="q" autofocus>
-                <button class="sr-only" tabindex="-1">Search</button>
+                    <div class="search-container">
+                        <input type="text" id="q" name="q" placeholder="Search..." autofocus>
+                        <button type="submit" aria-label="Search"></button>
+                    </div>
                 </form>
             </section>
             <section id="bookmarks">
