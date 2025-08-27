@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quad-Stream Player</title>
+    <title>Quad-Stream 2x2 Player</title>
     <style>
         body {
             font-family: sans-serif;
@@ -15,10 +15,11 @@
         h1 {
             text-align: center;
         }
-        /* Use a CSS Grid for a 2x2 layout */
+        /* This is the key change for the 2x2 layout */
         #container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            /* This line creates exactly two equal-width columns */
+            grid-template-columns: 1fr 1fr;
             gap: 20px; /* Space between video players */
             max-width: 1800px;
             margin: 0 auto;
@@ -26,6 +27,8 @@
         .player-wrapper {
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             background-color: #000;
+            /* This helps maintain a 16:9 aspect ratio for the player area */
+            aspect-ratio: 16 / 9;
         }
         video {
             width: 100%;
@@ -36,7 +39,7 @@
 </head>
 <body>
 
-    <h1>Quad-Stream View</h1>
+    <h1>Quad-Stream View (2x2)</h1>
 
     <div id="container">
         <div class="player-wrapper">
@@ -59,10 +62,8 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        // Helper function to set up a player to avoid repeating code
         function setupPlayer(videoId, sourceUrl) {
             const videoElement = document.getElementById(videoId);
-
             if (Hls.isSupported()) {
                 const hls = new Hls();
                 hls.loadSource(sourceUrl);
@@ -72,13 +73,11 @@
             }
         }
 
-        // --- Stream URLs ---
         const stream1_url = 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8';
         const stream2_url = 'https://s20.us-east-1.skyvdn.com/rtplive/30054/chunklist_w1763131792.m3u8';
         const stream3_url = 'https://s20.us-east-1.skyvdn.com/rtplive/30057/chunklist_w2092101538.m3u8';
-        const stream4_url = 'https://s19.us-east-1.skyvdn.com/rtplive/30051/chunklist_w1657963390.m3u8';
+        const stream4_url = 'https://s20.us-east-1.skyvdn.com/rtplive/30051/chunklist_w766310199.m3u8';
 
-        // --- Initialize all players ---
         setupPlayer('video1', stream1_url);
         setupPlayer('video2', stream2_url);
         setupPlayer('video3', stream3_url);
