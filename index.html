@@ -176,22 +176,21 @@
         greetingElement.textContent = greetingText;
     }
 
-    // Background image cycler
-    const backgrounds = [
-        'background.jpg',
-        'Background2.jpg'
-    ];
-    let currentBackground = 0;
-
-    function changeBackground() {
-        currentBackground = (currentBackground + 1) % backgrounds.length;
-        document.body.style.backgroundImage = `url('${backgrounds[currentBackground]}')`;
+    // Set a random background on page load
+    function setRandomBackground() {
+        const backgrounds = [
+            'background.jpg',
+            'Background2.jpg'
+        ];
+        const randomIndex = Math.floor(Math.random() * backgrounds.length);
+        const randomImage = backgrounds[randomIndex];
+        document.body.style.backgroundImage = `url('${randomImage}')`;
     }
 
     // Call the functions when the page loads
     document.addEventListener('DOMContentLoaded', () => {
         setGreeting();
-        setInterval(changeBackground, 10000); // Change background every 10 seconds
+        setRandomBackground();
     });
 </script>
 </body>
