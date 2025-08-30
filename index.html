@@ -14,10 +14,11 @@
         margin: 0;
         /* === FIX: Removed padding-top to allow content to go to the top === */
         padding: 0;
-        background-image: url('https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/background.jpg');
+        background-image: url('background.jpg');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
+        transition: background-image 1s ease-in-out;
     }
 
     main {
@@ -158,8 +159,23 @@
         greetingElement.textContent = greetingText;
     }
 
-    // Call the function when the page loads
-    document.addEventListener('DOMContentLoaded', setGreeting);
+    // Background image cycler
+    const backgrounds = [
+        'background.jpg',
+        'Background2.jpg'
+    ];
+    let currentBackground = 0;
+
+    function changeBackground() {
+        currentBackground = (currentBackground + 1) % backgrounds.length;
+        document.body.style.backgroundImage = `url('${backgrounds[currentBackground]}')`;
+    }
+
+    // Call the functions when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        setGreeting();
+        setInterval(changeBackground, 10000); // Change background every 10 seconds
+    });
 </script>
 </body>
 </html>
