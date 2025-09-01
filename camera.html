@@ -64,6 +64,11 @@
         .context-menu-item:hover {
             background-color: #4a4a4a;
         }
+        .context-menu-separator {
+            height: 1px;
+            background-color: #555;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -95,10 +100,8 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        // This object stores the active HLS.js instance for each player.
         const hlsInstances = {};
 
-        // A single list of all available cameras.
         const allCameras = [
             { name: 'MM 19 - Clemson Blvd', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30057/chunklist_w2092101538.m3u8' },
             { name: 'MM 21 - HWY 178', url: 'https://s19.us-east-1.skyvdn.com/rtplive/30056/chunklist_w234287558.m3u8' },
@@ -110,14 +113,7 @@
             { name: 'MM 40 - HWY 153', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30062/chunklist_w508245393.m3u8' } 
         ];
 
-        /**
-         * Sets up or switches a video stream in a specific player.
-         * @param {string} videoId The ID of the video element (e.g., 'video1').
-         * @param {string} cameraName The display name of the camera.
-         * @param {string} sourceUrl The M3U8 URL of the stream.
-         */
         function setupPlayer(videoId, cameraName, sourceUrl) {
-            // If a player instance already exists for this video, destroy it first.
             if (hlsInstances[videoId]) {
                 hlsInstances[videoId].destroy();
             }
@@ -132,9 +128,8 @@
             }
 
             const hls = new Hls();
-            hlsInstances[videoId] = hls; // Store the new instance.
+            hlsInstances[videoId] = hls;
 
-            // Function to briefly show status messages on the video player.
             function showStatus(message) {
                 statusElement.textContent = message;
                 statusElement.style.opacity = '1';
@@ -155,12 +150,20 @@
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
                     console.error(`Fatal error on ${videoId}:`, data.details);
-                    // You can add stream recovery logic here if needed.
                 }
             });
         }
 
-        // --- Initialize the four players with the first four cameras ---
+        function toggleFullScreen(element) {
+            if (!document.fullscreenElement) {
+                element.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
         const playerIds = ['video1', 'video2', 'video3', 'video4'];
         playerIds.forEach((videoId, index) => {
             if (allCameras[index]) {
@@ -169,37 +172,46 @@
             }
         });
         
-        // --- Context Menu Logic ---
         const contextMenu = document.getElementById('contextMenu');
 
         document.querySelectorAll('.player-wrapper').forEach(wrapper => {
             wrapper.addEventListener('contextmenu', event => {
-                event.preventDefault(); // Stop the default browser right-click menu.
+                event.preventDefault();
                 const videoId = wrapper.querySelector('video').id;
 
-                contextMenu.innerHTML = ''; // Clear any previous menu items.
+                contextMenu.innerHTML = '';
                 
-                // Build the menu with an item for every camera.
                 allCameras.forEach(camera => {
                     const menuItemElement = document.createElement('div');
                     menuItemElement.className = 'context-menu-item';
                     menuItemElement.textContent = camera.name;
-                    // When a menu item is clicked, switch the stream in the correct player.
                     menuItemElement.onclick = () => {
                         setupPlayer(videoId, camera.name, camera.url);
-                        contextMenu.style.display = 'none'; // Hide menu after selection.
+                        contextMenu.style.display = 'none';
                     };
                     contextMenu.appendChild(menuItemElement);
                 });
+                
+                const separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                contextMenu.appendChild(separator);
 
-                // Position the menu at the cursor and display it.
+                const fullScreenItem = document.createElement('div');
+                fullScreenItem.className = 'context-menu-item';
+                fullScreenItem.textContent = 'Full Screen';
+                fullScreenItem.onclick = () => {
+                    toggleFullScreen(wrapper);
+                    contextMenu.style.display = 'none';
+                };
+                contextMenu.appendChild(fullScreenItem);
+
+
                 contextMenu.style.left = `${event.clientX}px`;
                 contextMenu.style.top = `${event.clientY}px`;
                 contextMenu.style.display = 'block';
             });
         });
 
-        // Hide the menu if the user clicks anywhere else on the page.
         window.addEventListener('click', () => {
             if (contextMenu.style.display === 'block') {
                 contextMenu.style.display = 'none';
