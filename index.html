@@ -80,6 +80,16 @@
              background-color: rgba(0, 0, 0, 0.2);
         }
     }
+
+    /* Style for the fine.jpg icon */
+    #fine-icon {
+        position: fixed; /* Fixed position relative to the viewport */
+        bottom: 20px;    /* 20px from the bottom */
+        right: 20px;   /* 20px from the right */
+        width: 80px;   /* Adjust size as needed */
+        height: auto;  /* Maintain aspect ratio */
+        z-index: 1000; /* Ensure it's above other content */
+    }
 </style>
 </head>
 <body>
@@ -137,6 +147,8 @@
             </section>
         </section>
     </main>
+
+    <img id="fine-icon" src="fine.jpg" alt="It's fine. I'm fine. Everything is fine!">
 
 <script>
     function setGreeting() {
