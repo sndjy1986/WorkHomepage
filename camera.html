@@ -42,6 +42,18 @@
             z-index: 10;
             white-space: nowrap;
         }
+        .text-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 10;
+            white-space: nowrap;
+        }
         /* --- Styles for the context menu --- */
         .context-menu {
             position: fixed;
@@ -76,21 +88,25 @@
     <div id="container">
         <div class="player-wrapper">
             <div id="status1" class="status-overlay"></div>
+            <div class="text-overlay"></div>
             <video id="video1" muted autoplay playsinline></video>
         </div>
 
         <div class="player-wrapper">
             <div id="status2" class="status-overlay"></div>
+            <div class="text-overlay"></div>
             <video id="video2" muted autoplay playsinline></video>
         </div>
 
         <div class="player-wrapper">
             <div id="status3" class="status-overlay"></div>
+            <div class="text-overlay"></div>
             <video id="video3" muted autoplay playsinline></video>
         </div>
         
         <div class="player-wrapper">
             <div id="status4" class="status-overlay"></div>
+            <div class="text-overlay"></div>
             <video id="video4" muted autoplay playsinline></video>
         </div>
     </div>
@@ -107,19 +123,21 @@
             { name: 'MM 21 - HWY 178', url: 'https://s19.us-east-1.skyvdn.com/rtplive/30056/chunklist_w234287558.m3u8' },
             { name: 'MM 23 - Rest Area', url: 'https://s18.us-east-1.skyvdn.com/rtplive/30055/chunklist_w1988576416.m3u8' },   
             { name: 'MM 24', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30054/chunklist_w1763131792.m3u8' },
-            { name: 'MM 27 - HWY 81', url: 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8' },
-            { name: 'MM 32 - HWY 8', url: 'https://s18.us-east-1.skyvdn.com/rtplive/30052/chunklist_w991875225.m3u8' },
+            { name: 'MM 27 - HWY 81', url: 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8', description: 'Mile Marker 27 - Highway 81 - Closest Lanes are SB Traffic' },
+            { name: 'MM 32 - HWY 8', url: 'https://s18.us-east-1.skyvdn.com/rtplive/30052/chunklist_w991875225.m3u8', description: 'Mile Marker 32 - Highway 8 - Closest Lanes are SB Traffic' },
             { name: 'MM 34 - US-29', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30051/chunklist_w766310199.m3u8' },
             { name: 'MM 40 - HWY 153', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30062/chunklist_w508245393.m3u8' } 
         ];
 
-        function setupPlayer(videoId, cameraName, sourceUrl) {
+        function setupPlayer(videoId, camera) {
             if (hlsInstances[videoId]) {
                 hlsInstances[videoId].destroy();
             }
 
             const videoElement = document.getElementById(videoId);
-            const statusElement = document.getElementById(videoId.replace('video', 'status'));
+            const wrapper = videoElement.parentElement;
+            const statusElement = wrapper.querySelector('.status-overlay');
+            const textOverlayElement = wrapper.querySelector('.text-overlay');
             
             if (!Hls.isSupported()) {
                 statusElement.textContent = 'HLS Not Supported';
@@ -136,7 +154,7 @@
                 setTimeout(() => { statusElement.style.opacity = '0'; }, 4000);
             }
 
-            hls.loadSource(sourceUrl);
+            hls.loadSource(camera.url);
             hls.attachMedia(videoElement);
 
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -144,7 +162,13 @@
                     console.error(`Autoplay failed for ${videoId}:`, error);
                     showStatus('Autoplay Blocked');
                 });
-                showStatus(`Playing: ${cameraName}`);
+                showStatus(`Playing: ${camera.name}`);
+                if (camera.description) {
+                    textOverlayElement.textContent = camera.description;
+                    textOverlayElement.style.display = 'block';
+                } else {
+                    textOverlayElement.style.display = 'none';
+                }
             });
 
             hls.on(Hls.Events.ERROR, (event, data) => {
@@ -168,7 +192,7 @@
         playerIds.forEach((videoId, index) => {
             if (allCameras[index]) {
                 const camera = allCameras[index];
-                setupPlayer(videoId, camera.name, camera.url);
+                setupPlayer(videoId, camera);
             }
         });
         
@@ -186,7 +210,7 @@
                     menuItemElement.className = 'context-menu-item';
                     menuItemElement.textContent = camera.name;
                     menuItemElement.onclick = () => {
-                        setupPlayer(videoId, camera.name, camera.url);
+                        setupPlayer(videoId, camera);
                         contextMenu.style.display = 'none';
                     };
                     contextMenu.appendChild(menuItemElement);
