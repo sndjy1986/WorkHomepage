@@ -1,192 +1,207 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <script src="js/main.js"></script>
-    <link rel="stylesheet" href="css/main.css">
-    <title>Work Homepage</title>
+
+    <meta charset="UTF-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+
+    <script src="js/main.js"></script>
+
+    <link rel="stylesheet" href="css/main.css">
+
+    <title>Work Homepage</title>
+
 <style>
-    body {
-        margin: 0;
-        padding: 0;
-        background-image: url('background.jpg');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        transition: background-image 1s ease-in-out;
-    }
+    body {
+        margin: 0;
+        padding: 0;
+        background-image: url('background.jpg');
+        background-size: contain;
+        background-position: center;
+        background-attachment: fixed;
+        transition: background-image 1s ease-in-out;
+        background-repeat: no-repeat;
+        animation: zoomAndFade 5s ease-in-out;
+    }
 
-    main {
-        position: relative !important;
-        background-color: rgba(0, 0, 0, 0.2); 
-        backdrop-filter: blur(10px); 
-        border-radius: 15px;
-    }
+    main {
+        position: relative !important;
+        background-color: rgba(0, 0, 0, 0.2); 
+        backdrop-filter: blur(10px); 
+        border-radius: 15px;
+    }
 
-    #greeting {
-        text-align: center;
-        font-size: 2.5em; 
-        font-weight: bold;
-        color: white;
-        text-shadow: 2px 2px 4px #000000; 
-        margin-bottom: -25px;
-    }
+    #greeting {
+        text-align: center;
+        font-size: 2.5em; 
+        font-weight: bold;
+        color: white;
+        text-shadow: 2px 2px 4px #000000; 
+        margin-bottom: -25px;
+    }
 
-    #dock ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        justify-content: center; 
-        align-items: flex-end;
-        height: 60px;
-    }
+    #dock ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        justify-content: center; 
+        align-items: flex-end;
+        height: 60px;
+    }
 
-    #dock li {
-        margin: 0 10px; 
-    }
+    #dock li {
+        margin: 0 10px; 
+    }
 
-    #dock li a {
-        display: inline-block;
-        transition: transform 0.2s ease-out;
-    }
+    #dock li a {
+        display: inline-block;
+        transition: transform 0.2s ease-out;
+    }
 
-    #dock li img {
-        width: 60px;
-        height: 60px;
-        vertical-align: middle;
-    }
+    #dock li img {
+        width: 60px;
+        height: 60px;
+        vertical-align: middle;
+    }
 
-    #dock li a:hover {
-        transform: scale(1.3) translateY(-10px);
-    }
+    #dock li a:hover {
+        transform: scale(1.3) translateY(-10px);
+    }
 
-    :root {
-        --text-color: ##f5f0f0;
-        --link-color: #0066cc;
-    }
+    :root {
+        --text-color: ##f5f0f0;
+        --link-color: #0066cc;
+    }
 
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --text-color: #ffffff;
-            --link-color: #66b3ff;
-        }
-        main {
-             background-color: rgba(0, 0, 0, 0.2);
-        }
-    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+            --text-color: #ffffff;
+            --link-color: #66b3ff;
+        }
+        main {
+             background-color: rgba(0, 0, 0, 0.2);
+        }
+    }
 </style>
 </head>
 <body>
 
-    <main>
-        <header>
-            <section id="date-time">
-                <h2 class="sr-only">Date & Time</h2>
-            </section>
-            <section id="weather">
-                <h2 class="sr-only">Location & Weather</h2>
-            </section>
-        </header>
-        <section id="traichu">
-            <h1 class="sr-only">Joey's Homepage</h1>
+    <main>
+        <header>
+            <section id="date-time">
+                <h2 class="sr-only">Date & Time</h2>
+            </section>
+            <section id="weather">
+                <h2 class="sr-only">Location & Weather</h2>
+            </section>
+        </header>
+        <section id="traichu">
+            <h1 class="sr-only">Joey's Homepage</h1>
 
-            <div id="greeting"></div>
+            <div id="greeting"></div>
 
-            <nav id="dock">
-                <ul>
-                    <li><a href="https://vanguard.emsanyware.com/" title="Vanguard"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/emsanyware.JPG" alt="Vanguard"></a></li>
-                    <li><a href="https://scheduling.esosuite.net/Default.aspx?DB=priorityambulance" title="ESO Suite"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/esoicon.png" alt="ESO Suite"></a></li>
-                    <li><a href="https://andersoncounty911_sc.transport.net/#/login" title="Med-Trans Helo"><img src="https://icons.duckduckgo.com/ip3/med-trans.net.ico" alt="Google Drive"></a></li>
-                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?gid=0#gid=0" title="Shift Report"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" alt="GitHub"</a></li>
-                    <li><a href="https://login.microsoftonline.com/" title="Work E-Mail"><img src="https://icons.duckduckgo.com/ip3/outlook.com.ico" alt="Work E-Mail Login"</a></li>
-                    <li><a href="https://www.paycomonline.net/v4/ee/web.php/app/login" title="PayCom Online"><img src="https://icons.duckduckgo.com/ip3/paycomonline.net.ico" alt="PayCom Online"</a></li>
-                    <li><a href="https://work.sndjy.us/camera" title="2X2 DOT Camera"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/Camera.png" alt="Camera's"></a></li>
-                </ul>
-            </nav>
+            <nav id="dock">
+                <ul>
+                    <li><a href="https://vanguard.emsanyware.com/" title="Vanguard"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/emsanyware.JPG" alt="Vanguard"></a></li>
+                    <li><a href="https://scheduling.esosuite.net/Default.aspx?DB=priorityambulance" title="ESO Suite"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/esoicon.png" alt="ESO Suite"></a></li>
+                    <li><a href="https://andersoncounty911_sc.transport.net/#/login" title="Med-Trans Helo"><img src="https://icons.duckduckgo.com/ip3/med-trans.net.ico" alt="Google Drive"></a></li>
+                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?gid=0#gid=0" title="Shift Report"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" alt="GitHub"</a></li>
+                    <li><a href="https://login.microsoftonline.com/" title="Work E-Mail"><img src="https://icons.duckduckgo.com/ip3/outlook.com.ico" alt="Work E-Mail Login"</a></li>
+                    <li><a href="https://www.paycomonline.net/v4/ee/web.php/app/login" title="PayCom Online"><img src="https://icons.duckduckgo.com/ip3/paycomonline.net.ico" alt="PayCom Online"</a></li>
+                    <li><a href="https://work.sndjy.us/camera" title="2X2 DOT Camera"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/Camera.png" alt="Camera's"></a></li>
+                </ul>
+            </nav>
 
-            <section id="search">
-                <h2 class="sr-only">Search</h2>
-                <form action="https://www.google.com/search" method="get">
-                    <div class="search-container">
-                        <input type="text" id="q" name="q" placeholder="Search..." autofocus>
-                        <button type="submit" aria-label="Search"></button>
-                    </div>
-                </form>
-            </section>
-            <section id="bookmarks">
-                <h2 class="sr-only">Bookmarks</h2>
-                <ul>
-                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" class="favicon" alt="Daily WorkSheet">Daily WorkSheet</a></li>
-                    <li><a href="https://truck-5c2f62a8549e.herokuapp.com/" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/network_normal_two_pcs.ico" class="favicon" alt="ESO">Dispatch Timers</a></li>
-                    <li><a href="https://drive.google.com/file/d/1i2Pybwtw5h-tDiBGzM1QLVQumYZx0Ubz/view?usp=drive_link" target="_blank"><img src="https://icons.duckduckgo.com/ip3/dead.net.ico" class="favicon" alt="Coroner Schedule">Coroner Schedule</a></li>
-                    <li><a href="https://amm04.airlink.com/sierrawireless/" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/desktop_w95.ico" alt="Truck Tracking">Sierra Wireless</a></li>
-                     </ul>
-                <ul>
-                    <li><a href="https://learn.emergencydispatch.org/academy/my_learning/dashboard" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emergencydispatch.org.ico" class="favicon" alt="EMD Training">PRO-QA Class</a></li>
-                    <li><a href="https://forms.microsoft.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9Zi2FaRW6gaHhKjeF02t2Aq8tURFAwVDVVUEVVRzZRODNTNkgyUFJNMDBHSS4u" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/ram_drive.ico" class="favicon" alt="Daily WorkSheet">Daily Truck Form</a></li>
-                    <li><a href="https://support.priorityambulance.com/helpdesk/WebObjects/Helpdesk.woa" target="_blank"><img src="https://icons.duckduckgo.com/ip3/sndjy.us.com.ico" class="favicon" alt="Priority Support">Work Support</a></li>
-                    <li><a href="https://www.511sc.org/#zoom=11.546860821896603&lon=-82.55557766187724&lat=34.58726185125286&dmsg&rest&cams&other&cong&wthr&acon&incd&trfc" target="_blank"><img src="https://icons.duckduckgo.com/ip3/511sc.org.ico" class="favicon" alt="DOT Cameras">DOT Cams</a></li>
-                    </li>
-                </ul>
-            </section>
-        </section>
-    </main>
+            <section id="search">
+                <h2 class="sr-only">Search</h2>
+                <form action="https://www.google.com/search" method="get">
+                    <div class="search-container">
+                        <input type="text" id="q" name="q" placeholder="Search..." autofocus>
+                        <button type="submit" aria-label="Search"></button>
+                    </div>
+                </form>
+            </section>
+            <section id="bookmarks">
+                <h2 class="sr-only">Bookmarks</h2>
+                <ul>
+                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" class="favicon" alt="Daily WorkSheet">Daily WorkSheet</a></li>
+                    <li><a href="https://truck-5c2f62a8549e.herokuapp.com/" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/network_normal_two_pcs.ico" class="favicon" alt="ESO">Dispatch Timers</a></li>
+                    <li><a href="https://drive.google.com/file/d/1i2Pybwtw5h-tDiBGzM1QLVQumYZx0Ubz/view?usp=drive_link" target="_blank"><img src="https://icons.duckduckgo.com/ip3/dead.net.ico" class="favicon" alt="Coroner Schedule">Coroner Schedule</a></li>
+                    <li><a href="https://amm04.airlink.com/sierrawireless/" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/desktop_w95.ico" alt="Truck Tracking">Sierra Wireless</a></li>
+                     </ul>
+                <ul>
+                    <li><a href="https://learn.emergencydispatch.org/academy/my_learning/dashboard" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emergencydispatch.org.ico" class="favicon" alt="EMD Training">PRO-QA Class</a></li>
+                    <li><a href="https://forms.microsoft.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9Zi2FaRW6gaHhKjeF02t2Aq8tURFAwVDVVUEVVRzZRODNTNkgyUFJNMDBHSS4u" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/ram_drive.ico" class="favicon" alt="Daily WorkSheet">Daily Truck Form</a></li>
+                    <li><a href="https://support.priorityambulance.com/helpdesk/WebObjects/Helpdesk.woa" target="_blank"><img src="https://icons.duckduckgo.com/ip3/sndjy.us.com.ico" class="favicon" alt="Priority Support">Work Support</a></li>
+                    <li><a href="https://www.511sc.org/#zoom=11.546860821896603&lon=-82.55557766187724&lat=34.58726185125286&dmsg&rest&cams&other&cong&wthr&acon&incd&trfc" target="_blank"><img src="https://icons.duckduckgo.com/ip3/511sc.org.ico" class="favicon" alt="DOT Cameras">DOT Cams</a></li>
+                    </li>
+                </ul>
+            </section>
+        </section>
+    </main>
 
 <script>
-    function setGreeting() {
-        const greetingElement = document.getElementById('greeting');
-        const currentHour = new Date().getHours();
-        
-        const morningGreetings = [
-            'Good Morning',
-            'Rise and Shine!',
-            'Have a great day!'
-        ];
-        const afternoonGreetings = [
-            'Good Afternoon',
-            'Hope you\'re having a productive day!',
-            'Keep up the great work!'
-        ];
-        const eveningGreetings = [
-            'Good Evening',
-            'Hope you had a great day!',
-            'Time to unwind.'
-        ];
+    function setGreeting() {
+        const greetingElement = document.getElementById('greeting');
+        const currentHour = new Date().getHours();
+        
+        const morningGreetings = [
+            'Good Morning',
+            'Rise and Shine!',
+            'I could be a morning person, if morning was around noon',
+            'I dont like morning people, or mornings , or people',
+            'Have a great day!
+        ];
+        const afternoonGreetings = [
+            'Good Afternoon',
+            'Hope you\'re having a productive day!',
+            'Keep up the great work!'
+        ];
+        const eveningGreetings = [
+            'Good Evening',
+            'Hope you had a great day!',
+            'Time to unwind.'
+        ];
 
-        let greetingText = '';
 
-        if (currentHour < 12) {
-            greetingText = morningGreetings[Math.floor(Math.random() * morningGreetings.length)];
-        } else if (currentHour < 18) {
-            greetingText = afternoonGreetings[Math.floor(Math.random() * afternoonGreetings.length)];
-        } else {
-            greetingText = eveningGreetings[Math.floor(Math.random() * eveningGreetings.length)];
-        }
-        greetingElement.textContent = greetingText;
-    }
+        let greetingText = '';
+       if (currentHour < 12) {
+            greetingText = morningGreetings[Math.floor(Math.random() * morningGreetings.length)];
+        } else if (currentHour < 18) {
+            greetingText = afternoonGreetings[Math.floor(Math.random() * afternoonGreetings.length)];
+        } else {
+            greetingText = eveningGreetings[Math.floor(Math.random() * eveningGreetings.length)];
+        }
+        greetingElement.textContent = greetingText;
+    }
 
-    function setRandomBackground() {
-        const backgrounds = [
-            'background.jpg',
-            'Background2.jpg',
-            'LIFEFLIGHT.png',
-            'background4.jpg',
-            'xmas.jpg'
-        ];
-        const randomIndex = Math.floor(Math.random() * backgrounds.length);
-        const randomImage = backgrounds[randomIndex];
-        document.body.style.backgroundImage = `url('${randomImage}')`;
-    }
+    function setRandomBackground() {
+        const backgrounds = [
+            'background.jpg',
+            'Background2.jpg',
+            'LIFEFLIGHT.png',
+            'background4.jpg',
+            'xmas.jpg'
+        ];
+        const randomIndex = Math.floor(Math.random() * backgrounds.length);
+        const randomImage = backgrounds[randomIndex];
+        document.body.style.backgroundImage = `url('${randomImage}')`;
+    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        setGreeting();
-        setRandomBackground();
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+        setGreeting();
+        setRandomBackground();
+    });
 </script>
 </body>
 </html>
