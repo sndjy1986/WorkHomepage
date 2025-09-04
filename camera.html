@@ -118,7 +118,6 @@
     </div>
 
     <div id="contextMenu" class="context-menu"></div>
-    <div id="fullScreenContextMenu" class="context-menu"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
@@ -208,64 +207,66 @@
         });
         
         const contextMenu = document.getElementById('contextMenu');
-        const fullScreenContextMenu = document.getElementById('fullScreenContextMenu');
 
-        document.querySelectorAll('.player-wrapper').forEach(wrapper => {
-            wrapper.addEventListener('contextmenu', event => {
-                event.preventDefault();
-                const videoId = wrapper.querySelector('video').id;
-                const menu = document.fullscreenElement ? fullScreenContextMenu : contextMenu;
+        document.addEventListener('contextmenu', event => {
+            event.preventDefault();
+            
+            const target = event.target;
+            const wrapper = target.closest('.player-wrapper');
+            
+            if (!wrapper) {
+                contextMenu.style.display = 'none';
+                return;
+            }
 
-                menu.innerHTML = '';
-                
-                allCameras.forEach(camera => {
-                    const menuItemElement = document.createElement('div');
-                    menuItemElement.className = 'context-menu-item';
-                    menuItemElement.textContent = camera.name;
-                    menuItemElement.onclick = () => {
-                        setupPlayer(videoId, camera);
-                        menu.style.display = 'none';
-                    };
-                    menu.appendChild(menuItemElement);
-                });
-                
-                let separator = document.createElement('div');
-                separator.className = 'context-menu-separator';
-                menu.appendChild(separator);
+            const videoId = wrapper.querySelector('video').id;
 
-                const toggleOverlayItem = document.createElement('div');
-                toggleOverlayItem.className = 'context-menu-item';
-                toggleOverlayItem.textContent = 'Toggle Overlays';
-                toggleOverlayItem.onclick = () => {
-                    toggleOverlays(wrapper);
-                    menu.style.display = 'none';
+            contextMenu.innerHTML = '';
+            
+            allCameras.forEach(camera => {
+                const menuItemElement = document.createElement('div');
+                menuItemElement.className = 'context-menu-item';
+                menuItemElement.textContent = camera.name;
+                menuItemElement.onclick = () => {
+                    setupPlayer(videoId, camera);
+                    contextMenu.style.display = 'none';
                 };
-                menu.appendChild(toggleOverlayItem);
-                
-                separator = document.createElement('div');
-                separator.className = 'context-menu-separator';
-                menu.appendChild(separator);
-
-
-                const fullScreenItem = document.createElement('div');
-                fullScreenItem.className = 'context-menu-item';
-                fullScreenItem.textContent = document.fullscreenElement ? 'Exit Full Screen' : 'Full Screen';
-                fullScreenItem.onclick = () => {
-                    toggleFullScreen(wrapper);
-                    menu.style.display = 'none';
-                };
-                menu.appendChild(fullScreenItem);
-
-
-                menu.style.left = `${event.clientX}px`;
-                menu.style.top = `${event.clientY}px`;
-                menu.style.display = 'block';
+                contextMenu.appendChild(menuItemElement);
             });
+            
+            let separator = document.createElement('div');
+            separator.className = 'context-menu-separator';
+            contextMenu.appendChild(separator);
+
+            const toggleOverlayItem = document.createElement('div');
+            toggleOverlayItem.className = 'context-menu-item';
+            toggleOverlayItem.textContent = 'Toggle Overlays';
+            toggleOverlayItem.onclick = () => {
+                toggleOverlays(wrapper);
+                contextMenu.style.display = 'none';
+            };
+            contextMenu.appendChild(toggleOverlayItem);
+            
+            separator = document.createElement('div');
+            separator.className = 'context-menu-separator';
+            contextMenu.appendChild(separator);
+
+            const fullScreenItem = document.createElement('div');
+            fullScreenItem.className = 'context-menu-item';
+            fullScreenItem.textContent = document.fullscreenElement ? 'Exit Full Screen' : 'Full Screen';
+            fullScreenItem.onclick = () => {
+                toggleFullScreen(wrapper);
+                contextMenu.style.display = 'none';
+            };
+            contextMenu.appendChild(fullScreenItem);
+
+            contextMenu.style.left = `${event.clientX}px`;
+            contextMenu.style.top = `${event.clientY}px`;
+            contextMenu.style.display = 'block';
         });
 
         window.addEventListener('click', () => {
             contextMenu.style.display = 'none';
-            fullScreenContextMenu.style.display = 'none';
         });
 
     </script>
