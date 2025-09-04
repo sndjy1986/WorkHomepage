@@ -112,6 +112,7 @@
     </div>
 
     <div id="contextMenu" class="context-menu"></div>
+    <div id="fullScreenContextMenu" class="context-menu"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
@@ -197,49 +198,81 @@
         });
         
         const contextMenu = document.getElementById('contextMenu');
+        const fullScreenContextMenu = document.getElementById('fullScreenContextMenu');
 
         document.querySelectorAll('.player-wrapper').forEach(wrapper => {
             wrapper.addEventListener('contextmenu', event => {
                 event.preventDefault();
                 const videoId = wrapper.querySelector('video').id;
 
-                contextMenu.innerHTML = '';
+                if (document.fullscreenElement) {
+                    fullScreenContextMenu.innerHTML = '';
+                    allCameras.forEach(camera => {
+                        const menuItemElement = document.createElement('div');
+                        menuItemElement.className = 'context-menu-item';
+                        menuItemElement.textContent = camera.name;
+                        menuItemElement.onclick = () => {
+                            setupPlayer(videoId, camera);
+                            fullScreenContextMenu.style.display = 'none';
+                        };
+                        fullScreenContextMenu.appendChild(menuItemElement);
+                    });
+                    
+                    const separator = document.createElement('div');
+                    separator.className = 'context-menu-separator';
+                    fullScreenContextMenu.appendChild(separator);
+
+                    const exitFullScreenItem = document.createElement('div');
+                    exitFullScreenItem.className = 'context-menu-item';
+                    exitFullScreenItem.textContent = 'Exit Full Screen';
+                    exitFullScreenItem.onclick = () => {
+                        document.exitFullscreen();
+                        fullScreenContextMenu.style.display = 'none';
+                    };
+                    fullScreenContextMenu.appendChild(exitFullScreenItem);
+
+                    fullScreenContextMenu.style.left = `${event.clientX}px`;
+                    fullScreenContextMenu.style.top = `${event.clientY}px`;
+                    fullScreenContextMenu.style.display = 'block';
+
+                } else {
+                    contextMenu.innerHTML = '';
                 
-                allCameras.forEach(camera => {
-                    const menuItemElement = document.createElement('div');
-                    menuItemElement.className = 'context-menu-item';
-                    menuItemElement.textContent = camera.name;
-                    menuItemElement.onclick = () => {
-                        setupPlayer(videoId, camera);
+                    allCameras.forEach(camera => {
+                        const menuItemElement = document.createElement('div');
+                        menuItemElement.className = 'context-menu-item';
+                        menuItemElement.textContent = camera.name;
+                        menuItemElement.onclick = () => {
+                            setupPlayer(videoId, camera);
+                            contextMenu.style.display = 'none';
+                        };
+                        contextMenu.appendChild(menuItemElement);
+                    });
+                    
+                    const separator = document.createElement('div');
+                    separator.className = 'context-menu-separator';
+                    contextMenu.appendChild(separator);
+
+                    const fullScreenItem = document.createElement('div');
+                    fullScreenItem.className = 'context-menu-item';
+                    fullScreenItem.textContent = 'Full Screen';
+                    fullScreenItem.onclick = () => {
+                        toggleFullScreen(wrapper);
                         contextMenu.style.display = 'none';
                     };
-                    contextMenu.appendChild(menuItemElement);
-                });
-                
-                const separator = document.createElement('div');
-                separator.className = 'context-menu-separator';
-                contextMenu.appendChild(separator);
-
-                const fullScreenItem = document.createElement('div');
-                fullScreenItem.className = 'context-menu-item';
-                fullScreenItem.textContent = 'Full Screen';
-                fullScreenItem.onclick = () => {
-                    toggleFullScreen(wrapper);
-                    contextMenu.style.display = 'none';
-                };
-                contextMenu.appendChild(fullScreenItem);
+                    contextMenu.appendChild(fullScreenItem);
 
 
-                contextMenu.style.left = `${event.clientX}px`;
-                contextMenu.style.top = `${event.clientY}px`;
-                contextMenu.style.display = 'block';
+                    contextMenu.style.left = `${event.clientX}px`;
+                    contextMenu.style.top = `${event.clientY}px`;
+                    contextMenu.style.display = 'block';
+                }
             });
         });
 
         window.addEventListener('click', () => {
-            if (contextMenu.style.display === 'block') {
-                contextMenu.style.display = 'none';
-            }
+            contextMenu.style.display = 'none';
+            fullScreenContextMenu.style.display = 'none';
         });
 
     </script>
