@@ -53,7 +53,13 @@
             font-size: 14px;
             z-index: 10;
             white-space: nowrap;
+            transition: opacity 0.5s;
         }
+
+        .overlay-hidden .text-overlay {
+            opacity: 0;
+        }
+
         /* --- Styles for the context menu --- */
         .context-menu {
             position: fixed;
@@ -188,6 +194,10 @@
                 document.exitFullscreen();
             }
         }
+        
+        function toggleOverlays(wrapper) {
+            wrapper.classList.toggle('overlay-hidden');
+        }
 
         const playerIds = ['video1', 'video2', 'video3', 'video4'];
         playerIds.forEach((videoId, index) => {
@@ -204,69 +214,52 @@
             wrapper.addEventListener('contextmenu', event => {
                 event.preventDefault();
                 const videoId = wrapper.querySelector('video').id;
+                const menu = document.fullscreenElement ? fullScreenContextMenu : contextMenu;
 
-                if (document.fullscreenElement) {
-                    fullScreenContextMenu.innerHTML = '';
-                    allCameras.forEach(camera => {
-                        const menuItemElement = document.createElement('div');
-                        menuItemElement.className = 'context-menu-item';
-                        menuItemElement.textContent = camera.name;
-                        menuItemElement.onclick = () => {
-                            setupPlayer(videoId, camera);
-                            fullScreenContextMenu.style.display = 'none';
-                        };
-                        fullScreenContextMenu.appendChild(menuItemElement);
-                    });
-                    
-                    const separator = document.createElement('div');
-                    separator.className = 'context-menu-separator';
-                    fullScreenContextMenu.appendChild(separator);
-
-                    const exitFullScreenItem = document.createElement('div');
-                    exitFullScreenItem.className = 'context-menu-item';
-                    exitFullScreenItem.textContent = 'Exit Full Screen';
-                    exitFullScreenItem.onclick = () => {
-                        document.exitFullscreen();
-                        fullScreenContextMenu.style.display = 'none';
-                    };
-                    fullScreenContextMenu.appendChild(exitFullScreenItem);
-
-                    fullScreenContextMenu.style.left = `${event.clientX}px`;
-                    fullScreenContextMenu.style.top = `${event.clientY}px`;
-                    fullScreenContextMenu.style.display = 'block';
-
-                } else {
-                    contextMenu.innerHTML = '';
+                menu.innerHTML = '';
                 
-                    allCameras.forEach(camera => {
-                        const menuItemElement = document.createElement('div');
-                        menuItemElement.className = 'context-menu-item';
-                        menuItemElement.textContent = camera.name;
-                        menuItemElement.onclick = () => {
-                            setupPlayer(videoId, camera);
-                            contextMenu.style.display = 'none';
-                        };
-                        contextMenu.appendChild(menuItemElement);
-                    });
-                    
-                    const separator = document.createElement('div');
-                    separator.className = 'context-menu-separator';
-                    contextMenu.appendChild(separator);
-
-                    const fullScreenItem = document.createElement('div');
-                    fullScreenItem.className = 'context-menu-item';
-                    fullScreenItem.textContent = 'Full Screen';
-                    fullScreenItem.onclick = () => {
-                        toggleFullScreen(wrapper);
-                        contextMenu.style.display = 'none';
+                allCameras.forEach(camera => {
+                    const menuItemElement = document.createElement('div');
+                    menuItemElement.className = 'context-menu-item';
+                    menuItemElement.textContent = camera.name;
+                    menuItemElement.onclick = () => {
+                        setupPlayer(videoId, camera);
+                        menu.style.display = 'none';
                     };
-                    contextMenu.appendChild(fullScreenItem);
+                    menu.appendChild(menuItemElement);
+                });
+                
+                let separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                menu.appendChild(separator);
+
+                const toggleOverlayItem = document.createElement('div');
+                toggleOverlayItem.className = 'context-menu-item';
+                toggleOverlayItem.textContent = 'Toggle Overlays';
+                toggleOverlayItem.onclick = () => {
+                    toggleOverlays(wrapper);
+                    menu.style.display = 'none';
+                };
+                menu.appendChild(toggleOverlayItem);
+                
+                separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                menu.appendChild(separator);
 
 
-                    contextMenu.style.left = `${event.clientX}px`;
-                    contextMenu.style.top = `${event.clientY}px`;
-                    contextMenu.style.display = 'block';
-                }
+                const fullScreenItem = document.createElement('div');
+                fullScreenItem.className = 'context-menu-item';
+                fullScreenItem.textContent = document.fullscreenElement ? 'Exit Full Screen' : 'Full Screen';
+                fullScreenItem.onclick = () => {
+                    toggleFullScreen(wrapper);
+                    menu.style.display = 'none';
+                };
+                menu.appendChild(fullScreenItem);
+
+
+                menu.style.left = `${event.clientX}px`;
+                menu.style.top = `${event.clientY}px`;
+                menu.style.display = 'block';
             });
         });
 
