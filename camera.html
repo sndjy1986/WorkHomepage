@@ -208,61 +208,56 @@
         
         const contextMenu = document.getElementById('contextMenu');
 
-        document.addEventListener('contextmenu', event => {
-            event.preventDefault();
-            
-            const target = event.target;
-            const wrapper = target.closest('.player-wrapper');
-            
-            if (!wrapper) {
-                contextMenu.style.display = 'none';
-                return;
-            }
+        document.querySelectorAll('.player-wrapper').forEach(wrapper => {
+            wrapper.addEventListener('contextmenu', event => {
+                event.preventDefault();
+                
+                contextMenu.innerHTML = '';
+                const videoId = wrapper.querySelector('video').id;
+                
+                allCameras.forEach(camera => {
+                    const menuItemElement = document.createElement('div');
+                    menuItemElement.className = 'context-menu-item';
+                    menuItemElement.textContent = camera.name;
+                    menuItemElement.onclick = () => {
+                        setupPlayer(videoId, camera);
+                        contextMenu.style.display = 'none';
+                    };
+                    contextMenu.appendChild(menuItemElement);
+                });
+                
+                let separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                contextMenu.appendChild(separator);
 
-            const videoId = wrapper.querySelector('video').id;
-
-            contextMenu.innerHTML = '';
-            
-            allCameras.forEach(camera => {
-                const menuItemElement = document.createElement('div');
-                menuItemElement.className = 'context-menu-item';
-                menuItemElement.textContent = camera.name;
-                menuItemElement.onclick = () => {
-                    setupPlayer(videoId, camera);
+                const toggleOverlayItem = document.createElement('div');
+                toggleOverlayItem.className = 'context-menu-item';
+                toggleOverlayItem.textContent = 'Toggle Overlays';
+                toggleOverlayItem.onclick = () => {
+                    toggleOverlays(wrapper);
                     contextMenu.style.display = 'none';
                 };
-                contextMenu.appendChild(menuItemElement);
+                contextMenu.appendChild(toggleOverlayItem);
+                
+                separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                contextMenu.appendChild(separator);
+
+
+                const fullScreenItem = document.createElement('div');
+                fullScreenItem.className = 'context-menu-item';
+                fullScreenItem.textContent = wrapper.querySelector('video') === document.fullscreenElement ? 'Exit Full Screen' : 'Full Screen';
+                fullScreenItem.onclick = () => {
+                    toggleFullScreen(wrapper);
+                    contextMenu.style.display = 'none';
+                };
+                contextMenu.appendChild(fullScreenItem);
+
+
+                contextMenu.style.left = `${event.clientX}px`;
+                contextMenu.style.top = `${event.clientY}px`;
+                contextMenu.style.display = 'block';
             });
-            
-            let separator = document.createElement('div');
-            separator.className = 'context-menu-separator';
-            contextMenu.appendChild(separator);
-
-            const toggleOverlayItem = document.createElement('div');
-            toggleOverlayItem.className = 'context-menu-item';
-            toggleOverlayItem.textContent = 'Toggle Overlays';
-            toggleOverlayItem.onclick = () => {
-                toggleOverlays(wrapper);
-                contextMenu.style.display = 'none';
-            };
-            contextMenu.appendChild(toggleOverlayItem);
-            
-            separator = document.createElement('div');
-            separator.className = 'context-menu-separator';
-            contextMenu.appendChild(separator);
-
-            const fullScreenItem = document.createElement('div');
-            fullScreenItem.className = 'context-menu-item';
-            fullScreenItem.textContent = document.fullscreenElement ? 'Exit Full Screen' : 'Full Screen';
-            fullScreenItem.onclick = () => {
-                toggleFullScreen(wrapper);
-                contextMenu.style.display = 'none';
-            };
-            contextMenu.appendChild(fullScreenItem);
-
-            contextMenu.style.left = `${event.clientX}px`;
-            contextMenu.style.top = `${event.clientY}px`;
-            contextMenu.style.display = 'block';
         });
 
         window.addEventListener('click', () => {
