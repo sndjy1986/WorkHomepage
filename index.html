@@ -2,201 +2,273 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <script src="js/main.js"></script>
-    <link rel="stylesheet" href="css/main.css">
-    <title>Work Homepage</title>
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        background-image: url('background.jpg');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        transition: background-image 1s ease-in-out;
-        background-repeat: no-repeat;
-    }
-
-    main {
-        position: relative !important;
-        background-color: rgba(0, 0, 0, 0.2); 
-        backdrop-filter: blur(10px); 
-        border-radius: 15px;
-    }
-
-    #greeting {
-        text-align: center;
-        font-size: 2.5em; 
-        font-weight: bold;
-        color: white;
-        text-shadow: 2px 2px 4px #000000; 
-        margin-bottom: -25px;
-    }
-
-    #dock ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        justify-content: center; 
-        align-items: flex-end;
-        height: 60px;
-    }
-
-    #dock li {
-        margin: 0 10px; 
-    }
-
-    #dock li a {
-        display: inline-block;
-        transition: transform 0.2s ease-out;
-    }
-
-    #dock li img {
-        width: 60px;
-        height: 60px;
-        vertical-align: middle;
-    }
-
-    #dock li a:hover {
-        transform: scale(1.3) translateY(-10px);
-    }
-
-    :root {
-        --text-color: ##f5f0f0;
-        --link-color: #0066cc;
-    }
-
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --text-color: #ffffff;
-            --link-color: #66b3ff;
+    <title>Quad-Stream Player</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background-color: #1a1a1a;
+            margin: 0;
+            overflow: hidden; /* Prevents scrollbars */
         }
-        main {
-             background-color: rgba(0, 0, 0, 0.2);
+        #container {
+            display: grid;
+            width: 100vw;
+            height: 100vh;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
         }
-    }
+        .player-wrapper {
+            position: relative;
+            background-color: #000;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .status-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        .text-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 10;
+            white-space: nowrap;
+            transition: opacity 0.5s;
+        }
 
-</style>
+        .overlay-hidden .text-overlay {
+            opacity: 0;
+        }
+
+        /* --- Styles for the context menu --- */
+        .context-menu {
+            position: fixed;
+            display: none;
+            background-color: #2c2c2c;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 5px 0;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            min-width: 150px;
+        }
+        .context-menu-item {
+            padding: 8px 15px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .context-menu-item:hover {
+            background-color: #4a4a4a;
+        }
+        .context-menu-separator {
+            height: 1px;
+            background-color: #555;
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
 
-    <main>
-        <header>
-            <section id="date-time">
-                <h2 class="sr-only">Date & Time</h2>
-            </section>
-            <section id="weather">
-                <h2 class="sr-only">Location & Weather</h2>
-            </section>
-        </header>
-        <section id="traichu">
-            <h1 class="sr-only">Joey's Homepage</h1>
+    <div id="container">
+        <div class="player-wrapper">
+            <div id="status1" class="status-overlay"></div>
+            <div class="text-overlay"></div>
+            <video id="video1" muted autoplay playsinline></video>
+        </div>
 
-            <div id="greeting"></div>
+        <div class="player-wrapper">
+            <div id="status2" class="status-overlay"></div>
+            <div class="text-overlay"></div>
+            <video id="video2" muted autoplay playsinline></video>
+        </div>
 
-            <nav id="dock">
-                <ul>
-                    <li><a href="https://vanguard.emsanyware.com/" title="Vanguard"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/emsanyware.JPG" alt="Vanguard"></a></li>
-                    <li><a href="https://scheduling.esosuite.net/Default.aspx?DB=priorityambulance" title="ESO Suite"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/esoicon.png" alt="ESO Suite"></a></li>
-                    <li><a href="https://andersoncounty911_sc.transport.net/#/login" title="Med-Trans Helo"><img src="https://icons.duckduckgo.com/ip3/med-trans.net.ico" alt="Google Drive"></a></li>
-                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?gid=0#gid=0" title="Shift Report"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" alt="GitHub"</a></li>
-                    <li><a href="https://login.microsoftonline.com/" title="Work E-Mail"><img src="https://icons.duckduckgo.com/ip3/outlook.com.ico" alt="Work E-Mail Login"</a></li>
-                    <li><a href="https://www.paycomonline.net/v4/ee/web.php/app/login" title="PayCom Online"><img src="https://icons.duckduckgo.com/ip3/paycomonline.net.ico" alt="PayCom Online"</a></li>
-                    <li><a href="https://work.sndjy.us/camera" title="2X2 DOT Camera"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/Camera.png" alt="Camera's"></a></li>
-                </ul>
-            </nav>
-
-            <section id="search">
-                <h2 class="sr-only">Search</h2>
-                <form action="https://www.google.com/search" method="get">
-                    <div class="search-container">
-                        <input type="text" id="q" name="q" placeholder="Search..." autofocus>
-                        <button type="submit" aria-label="Search"></button>
-                    </div>
-                </form>
-            </section>
-            <section id="bookmarks">
-                <h2 class="sr-only">Bookmarks</h2>
-                <ul>
-                    <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" class="favicon" alt="Daily WorkSheet">Daily WorkSheet</a></li>
-                    <li><a href="https://truck-5c2f62a8549e.herokuapp.com/" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/network_normal_two_pcs.ico" class="favicon" alt="ESO">Dispatch Timers</a></li>
-                    <li><a href="https://drive.google.com/file/d/1i2Pybwtw5h-tDiBGzM1QLVQumYZx0Ubz/view?usp=drive_link" target="_blank"><img src="https://icons.duckduckgo.com/ip3/dead.net.ico" class="favicon" alt="Coroner Schedule">Coroner Schedule</a></li>
-                    <li><a href="https://amm04.airlink.com/sierrawireless/" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/desktop_w95.ico" alt="Truck Tracking">Sierra Wireless</a></li>
-                     </ul>
-                <ul>
-                    <li><a href="https://learn.emergencydispatch.org/academy/my_learning/dashboard" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emergencydispatch.org.ico" class="favicon" alt="EMD Training">PRO-QA Class</a></li>
-                    <li><a href="https://forms.microsoft.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9Zi2FaRW6gaHhKjeF02t2Aq8tURFAwVDVVUEVVRzZRODNTNkgyUFJNMDBHSS4u" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/ram_drive.ico" class="favicon" alt="Daily WorkSheet">Daily Truck Form</a></li>
-                    <li><a href="https://support.priorityambulance.com/helpdesk/WebObjects/Helpdesk.woa" target="_blank"><img src="https://icons.duckduckgo.com/ip3/sndjy.us.com.ico" class="favicon" alt="Priority Support">Work Support</a></li>
-                    <li><a href="https://www.511sc.org/#zoom=11.546860821896603&lon=-82.55557766187724&lat=34.58726185125286&dmsg&rest&cams&other&cong&wthr&acon&incd&trfc" target="_blank"><img src="https://icons.duckduckgo.com/ip3/511sc.org.ico" class="favicon" alt="DOT Cameras">DOT Cams</a></li>
-                    </li>
-                </ul>
-            </section>
-        </section>
-    </main>
-
-
-<script>
-    function setGreeting() {
-        const greetingElement = document.getElementById('greeting');
-        const currentHour = new Date().getHours();
+        <div class="player-wrapper">
+            <div id="status3" class="status-overlay"></div>
+            <div class="text-overlay"></div>
+            <video id="video3" muted autoplay playsinline></video>
+        </div>
         
-        const morningGreetings = [
-            'Good Morning!',
-            'Rise and Shine!',
-            'You\'ve been summoned.',
-            'Let\'s get this bread.',
-            'Time to make the donuts.',
-            'I don\'t like morning people, or mornings, or people.'
-        ];
-        const afternoonGreetings = [
-            'Good Afternoon.',
-            'Is it 5 o\'clock yet?',
-            'Surviving another day!',
-            'Keep up the great work!',
-            'Remember that to-do list? It misses you.'
-        ];
-        const eveningGreetings = [
-            'Good Evening.',
-            'Time to unwind.',
-            'The day is over. You can stop pretending to work now.',
-            'Time to start your real life.',
-            'May your Wi-Fi be strong and your snacks plentiful.'
+        <div class="player-wrapper">
+            <div id="status4" class="status-overlay"></div>
+            <div class="text-overlay"></div>
+            <video id="video4" muted autoplay playsinline></video>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <script>
+        const hlsInstances = {};
+
+        const allCameras = [
+            { name: 'MM 19 - Clemson Blvd', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30057/chunklist_w2092101538.m3u8', description: 'Mile Marker 19 - Clemson Blvd - Closest Lanes are SB Traffic' },
+            { name: 'MM 21 - HWY 178', url: 'https://s19.us-east-1.skyvdn.com/rtplive/30056/chunklist_w234287558.m3u8', description: 'Mile Marker 21 - Highway 178 - Closest Lanes are NB Traffic' },
+            { name: 'MM 23 - Rest Area', url: 'https://s18.us-east-1.skyvdn.com/rtplive/30055/chunklist_w1988576416.m3u8', description: 'Mile Marker 23 - Rest Area - Closest Lanes are SB Traffic' },   
+            { name: 'MM 24', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30054/chunklist_w1763131792.m3u8', description: 'Mile Marker 24 - Closest Lanes are NB Traffic' },
+            { name: 'MM 27 - HWY 81', url: 'https://s19.us-east-1.skyvdn.com/rtplive/30053/chunklist_w682873545.m3u8', description: 'Mile Marker 27 - Highway 81 - Closest Lanes are SB Traffic' },
+            { name: 'MM 32 - HWY 8', url: 'https://s18.us-east-1.skyvdn.com/rtplive/30052/chunklist_w991875225.m3u8', description: 'Mile Marker 32 - Highway 8 - Closest Lanes are SB Traffic' },
+            { name: 'MM 34 - US-29', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30051/chunklist_w766310199.m3u8', description: 'Mile Marker 34 - US-29 - Closest Lanes are SB Traffic' },
+            { name: 'MM 40 - HWY 153', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30062/chunklist_w508245393.m3u8', description: 'Mile Marker 40 - Highway 153 - Closest Lanes are NB Traffic' } 
         ];
 
-        let greetingText = '';
+        function setupPlayer(videoId, camera) {
+            if (hlsInstances[videoId]) {
+                hlsInstances[videoId].destroy();
+            }
 
-        if (currentHour < 12) {
-            greetingText = morningGreetings[Math.floor(Math.random() * morningGreetings.length)];
-        } else if (currentHour < 18) {
-            greetingText = afternoonGreetings[Math.floor(Math.random() * afternoonGreetings.length)];
-        } else {
-            greetingText = eveningGreetings[Math.floor(Math.random() * eveningGreetings.length)];
+            const videoElement = document.getElementById(videoId);
+            const wrapper = videoElement.parentElement;
+            const statusElement = wrapper.querySelector('.status-overlay');
+            const textOverlayElement = wrapper.querySelector('.text-overlay');
+            
+            if (!Hls.isSupported()) {
+                statusElement.textContent = 'HLS Not Supported';
+                statusElement.style.opacity = '1';
+                return;
+            }
+
+            const hls = new Hls();
+            hlsInstances[videoId] = hls;
+
+            function showStatus(message) {
+                statusElement.textContent = message;
+                statusElement.style.opacity = '1';
+                setTimeout(() => { statusElement.style.opacity = '0'; }, 4000);
+            }
+
+            hls.loadSource(camera.url);
+            hls.attachMedia(videoElement);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                videoElement.play().catch(error => {
+                    console.error(`Autoplay failed for ${videoId}:`, error);
+                    showStatus('Autoplay Blocked');
+                });
+                showStatus(`Playing: ${camera.name}`);
+                if (camera.description) {
+                    textOverlayElement.textContent = camera.description;
+                    textOverlayElement.style.display = 'block';
+                } else {
+                    textOverlayElement.style.display = 'none';
+                }
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.error(`Fatal error on ${videoId}:`, data.details);
+                }
+            });
         }
-        greetingElement.textContent = greetingText;
-    }
 
-    function setRandomBackground() {
-        const backgrounds = [
-            'background.jpg',
-            'Background2.jpg',
-            'LIFEFLIGHT.png',
-            'background4.jpg',
-            'xmas.jpg'
-        ];
-        const randomIndex = Math.floor(Math.random() * backgrounds.length);
-        const randomImage = backgrounds[randomIndex];
-        document.body.style.backgroundImage = `url('${randomImage}')`;
-    }
+        function toggleFullScreen(element) {
+            if (!document.fullscreenElement) {
+                element.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        function toggleOverlays(wrapper) {
+            wrapper.classList.toggle('overlay-hidden');
+        }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        setGreeting();
-        setRandomBackground();
-    });
-</script>
+        const playerIds = ['video1', 'video2', 'video3', 'video4'];
+        playerIds.forEach((videoId, index) => {
+            if (allCameras[index]) {
+                const camera = allCameras[index];
+                setupPlayer(videoId, camera);
+            }
+        });
+        
+        const contextMenu = document.getElementById('contextMenu');
+
+        document.querySelectorAll('.player-wrapper').forEach(wrapper => {
+            wrapper.addEventListener('contextmenu', event => {
+                event.preventDefault();
+                
+                // --- EDITED LINE ---
+                // Move the context menu inside the clicked player wrapper
+                wrapper.appendChild(contextMenu);
+
+                contextMenu.innerHTML = '';
+                const videoId = wrapper.querySelector('video').id;
+                
+                allCameras.forEach(camera => {
+                    const menuItemElement = document.createElement('div');
+                    menuItemElement.className = 'context-menu-item';
+                    menuItemElement.textContent = camera.name;
+                    menuItemElement.onclick = () => {
+                        setupPlayer(videoId, camera);
+                        contextMenu.style.display = 'none';
+                    };
+                    contextMenu.appendChild(menuItemElement);
+                });
+                
+                let separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                contextMenu.appendChild(separator);
+
+                const toggleOverlayItem = document.createElement('div');
+                toggleOverlayItem.className = 'context-menu-item';
+                toggleOverlayItem.textContent = 'Toggle Overlays';
+                toggleOverlayItem.onclick = () => {
+                    toggleOverlays(wrapper);
+                    contextMenu.style.display = 'none';
+                };
+                contextMenu.appendChild(toggleOverlayItem);
+                
+                separator = document.createElement('div');
+                separator.className = 'context-menu-separator';
+                contextMenu.appendChild(separator);
+
+
+                const fullScreenItem = document.createElement('div');
+                fullScreenItem.className = 'context-menu-item';
+                fullScreenItem.textContent = wrapper.querySelector('video') === document.fullscreenElement ? 'Exit Full Screen' : 'Full Screen';
+                fullScreenItem.onclick = () => {
+                    toggleFullScreen(wrapper);
+                    contextMenu.style.display = 'none';
+                };
+                contextMenu.appendChild(fullScreenItem);
+
+
+                contextMenu.style.left = `${event.clientX}px`;
+                contextMenu.style.top = `${event.clientY}px`;
+                contextMenu.style.display = 'block';
+            });
+        });
+
+        window.addEventListener('click', () => {
+            contextMenu.style.display = 'none';
+        });
+
+    </script>
+
 </body>
 </html>
