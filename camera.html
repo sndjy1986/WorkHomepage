@@ -212,6 +212,10 @@
             wrapper.addEventListener('contextmenu', event => {
                 event.preventDefault();
                 
+                // --- EDITED LINE ---
+                // Move the context menu inside the clicked player wrapper
+                wrapper.appendChild(contextMenu);
+
                 contextMenu.innerHTML = '';
                 const videoId = wrapper.querySelector('video').id;
                 
