@@ -42,10 +42,10 @@ body.alert-active {
 /* WORD OF THE DAY */
 #word-of-the-day {
     position: fixed;
-    bottom: 0;
+    bottom: 4rem; /* This moves the element up from the bottom */
     left: 0;
     width: 100%;
-    padding: 25px;
+    padding: 20px;
     box-sizing: border-box;
     text-align: center;
 }
@@ -53,7 +53,7 @@ body.alert-active {
 #word-container {
     max-width: 600px;
     margin: 0 auto;
-    padding: -30px;
+    padding: 20px;
     background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
     border-radius: 15px;
