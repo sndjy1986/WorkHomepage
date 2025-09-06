@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Feed</title>
+    <style>
+        body {
+            margin: 0;
+            padding-top: 50px; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f0f2f5;
+        }
+        main {
+            padding: 20px;
+        }
+        #news-ticker {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            z-index: 9999;
+            border-bottom: 2px solid #333;
+        }
+        #news-content {
+            position: absolute;
+            white-space: nowrap;
+            line-height: 50px;
+            font-size: 16px;
+            font-weight: lighter;
+            animation: scroll-left 100s linear infinite;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+        #news-content a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 80px;
+        }
+        #news-content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="news-ticker">
+        <div id="news-content">🔴 Loading RSS News Feed.......</div>
+    </div>
+
+    <main>
+        <h1>News Feed Page</h1>
+        <p>This page displays the scrolling news feed component.</p>
+        <a href="index.html">← Back to Homepage</a>
+    </main>
+
+    <script>
+        function loadNewsFeed() {
+            const newsContent = document.getElementById('news-content');
+            const cacheKey = 'foxNewsFeedCache';
+            const cacheDuration = 15 * 60 * 1000;
+
+            const cachedData = localStorage.getItem(cacheKey);
+            if (cachedData) {
+                const { html, timestamp } = JSON.parse(cachedData);
+                if (Date.now() - timestamp < cacheDuration) {
+                    newsContent.innerHTML = html;
+                    return;
+                }
+            }
+
+            fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
+            .then(response => response.text())
+            .then(str => new DOMParser().parseFromString(str, "application/xml"))
+            .then(data => {
+                const items = data.querySelectorAll("item");
+                let html = '';
+                items.forEach(item => {
+                    const title = item.querySelector("title").textContent;
+                    const link = item.querySelector("link").textContent;
+                    html += `<a href="${link}" target="_blank">🦊 ${title}</a>`;
+                });
+                if (html === '') { throw new Error('No items found in RSS feed.'); }
+                newsContent.innerHTML = html;
+                const dataToCache = { html: html, timestamp: Date.now() };
+                localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+            })
+            .catch(error => {
+                console.error('Error fetching or parsing RSS feed:', error);
+                newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊';
+            });
+        }
+        loadNewsFeed();
+        setInterval(loadNewsFeed, 900000);
+    </script>
+
+</body>
+</html>
