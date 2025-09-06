@@ -123,6 +123,8 @@
 
     <script>
         const hlsInstances = {};
+        let cycleInterval = null;
+        let cyclingPlayerId = null;
 
         const allCameras = [
             { name: 'MM 19 - Clemson Blvd', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30057/chunklist_w2092101538.m3u8', description: 'Mile Marker 19 - Clemson Blvd - Closest Lanes are SB Traffic' },
@@ -136,6 +138,10 @@
         ];
 
         function setupPlayer(videoId, camera) {
+            if (cycleInterval && cyclingPlayerId !== videoId) {
+                stopAutoCycle();
+            }
+
             if (hlsInstances[videoId]) {
                 hlsInstances[videoId].destroy();
             }
@@ -190,12 +196,43 @@
                     alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
                 });
             } else {
+                if (cycleInterval) {
+                    stopAutoCycle();
+                }
                 document.exitFullscreen();
             }
         }
         
         function toggleOverlays(wrapper) {
             wrapper.classList.toggle('overlay-hidden');
+        }
+
+        function startAutoCycle(videoId) {
+            if (cycleInterval) return; 
+
+            cyclingPlayerId = videoId;
+            let currentIndex = -1;
+
+            const hlsInstance = hlsInstances[videoId];
+            if (hlsInstance) {
+                for(let i=0; i < allCameras.length; i++){
+                    if(hlsInstance.url === allCameras[i].url) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            cycleInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % allCameras.length;
+                setupPlayer(videoId, allCameras[currentIndex]);
+            }, 30000); 
+        }
+
+        function stopAutoCycle() {
+            clearInterval(cycleInterval);
+            cycleInterval = null;
+            cyclingPlayerId = null;
         }
 
         const playerIds = ['video1', 'video2', 'video3', 'video4'];
@@ -212,8 +249,6 @@
             wrapper.addEventListener('contextmenu', event => {
                 event.preventDefault();
                 
-                // --- EDITED LINE ---
-                // Move the context menu inside the clicked player wrapper
                 wrapper.appendChild(contextMenu);
 
                 contextMenu.innerHTML = '';
@@ -224,6 +259,7 @@
                     menuItemElement.className = 'context-menu-item';
                     menuItemElement.textContent = camera.name;
                     menuItemElement.onclick = () => {
+                        stopAutoCycle(); 
                         setupPlayer(videoId, camera);
                         contextMenu.style.display = 'none';
                     };
@@ -247,7 +283,6 @@
                 separator.className = 'context-menu-separator';
                 contextMenu.appendChild(separator);
 
-
                 const fullScreenItem = document.createElement('div');
                 fullScreenItem.className = 'context-menu-item';
                 fullScreenItem.textContent = wrapper.querySelector('video') === document.fullscreenElement ? 'Exit Full Screen' : 'Full Screen';
@@ -257,6 +292,28 @@
                 };
                 contextMenu.appendChild(fullScreenItem);
 
+                if (document.fullscreenElement) {
+                    const autoCycleItem = document.createElement('div');
+                    autoCycleItem.className = 'context-menu-item';
+
+                    if (cycleInterval && cyclingPlayerId === videoId) {
+                        autoCycleItem.textContent = 'Stop Auto Cycle';
+                        autoCycleItem.onclick = () => {
+                            stopAutoCycle();
+                            contextMenu.style.display = 'none';
+                        };
+                    } else {
+                        autoCycleItem.textContent = 'Start Auto Cycle';
+                        autoCycleItem.onclick = () => {
+                            if(cycleInterval) {
+                                stopAutoCycle();
+                            }
+                            startAutoCycle(videoId);
+                            contextMenu.style.display = 'none';
+                        };
+                    }
+                    contextMenu.appendChild(autoCycleItem);
+                }
 
                 contextMenu.style.left = `${event.clientX}px`;
                 contextMenu.style.top = `${event.clientY}px`;
