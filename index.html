@@ -12,13 +12,19 @@
 <style>
     body {
         margin: 0;
-        padding: 0;
+        /* Adjusted padding to make space for the news ticker */
+        padding-top: 50px; 
         background-image: url('background.jpg');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-        transition: background-image 1s ease-in-out;
+        transition: padding-top 0.3s ease, background-image 1s ease-in-out;
         background-repeat: no-repeat;
+    }
+
+    /* Added to handle positioning when the weather alert is active */
+    body.alert-active {
+        padding-top: 105px;
     }
 
     main {
@@ -80,10 +86,55 @@
              background-color: rgba(0, 0, 0, 0.2);
         }
     }
+    
+    /* CSS for the News Feed */
+    #news-ticker {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 50px;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
+        z-index: 9999;
+        border-bottom: 2px solid #333;
+        transition: top 0.3s ease;
+    }
+    
+    body.alert-active #news-ticker {
+        top: 55px;
+    }
+
+    #news-content {
+        position: absolute;
+        white-space: nowrap;
+        line-height: 50px;
+        font-size: 16px;
+        font-weight: lighter;
+        animation: scroll-left 100s linear infinite;
+        will-change: transform;
+    }
+    @keyframes scroll-left {
+        0% { transform: translateX(100vw); }
+        100% { transform: translateX(-100%); }
+    }
+    #news-content a {
+        color: #fff;
+        text-decoration: none;
+        margin-right: 80px;
+    }
+    #news-content a:hover {
+        text-decoration: underline;
+    }
 
 </style>
 </head>
 <body>
+
+    <div id="news-ticker">
+        <div id="news-content">🔴 Loading RSS News Feed.......</div>
+    </div>
 
     <div id="weather-alert"></div>
 
@@ -149,26 +200,13 @@
         const currentHour = new Date().getHours();
         
         const morningGreetings = [
-            'Good Morning!',
-            'Rise and Shine!',
-            'You\'ve been summoned.',
-            'Let\'s get this bread.',
-            'Time to make the donuts.',
-            'I don\'t like morning people, or mornings, or people.'
+            'Good Morning!', 'Rise and Shine!', 'You\'ve been summoned.', 'Let\'s get this bread.', 'Time to make the donuts.', 'I don\'t like morning people, or mornings, or people.'
         ];
         const afternoonGreetings = [
-            'Good Afternoon.',
-            'Is it 5 o\'clock yet?',
-            'Surviving another day!',
-            'Keep up the great work!',
-            'Remember that to-do list? It misses you.'
+            'Good Afternoon.', 'Is it 5 o\'clock yet?', 'Surviving another day!', 'Keep up the great work!', 'Remember that to-do list? It misses you.'
         ];
         const eveningGreetings = [
-            'Good Evening.',
-            'Time to unwind.',
-            'The day is over. You can stop pretending to work now.',
-            'Time to start your real life.',
-            'May your Wi-Fi be strong and your snacks plentiful.'
+            'Good Evening.', 'Time to unwind.', 'The day is over. You can stop pretending to work now.', 'Time to start your real life.', 'May your Wi-Fi be strong and your snacks plentiful.'
         ];
 
         let greetingText = '';
@@ -184,23 +222,55 @@
     }
 
     function setRandomBackground() {
-        const backgrounds = [
-            'background.jpg',
-            'Background2.jpg',
-            'LIFEFLIGHT.png',
-            'background4.jpg',
-            'background5.jpg',
-            'xmas.jpg'
-        ];
+        const backgrounds = [ 'background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png', 'background4.jpg', 'background5.jpg', 'xmas.jpg' ];
         const randomIndex = Math.floor(Math.random() * backgrounds.length);
-        const randomImage = backgrounds[randomIndex];
-        document.body.style.backgroundImage = `url('${randomImage}')`;
+        document.body.style.backgroundImage = `url('${backgrounds[randomIndex]}')`;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
         setGreeting();
         setRandomBackground();
     });
+</script>
+<script>
+    // JavaScript to fetch and display the news feed
+    function loadNewsFeed() {
+        const newsContent = document.getElementById('news-content');
+        const cacheKey = 'foxNewsFeedCache';
+        const cacheDuration = 15 * 60 * 1000; // 15 minutes
+
+        const cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+            const { html, timestamp } = JSON.parse(cachedData);
+            if (Date.now() - timestamp < cacheDuration) {
+                newsContent.innerHTML = html;
+                return;
+            }
+        }
+
+        fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
+        .then(response => response.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+            const items = data.querySelectorAll("item");
+            let html = '';
+            items.forEach(item => {
+                const title = item.querySelector("title").textContent;
+                const link = item.querySelector("link").textContent;
+                html += `<a href="${link}" target="_blank">🦊 ${title}</a>`;
+            });
+            if (html === '') { throw new Error('No items found in RSS feed.'); }
+            newsContent.innerHTML = html;
+            const dataToCache = { html: html, timestamp: Date.now() };
+            localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+        })
+        .catch(error => {
+            console.error('Error fetching or parsing RSS feed:', error);
+            newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊';
+        });
+    }
+    loadNewsFeed();
+    setInterval(loadNewsFeed, 900000); // Refresh every 15 minutes
 </script>
 </body>
 </html>
