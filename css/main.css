@@ -42,7 +42,7 @@ body.alert-active {
 /* WORD OF THE DAY */
 #word-of-the-day {
     position: fixed;
-    bottom: -10;
+    bottom: 0;
     left: 0;
     width: 100%;
     padding: 25px;
