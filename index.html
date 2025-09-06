@@ -107,14 +107,34 @@
     }
 
     #news-content {
-        position: absolute;
-        white-space: nowrap;
-        line-height: 50px;
-        font-size: 16px;
-        font-weight: lighter;
-        animation: scroll-left 200s linear infinite;
-        will-change: transform;
+    position: absolute;
+    white-space: nowrap;
+    line-height: 50px;
+    font-size: 16px;
+    font-weight: lighter;
+
+    /* --- Changes for smoother animation --- */
+    -webkit-transform: translateZ(0); /* Triggers GPU acceleration in WebKit browsers */
+    backface-visibility: hidden;      /* Helps prevent flickering during animation */
+    /* ------------------------------------ */
+    
+    /* Your existing animation properties */
+    animation-name: scroll-left;
+    animation-duration: 150s; /* Kept your 150s speed */
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+}
+
+/* This part remains the same */
+@keyframes scroll-left {
+    0% {
+        transform: translateX(100vw);
     }
+    100% {
+        transform: translateX(-100%);
+    }
+}
     @keyframes scroll-left {
         0% { transform: translateX(100vw); }
         100% { transform: translateX(-100%); }
