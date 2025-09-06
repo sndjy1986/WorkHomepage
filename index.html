@@ -211,6 +211,13 @@
                 </ul>
             </section>
         </section>
+        <section id="word-of-the-day">
+            <h2 class="sr-only">Word of the Day</h2>
+            <div id="word-container">
+                <h3 id="word-title"></h3>
+                <p id="word-definition"></p>
+            </div>
+        </section>
     </main>
 
 
@@ -247,9 +254,53 @@
         document.body.style.backgroundImage = `url('${backgrounds[randomIndex]}')`;
     }
 
+    function loadWordOfTheDay() {
+        const wordTitle = document.getElementById('word-title');
+        const wordDefinition = document.getElementById('word-definition');
+        const cacheKey = 'wordOfTheDayCache';
+        const cacheDuration = 24 * 60 * 60 * 1000; // 24 hours
+
+        const cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+            const { word, definition, timestamp } = JSON.parse(cachedData);
+            if (Date.now() - timestamp < cacheDuration) {
+                wordTitle.textContent = word;
+                wordDefinition.textContent = definition;
+                return;
+            }
+        }
+
+        // Using a CORS proxy to get around browser restrictions
+        fetch('https://cors-anywhere.herokuapp.com/https://wordsmith.org/awad/rss1.xml')
+        .then(response => response.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+            const item = data.querySelector("item");
+            const title = item.querySelector("title").textContent;
+            const description = item.querySelector("description").textContent;
+            
+            // Basic parsing of the description
+            const definition = description.split('<br>')[0].trim();
+
+
+            wordTitle.textContent = title;
+            wordDefinition.textContent = definition;
+
+            const dataToCache = { word: title, definition: definition, timestamp: Date.now() };
+            localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+        })
+        .catch(error => {
+            console.error('Error fetching or parsing Word of the Day RSS feed:', error);
+            wordTitle.textContent = 'Word of the Day';
+            wordDefinition.textContent = 'Could not load the word of the day.';
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         setGreeting();
         setRandomBackground();
+        loadNewsFeed();
+        loadWordOfTheDay();
     });
 </script>
 <script>
@@ -291,5 +342,6 @@
     }
     loadNewsFeed();
     setInterval(loadNewsFeed, 900000); // Refresh every 15 minutes
+</script>
 </body>
 </html>
