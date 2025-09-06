@@ -222,11 +222,11 @@
                     }
                 }
             }
-            
+            //Auto Cycle Timer - HERE!!!
             cycleInterval = setInterval(() => {
                 currentIndex = (currentIndex + 1) % allCameras.length;
                 setupPlayer(videoId, allCameras[currentIndex]);
-            }, 30000); 
+            }, 15000); 
         }
 
         function stopAutoCycle() {
