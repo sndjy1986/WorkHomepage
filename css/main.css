@@ -51,12 +51,14 @@ body.alert-active {
 }
 
 #word-container {
-    max-width: 600px;
+    width: 600px;
+    height: 200px;
     margin: 0 auto;
     padding: 20px;
     background-color: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
     border-radius: 15px;
+    overflow-y: auto;
 }
 
 #word-title {
