@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const start20MinButton = document.getElementById('start-20-min');
     const timersContainer = document.getElementById('timers-container');
 
+    // Keep track of active intervals
+    const activeTimers = {};
+
     start10MinButton.addEventListener('click', () => {
         createTimer(timerNameInput.value || '10 Min Timer', 10 * 60);
     });
@@ -37,10 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (remainingTime <= 0) {
                 clearInterval(interval);
+                delete activeTimers[timerId]; // Remove from tracking
                 timerBox.classList.add('completed');
                 timerTimeElement.textContent = "Done!";
             }
         }, 1000);
+
+        // Store the interval ID
+        activeTimers[timerId] = interval;
+
+        // Right-click to clear
+        timerBox.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            clearInterval(activeTimers[timerId]);
+            delete activeTimers[timerId];
+            timerBox.remove();
+        });
 
         updateTimerDisplay(timerTimeElement, remainingTime);
     }
