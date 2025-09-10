@@ -1,0 +1,43 @@
+#timer-form {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#timers-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.timer-box {
+    width: 96px; /* Approximately 1 inch */
+    height: 96px; /* Approximately 1 inch */
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.timer-box.completed {
+    animation: flash-red 1s infinite;
+}
+
+@keyframes flash-red {
+    0%, 100% { background-color: #f9f9f9; }
+    50% { background-color: #ff0000; }
+}
+
+.timer-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.timer-time {
+    font-size: 1.2em;
+}
