@@ -41,6 +41,10 @@
             height: 100%;
             object-fit: cover;
         }
+
+        .player-wrapper.zoom video {
+            transform: scale(1.2);
+        }
         .status-overlay {
             position: absolute;
             top: 10px;
@@ -339,6 +343,15 @@
                     contextMenu.style.display = 'none';
                 };
                 contextMenu.appendChild(toggleOverlayItem);
+
+                const zoomItem = document.createElement('div');
+                zoomItem.className = 'context-menu-item';
+                zoomItem.textContent = 'Toggle Zoom';
+                zoomItem.onclick = () => {
+                    wrapper.classList.toggle('zoom');
+                    contextMenu.style.display = 'none';
+                };
+                contextMenu.appendChild(zoomItem);
                 
                 separator = document.createElement('div');
                 separator.className = 'context-menu-separator';
