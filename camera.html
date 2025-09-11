@@ -18,19 +18,6 @@
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
         }
-
-        #container.six-cameras {
-            grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-        }
-
-        .player-wrapper:nth-child(n+5) {
-            display: none;
-        }
-
-        #container.six-cameras .player-wrapper:nth-child(n+5) {
-            display: block;
-        }
         .player-wrapper {
             position: relative;
             background-color: #000;
@@ -128,18 +115,6 @@
             <div class="text-overlay"></div>
             <video id="video4" muted autoplay playsinline></video>
         </div>
-
-        <div class="player-wrapper">
-            <div id="status5" class="status-overlay"></div>
-            <div class="text-overlay"></div>
-            <video id="video5" muted autoplay playsinline></video>
-        </div>
-
-        <div class="player-wrapper">
-            <div id="status6" class="status-overlay"></div>
-            <div class="text-overlay"></div>
-            <video id="video6" muted autoplay playsinline></video>
-        </div>
     </div>
 
     <div id="contextMenu" class="context-menu"></div>
@@ -160,8 +135,6 @@
             { name: 'MM 32 - HWY 8', url: 'https://s18.us-east-1.skyvdn.com/rtplive/30052/chunklist_w991875225.m3u8', description: 'Mile Marker 32 - Highway 8 - Closest Lanes are NB Traffic' },
             { name: 'MM 34 - US-29', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30051/chunklist_w766310199.m3u8', description: 'Mile Marker 34 - US-29 - Closest Lanes are SB Traffic' },
             { name: 'MM 40 - HWY 153', url: 'https://s20.us-east-1.skyvdn.com/rtplive/30062/chunklist_w508245393.m3u8', description: 'Mile Marker 40 - Highway 153 - Closest Lanes are NB Traffic' },
-            { name: 'MM 41 - HWY 28', url: 'https://s18.us-east-1.skyvdn.com/rtplive/30063/chunklist_w1234567890.m3u8', description: 'Mile Marker 41 - Highway 28 - Closest Lanes are SB Traffic' },
-            { name: 'MM 42 - HWY 29', url: 'https://s19.us-east-1.skyvdn.com/rtplive/30064/chunklist_w0987654321.m3u8', description: 'Mile Marker 42 - Highway 29 - Closest Lanes are NB Traffic' },
 
         ];
 
@@ -263,26 +236,13 @@
             cyclingPlayerId = null;
         }
 
-        let playerIds = ['video1', 'video2', 'video3', 'video4'];
-
-        function setGridLayout(cameras) {
-            const container = document.getElementById('container');
-            if (cameras === 6) {
-                container.classList.add('six-cameras');
-                playerIds = ['video1', 'video2', 'video3', 'video4', 'video5', 'video6'];
-            } else {
-                container.classList.remove('six-cameras');
-                playerIds = ['video1', 'video2', 'video3', 'video4'];
+        const playerIds = ['video1', 'video2', 'video3', 'video4'];
+        playerIds.forEach((videoId, index) => {
+            if (allCameras[index]) {
+                const camera = allCameras[index];
+                setupPlayer(videoId, camera);
             }
-            playerIds.forEach((videoId, index) => {
-                if (allCameras[index]) {
-                    const camera = allCameras[index];
-                    setupPlayer(videoId, camera);
-                }
-            });
-        }
-
-        setGridLayout(4);
+        });
         
         const contextMenu = document.getElementById('contextMenu');
 
@@ -308,28 +268,6 @@
                 });
                 
                 let separator = document.createElement('div');
-                separator.className = 'context-menu-separator';
-                contextMenu.appendChild(separator);
-
-                const fourCamerasItem = document.createElement('div');
-                fourCamerasItem.className = 'context-menu-item';
-                fourCamerasItem.textContent = '4 Cameras';
-                fourCamerasItem.onclick = () => {
-                    setGridLayout(4);
-                    contextMenu.style.display = 'none';
-                };
-                contextMenu.appendChild(fourCamerasItem);
-
-                const sixCamerasItem = document.createElement('div');
-                sixCamerasItem.className = 'context-menu-item';
-                sixCamerasItem.textContent = '6 Cameras';
-                sixCamerasItem.onclick = () => {
-                    setGridLayout(6);
-                    contextMenu.style.display = 'none';
-                };
-                contextMenu.appendChild(sixCamerasItem);
-
-                separator = document.createElement('div');
                 separator.className = 'context-menu-separator';
                 contextMenu.appendChild(separator);
 
