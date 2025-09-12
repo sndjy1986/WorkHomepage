@@ -151,16 +151,6 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        if (Notification.permission !== 'granted') {
-            Notification.requestPermission();
-        }
-
-        function showNotification(title, body) {
-            if (Notification.permission === 'granted') {
-                new Notification(title, { body });
-            }
-        }
-
         const hlsInstances = {};
         let cycleInterval = null;
         let cyclingPlayerId = null;
@@ -226,9 +216,6 @@
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
                     console.error(`Fatal error on ${videoId}:`, data.details);
-                    const camera = allCameras.find(c => c.url === hls.url);
-                    const cameraName = camera ? camera.name : videoId;
-                    showNotification('Camera Feed Error', `The camera feed for "${cameraName}" has failed.`);
                 }
             });
         }
