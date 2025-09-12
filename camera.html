@@ -108,7 +108,7 @@
 </head>
 <body>
 
-    <div id="scdot-alert" style="background-color: #f8d7da; color: #721c24; padding: 10px; text-align: center; display: none;"></div>
+    
 
     <div id="container">
         <div class="player-wrapper">
@@ -414,33 +414,7 @@
             contextMenu.style.display = 'none';
         });
 
-        function fetch511Alert() {
-            fetch('https://www.511sc.org/')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.text();
-                })
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const alertTicker = doc.getElementById('alert-ticker');
-                    if (alertTicker && alertTicker.innerText.trim() !== '') {
-                        const alertDiv = document.getElementById('scdot-alert');
-                        alertDiv.innerHTML = alertTicker.innerHTML;
-                        alertDiv.style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching 511sc.org alert:', error);
-                    const alertDiv = document.getElementById('scdot-alert');
-                    alertDiv.innerHTML = 'Could not load alerts from 511sc.org. The site may be blocking the request.';
-                    alertDiv.style.display = 'block';
-                });
-        }
 
-        fetch511Alert();
 
     </script>
 
