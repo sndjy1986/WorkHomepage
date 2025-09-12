@@ -50,20 +50,20 @@
 </head>
 <body>
     <a href="index.html" class="back-link">&larr; Back to Home</a>
-    <h1>Smart Home Control</h1>
+    <h1>Bedroom Fan</h1>
     <div class="button-container">
-        <button id="bedroomFanOn" class="control-button">Bedroom Fan - On</button>
+        <button id="toggleFan" class="control-button">On/Off</button>
     </div>
     <div id="status" class="status-message"></div>
 
     <script>
-        document.getElementById('bedroomFanOn').addEventListener('click', () => {
+        document.getElementById('toggleFan').addEventListener('click', () => {
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = 'Sending command...';
 
             fetch('https://mkzense.com/webhook/alexa/cf2d79a3d274ff9dec3bac63cb279af09fcdb7f4/IFTTTrigger-3', {
-                method: 'POST', // Webhooks are often triggered with POST requests
-                mode: 'no-cors' // Use no-cors for opaque requests to avoid CORS issues with webhooks
+                method: 'POST',
+                mode: 'no-cors'
             })
             .then(() => {
                 statusDiv.textContent = 'Command sent successfully!';
