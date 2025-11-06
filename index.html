@@ -31,6 +31,7 @@
     background: none; /* disable static background */
   }
 
+  /* Full-viewport blurred background */
   body::before {
     content: "";
     position: fixed;
@@ -102,6 +103,7 @@
     }
   }
 
+  /* News Ticker */
   #news-ticker {
     position: fixed;
     top: 0;
@@ -150,7 +152,7 @@
     text-decoration: underline;
   }
 
-  /* ==== Clean, single-icon full-width search bar ==== */
+  /* ===== Clean, single-icon search bar that matches nav width ===== */
   #search {
     display: flex;
     justify-content: center;
@@ -161,13 +163,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 80%; /* matches nav width visually */
-    max-width: 800px;
+    /* width is set dynamically in JS to match #dock ul width */
+    max-width: 95vw;
     background: rgba(0, 0, 0, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
     overflow: hidden;
-    transition: box-shadow 0.3s ease;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
   }
 
   #search .search-container input#q {
@@ -198,6 +200,7 @@
     color: #99ccff;
   }
 
+  /* Glow when focused */
   #search .search-container:focus-within {
     box-shadow: 0 0 12px rgba(102,179,255,0.7);
     border-color: #66b3ff;
@@ -218,14 +221,9 @@
       <section id="weather"><h2 class="sr-only">Location & Weather</h2></section>
     </header>
 
-  <main>
-    <header>
-      <section id="date-time"><h2 class="sr-only">Date & Time</h2></section>
-      <section id="weather"><h2 class="sr-only">Location & Weather</h2></section>
-    </header>
-
     <section id="traichu">
       <h1 class="sr-only">Joey's Homepage</h1>
+
       <div id="greeting"></div>
 
       <nav id="dock">
@@ -240,16 +238,15 @@
         </ul>
       </nav>
 
-<section id="search">
-  <h2 class="sr-only">Search</h2>
-  <form action="https://www.google.com/search" method="get">
-    <div class="search-container">
-      <input type="text" id="q" name="q" placeholder="Search..." autofocus>
-      <button type="submit" aria-label="Search">🔍</button>
-    </div>
-  </form>
-</section>
-
+      <section id="search">
+        <h2 class="sr-only">Search</h2>
+        <form action="https://www.google.com/search" method="get">
+          <div class="search-container" id="searchContainer">
+            <input type="text" id="q" name="q" placeholder="Search..." autofocus>
+            <button type="submit" aria-label="Search">🔍</button>
+          </div>
+        </form>
+      </section>
 
       <section id="bookmarks">
         <h2 class="sr-only">Bookmarks</h2>
@@ -280,12 +277,15 @@
   </main>
 
   <script>
+    /**
+     * Sets a random greeting based on the time of day.
+     */
     function setGreeting() {
       const greetingElement = document.getElementById('greeting');
       const currentHour = new Date().getHours();
 
-      const morning = ['Good Morning!', 'Rise and Shine!', "You\'ve been summoned.", "Let\'s get this bread.", 'Time to make the donuts.', 'Greetings fellow morning hater.','Another day, Another Dollar.'];
-      const afternoon = ['Good Afternoon.', "Is it 5 o\'clock yet?", 'Surviving another day!', 'Keep up the great work!', 'Remember that to-do list? It misses you.'];
+      const morning = ['Good Morning!', 'Rise and Shine!', "You've been summoned.", "Let's get this bread.", 'Time to make the donuts.', 'Greetings fellow morning hater.','Another day, Another Dollar.'];
+      const afternoon = ['Good Afternoon.', "Is it 5 o'clock yet?", 'Surviving another day!', 'Keep up the great work!', 'Remember that to-do list? It misses you.'];
       const evening = ['Good Evening.', 'Time to unwind.', 'The day is over. You can stop pretending to work now.', 'Time to start your real life.', 'May your Wi-Fi be strong and your snacks plentiful.'];
 
       let greeting = '';
@@ -296,12 +296,18 @@
       greetingElement.textContent = greeting;
     }
 
+    /**
+     * Sets a random background image.
+     */
     function setRandomBackground() {
       const backgrounds = ['background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png', 'background4.jpg', 'background5.jpg', 'xmas.jpg', 'PICTURE.jpg'];
       const chosen = `url('${backgrounds[Math.floor(Math.random() * backgrounds.length)]}')`;
       document.documentElement.style.setProperty('--bg-url', chosen);
     }
 
+    /**
+     * Fox News RSS
+     */
     function loadNewsFeed() {
       const newsContent = document.getElementById('news-content');
       const cacheKey = 'foxNewsFeedCache';
@@ -334,6 +340,9 @@
         .catch(() => newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊');
     }
 
+    /**
+     * Word of the Day
+     */
     function loadWordOfTheDay() {
       const title = document.getElementById('word-title');
       const def = document.getElementById('word-definition');
@@ -369,12 +378,35 @@
         });
     }
 
+    /**
+     * Make the search bar the exact width of the nav bar
+     */
+    function sizeSearchToNav() {
+      const navUl = document.querySelector('#dock ul');
+      const searchContainer = document.getElementById('searchContainer');
+      if (!navUl || !searchContainer) return;
+
+      // Measure the rendered width of the nav and apply it to the search
+      const navWidth = Math.ceil(navUl.getBoundingClientRect().width);
+      // Add a small buffer so borders don't wrap
+      const finalWidth = Math.min(navWidth, document.documentElement.clientWidth * 0.95);
+      searchContainer.style.width = finalWidth + 'px';
+    }
+
+    // Debounce resize for performance
+    let __resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(__resizeTimer);
+      __resizeTimer = setTimeout(sizeSearchToNav, 120);
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       setGreeting();
       setRandomBackground();
       loadNewsFeed();
       loadWordOfTheDay();
-      setInterval(loadNewsFeed, 900000);
+      sizeSearchToNav();               // initial sizing to match nav
+      setInterval(loadNewsFeed, 900000); // 15 minutes
     });
   </script>
 </body>
