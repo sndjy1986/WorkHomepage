@@ -150,121 +150,57 @@
     text-decoration: underline;
   }
 
-  /* ======= Search box (black interior + glow on focus) ======= */
-  /* keep layout identical; just style the input/button */
   /* ==== Clean, single-icon full-width search bar ==== */
-#search {
-  display: flex;
-  justify-content: center;
-  margin: 20px auto;
-}
+  #search {
+    display: flex;
+    justify-content: center;
+    margin: 20px auto;
+  }
 
-#search .search-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80%; /* matches nav width visually */
-  max-width: 800px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  overflow: hidden;
-  transition: box-shadow 0.3s ease;
-}
-
-#search .search-container input#q {
-  flex: 1;
-  background: transparent;
-  color: white;
-  font-size: 18px;
-  padding: 10px 15px;
-  border: none;
-  outline: none;
-}
-
-#search .search-container input#q::placeholder {
-  color: #bbb;
-}
-
-#search .search-container button {
-  background: none;
-  border: none;
-  color: #66b3ff;
-  font-size: 22px;
-  cursor: pointer;
-  padding: 0 15px;
-  transition: color 0.2s ease;
-}
-
-#search .search-container button:hover {
-  color: #99ccff;
-}
-
-/* Glowing effect on focus */
-#search .search-container:focus-within {
-  box-shadow: 0 0 12px rgba(102,179,255,0.7);
-  border-color: #66b3ff;
-}
+  #search .search-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%; /* matches nav width visually */
+    max-width: 800px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+  }
 
   #search .search-container input#q {
-    background: rgba(0, 0, 0, 0.8) !important;  /* translucent black interior */
-    color: #fff !important;
-    -webkit-text-fill-color: #fff;
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 16px;
-    width: 100%;
+    flex: 1;
+    background: transparent;
+    color: white;
+    font-size: 18px;
+    padding: 10px 15px;
+    border: none;
     outline: none;
-    box-shadow: none;
   }
 
   #search .search-container input#q::placeholder {
-    color: #ccc;
+    color: #bbb;
   }
 
-  /* Button next to the input; adds a magnifier via pseudo-element */
   #search .search-container button {
-    background: rgba(0,0,0,0.8);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: #fff;
-    border-radius: 8px;
-    width: 36px;
-    height: 36px;
+    background: none;
+    border: none;
+    color: #66b3ff;
+    font-size: 22px;
     cursor: pointer;
-    display: inline-grid;
-    place-items: center;
+    padding: 0 15px;
+    transition: color 0.2s ease;
   }
-  #search .search-container button::before {
-    content: "🔍";
-    line-height: 1;
-    font-size: 16px;
-  }
+
   #search .search-container button:hover {
-    background: rgba(40,40,40,0.9);
+    color: #99ccff;
   }
 
-  /* Glowing pulse when the input is focused */
-  @keyframes searchGlowPulse {
-    0%   { box-shadow: 0 0 0 rgba(102,179,255,0); }
-    50%  { box-shadow: 0 0 12px rgba(102,179,255,0.7); }
-    100% { box-shadow: 0 0 0 rgba(102,179,255,0); }
-  }
-  #search .search-container input#q:focus {
-    border-color: #66b3ff !important;
-    animation: searchGlowPulse 1.8s ease-in-out infinite;
-  }
-  /* Optional: glow the whole container if supported */
-  #search .search-container:has(input#q:focus) {
-    box-shadow: 0 0 10px rgba(102,179,255,0.45);
-    transition: box-shadow 0.2s ease-in-out;
-  }
-
-  /* Chrome/Safari autofill fix (keeps it dark) */
-  #search .search-container input#q:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 1000px rgba(0,0,0,0.8) inset !important;
-    -webkit-text-fill-color: #fff !important;
-    caret-color: #fff;
+  #search .search-container:focus-within {
+    box-shadow: 0 0 12px rgba(102,179,255,0.7);
+    border-color: #66b3ff;
   }
 </style>
 </head>
@@ -275,6 +211,12 @@
   </div>
 
   <div id="weather-alert"></div>
+
+  <main>
+    <header>
+      <section id="date-time"><h2 class="sr-only">Date & Time</h2></section>
+      <section id="weather"><h2 class="sr-only">Location & Weather</h2></section>
+    </header>
 
   <main>
     <header>
