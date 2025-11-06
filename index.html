@@ -28,7 +28,7 @@
     min-height: 100dvh;
     padding-top: 50px;
     transition: padding-top 0.3s ease;
-    background: none; /* disable static background */
+    background: none;
   }
 
   body::before {
@@ -102,6 +102,7 @@
     }
   }
 
+  /* --- News Ticker --- */
   #news-ticker {
     position: fixed;
     top: 0;
@@ -128,10 +129,7 @@
     font-weight: lighter;
     -webkit-transform: translateZ(0);
     backface-visibility: hidden;
-    animation-name: scroll-left;
-    animation-duration: 150s;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
+    animation: scroll-left 150s linear infinite;
     will-change: transform;
   }
 
@@ -148,6 +146,42 @@
 
   #news-content a:hover {
     text-decoration: underline;
+  }
+
+  /* --- Transparent black search box --- */
+  .search-container input[type="text"] {
+    background-color: rgba(0, 0, 0, 0.6); /* translucent black */
+    color: white;
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 16px;
+    outline: none;
+    width: 220px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .search-container input[type="text"]::placeholder {
+    color: #ccc;
+  }
+
+  .search-container input[type="text"]:focus {
+    border-color: #66b3ff;
+    box-shadow: 0 0 6px rgba(102, 179, 255, 0.5);
+  }
+
+  .search-container button {
+    background-color: rgba(30, 30, 30, 0.7);
+    border: 1px solid #555;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .search-container button:hover {
+    background-color: rgba(60, 60, 60, 0.8);
   }
 </style>
 </head>
@@ -186,7 +220,7 @@
         <form action="https://www.google.com/search" method="get">
           <div class="search-container">
             <input type="text" id="q" name="q" placeholder="Search..." autofocus>
-            <button type="submit" aria-label="Search"></button>
+            <button type="submit" aria-label="Search">🔍</button>
           </div>
         </form>
       </section>
@@ -221,19 +255,12 @@
 
   <script>
     function setGreeting() {
-      const greetingElement = document.getElementById('greeting');
-      const currentHour = new Date().getHours();
-
+      const el = document.getElementById('greeting');
+      const hour = new Date().getHours();
       const morning = ['Good Morning!', 'Rise and Shine!', "You've been summoned.", "Let's get this bread.", 'Time to make the donuts.', 'Greetings fellow morning hater.','Another day, Another Dollar.'];
       const afternoon = ['Good Afternoon.', "Is it 5 o'clock yet?", 'Surviving another day!', 'Keep up the great work!', 'Remember that to-do list? It misses you.'];
       const evening = ['Good Evening.', 'Time to unwind.', 'The day is over. You can stop pretending to work now.', 'Time to start your real life.', 'May your Wi-Fi be strong and your snacks plentiful.'];
-
-      let greeting = '';
-      if (currentHour < 12) greeting = morning[Math.floor(Math.random() * morning.length)];
-      else if (currentHour < 18) greeting = afternoon[Math.floor(Math.random() * afternoon.length)];
-      else greeting = evening[Math.floor(Math.random() * evening.length)];
-
-      greetingElement.textContent = greeting;
+      el.textContent = hour < 12 ? morning[Math.floor(Math.random()*morning.length)] : hour < 18 ? afternoon[Math.floor(Math.random()*afternoon.length)] : evening[Math.floor(Math.random()*evening.length)];
     }
 
     function setRandomBackground() {
@@ -243,19 +270,17 @@
     }
 
     function loadNewsFeed() {
-      const newsContent = document.getElementById('news-content');
-      const cacheKey = 'foxNewsFeedCache';
-      const cacheDuration = 15 * 60 * 1000;
-
-      const cached = localStorage.getItem(cacheKey);
+      const el = document.getElementById('news-content');
+      const key = 'foxNewsFeedCache';
+      const cacheTime = 15 * 60 * 1000;
+      const cached = localStorage.getItem(key);
       if (cached) {
         const { html, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < cacheDuration) {
-          newsContent.innerHTML = html;
+        if (Date.now() - timestamp < cacheTime) {
+          el.innerHTML = html;
           return;
         }
       }
-
       fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
         .then(r => r.text())
         .then(str => new DOMParser().parseFromString(str, "application/xml"))
@@ -267,41 +292,36 @@
             const l = i.querySelector("link").textContent;
             html += `<a href="${l}" target="_blank">🦊 ${t}</a>`;
           });
-          if (!html) throw new Error('No items found');
-          newsContent.innerHTML = html;
-          localStorage.setItem(cacheKey, JSON.stringify({ html, timestamp: Date.now() }));
+          el.innerHTML = html || '🦊 Unable to load news feed.';
+          localStorage.setItem(key, JSON.stringify({ html, timestamp: Date.now() }));
         })
-        .catch(() => newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊');
+        .catch(() => el.innerHTML = '🦊 Unable to load news feed.');
     }
 
     function loadWordOfTheDay() {
       const title = document.getElementById('word-title');
       const def = document.getElementById('word-definition');
-      const cacheKey = 'wordOfTheDayCache';
-      const cacheDuration = 24 * 60 * 60 * 1000;
-
-      const cached = localStorage.getItem(cacheKey);
+      const key = 'wordOfTheDayCache';
+      const cacheTime = 24 * 60 * 60 * 1000;
+      const cached = localStorage.getItem(key);
       if (cached) {
         const { word, definition, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < cacheDuration) {
+        if (Date.now() - timestamp < cacheTime) {
           title.textContent = word;
           def.textContent = definition;
           return;
         }
       }
-
       fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://wordsmith.org/awad/rss1.xml')}`)
         .then(r => r.text())
         .then(str => new DOMParser().parseFromString(str, "application/xml"))
         .then(data => {
           const item = data.querySelector("item");
           const w = item.querySelector("title").textContent;
-          const desc = item.querySelector("description").textContent;
-          const definition = desc.split('<br>')[0].trim();
-
+          const d = item.querySelector("description").textContent.split('<br>')[0].trim();
           title.textContent = w;
-          def.textContent = definition;
-          localStorage.setItem(cacheKey, JSON.stringify({ word: w, definition, timestamp: Date.now() }));
+          def.textContent = d;
+          localStorage.setItem(key, JSON.stringify({ word: w, definition: d, timestamp: Date.now() }));
         })
         .catch(() => {
           title.textContent = 'Word of the Day';
