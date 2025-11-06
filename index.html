@@ -10,6 +10,12 @@
   <title>Work Homepage</title>
 
 <style>
+  :root {
+    --text-color: #f5f0f0;
+    --link-color: #0066cc;
+    --bg-url: url('background.jpg');
+  }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -18,17 +24,22 @@
 
   body {
     position: relative;
-    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     padding-top: 50px;
-    background: none;
+    transition: padding-top 0.3s ease;
+    background: none; /* disable static background */
   }
 
   body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: url('background.jpg') center / cover no-repeat;
+    background: var(--bg-url) center / cover no-repeat;
     filter: blur(20px);
+    transform: translateZ(0) scale(1.06);
+    transform-origin: center;
+    will-change: transform;
     z-index: -1;
   }
 
@@ -37,7 +48,8 @@
   }
 
   main {
-    background-color: rgba(0, 0, 0, 0.25);
+    position: relative !important;
+    background-color: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(20px);
     border-radius: 15px;
   }
@@ -48,6 +60,7 @@
     font-weight: bold;
     color: white;
     text-shadow: 2px 2px 4px #000000;
+    margin-bottom: -10px;
   }
 
   #dock ul {
@@ -72,13 +85,23 @@
   #dock li img {
     width: 60px;
     height: 60px;
+    vertical-align: middle;
   }
 
   #dock li a:hover {
     transform: scale(1.3) translateY(-10px);
   }
 
-  /* News Ticker */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --text-color: #ffffff;
+      --link-color: #66b3ff;
+    }
+    main {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+  }
+
   #news-ticker {
     position: fixed;
     top: 0;
@@ -103,7 +126,13 @@
     line-height: 50px;
     font-size: 16px;
     font-weight: lighter;
-    animation: scroll-left 150s linear infinite;
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    animation-name: scroll-left;
+    animation-duration: 150s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
   }
 
   @keyframes scroll-left {
@@ -121,20 +150,22 @@
     text-decoration: underline;
   }
 
-  /* Search Box */
-  .search-container {
+  /* ======= Search box (black interior + glow on focus) ======= */
+  /* keep layout identical; just style the input/button */
+  #search .search-container {
     background: transparent;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 6px;
     width: 260px;
+    margin: 0 auto; /* centers the pill under your icons */
     border-radius: 10px;
-    margin: 20px auto;
   }
 
-  .search-container input[type="text"] {
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
+  #search .search-container input#q {
+    background: rgba(0, 0, 0, 0.8) !important;  /* translucent black interior */
+    color: #fff !important;
+    -webkit-text-fill-color: #fff;
     border: 1px solid rgba(255,255,255,0.25);
     border-radius: 8px;
     padding: 8px 12px;
@@ -142,51 +173,54 @@
     width: 100%;
     outline: none;
     box-shadow: none;
-    -webkit-text-fill-color: white;
   }
 
-  .search-container input[type="text"]::placeholder {
+  #search .search-container input#q::placeholder {
     color: #ccc;
   }
 
-  .search-container button {
-    background: rgba(0,0,0,0.85);
+  /* Button next to the input; adds a magnifier via pseudo-element */
+  #search .search-container button {
+    background: rgba(0,0,0,0.8);
     border: 1px solid rgba(255,255,255,0.25);
-    color: white;
+    color: #fff;
     border-radius: 8px;
-    margin-left: 6px;
     width: 36px;
     height: 36px;
     cursor: pointer;
+    display: inline-grid;
+    place-items: center;
+  }
+  #search .search-container button::before {
+    content: "🔍";
+    line-height: 1;
+    font-size: 16px;
+  }
+  #search .search-container button:hover {
+    background: rgba(40,40,40,0.9);
   }
 
-  .search-container button:hover {
-    background-color: rgba(40,40,40,0.9);
-  }
-
-  /* === Glowing Border Animation === */
+  /* Glowing pulse when the input is focused */
   @keyframes searchGlowPulse {
     0%   { box-shadow: 0 0 0 rgba(102,179,255,0); }
     50%  { box-shadow: 0 0 12px rgba(102,179,255,0.7); }
     100% { box-shadow: 0 0 0 rgba(102,179,255,0); }
   }
-
-  .search-container input[type="text"]:focus {
+  #search .search-container input#q:focus {
     border-color: #66b3ff !important;
     animation: searchGlowPulse 1.8s ease-in-out infinite;
   }
-
-  /* Autofill fix */
-  input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 1000px rgba(0,0,0,0.85) inset !important;
-    -webkit-text-fill-color: white !important;
-    caret-color: white !important;
+  /* Optional: glow the whole container if supported */
+  #search .search-container:has(input#q:focus) {
+    box-shadow: 0 0 10px rgba(102,179,255,0.45);
+    transition: box-shadow 0.2s ease-in-out;
   }
 
-  /* Optional: glow the whole search box when focused */
-  #search .search-container:has(input:focus) {
-    box-shadow: 0 0 10px rgba(102,179,255,0.5);
-    transition: box-shadow 0.3s ease-in-out;
+  /* Chrome/Safari autofill fix (keeps it dark) */
+  #search .search-container input#q:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px rgba(0,0,0,0.8) inset !important;
+    -webkit-text-fill-color: #fff !important;
+    caret-color: #fff;
   }
 </style>
 </head>
@@ -196,7 +230,9 @@
     <div id="news-content">🔴 Loading RSS News Feed.......</div>
   </div>
 
- <main>
+  <div id="weather-alert"></div>
+
+  <main>
     <header>
       <section id="date-time"><h2 class="sr-only">Date & Time</h2></section>
       <section id="weather"><h2 class="sr-only">Location & Weather</h2></section>
@@ -223,7 +259,7 @@
         <form action="https://www.google.com/search" method="get">
           <div class="search-container">
             <input type="text" id="q" name="q" placeholder="Search..." autofocus>
-            <button type="submit" aria-label="Search">🔍</button>
+            <button type="submit" aria-label="Search"></button>
           </div>
         </form>
       </section>
@@ -247,17 +283,112 @@
       </section>
     </section>
 
+    <section id="word-of-the-day">
+      <h2 class="sr-only">Word of the Day</h2>
+      <div id="word-container">
+        <h3 id="word-title"></h3>
+        <p id="word-definition"></p>
+      </div>
+    </section>
+  </main>
+
   <script>
     function setGreeting() {
-      const el = document.getElementById('greeting');
-      const hour = new Date().getHours();
-      const greetings = hour < 12 ? ['Good Morning!', 'Rise and Shine!', "Let’s get this bread!"]
-        : hour < 18 ? ['Good Afternoon.', 'Keep up the great work!']
-        : ['Good Evening.', 'Time to unwind.'];
-      el.textContent = greetings[Math.floor(Math.random() * greetings.length)];
+      const greetingElement = document.getElementById('greeting');
+      const currentHour = new Date().getHours();
+
+      const morning = ['Good Morning!', 'Rise and Shine!', "You\'ve been summoned.", "Let\'s get this bread.", 'Time to make the donuts.', 'Greetings fellow morning hater.','Another day, Another Dollar.'];
+      const afternoon = ['Good Afternoon.', "Is it 5 o\'clock yet?", 'Surviving another day!', 'Keep up the great work!', 'Remember that to-do list? It misses you.'];
+      const evening = ['Good Evening.', 'Time to unwind.', 'The day is over. You can stop pretending to work now.', 'Time to start your real life.', 'May your Wi-Fi be strong and your snacks plentiful.'];
+
+      let greeting = '';
+      if (currentHour < 12) greeting = morning[Math.floor(Math.random() * morning.length)];
+      else if (currentHour < 18) greeting = afternoon[Math.floor(Math.random() * afternoon.length)];
+      else greeting = evening[Math.floor(Math.random() * evening.length)];
+
+      greetingElement.textContent = greeting;
     }
 
-    document.addEventListener('DOMContentLoaded', setGreeting);
+    function setRandomBackground() {
+      const backgrounds = ['background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png', 'background4.jpg', 'background5.jpg', 'xmas.jpg', 'PICTURE.jpg'];
+      const chosen = `url('${backgrounds[Math.floor(Math.random() * backgrounds.length)]}')`;
+      document.documentElement.style.setProperty('--bg-url', chosen);
+    }
+
+    function loadNewsFeed() {
+      const newsContent = document.getElementById('news-content');
+      const cacheKey = 'foxNewsFeedCache';
+      const cacheDuration = 15 * 60 * 1000;
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { html, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < cacheDuration) {
+          newsContent.innerHTML = html;
+          return;
+        }
+      }
+
+      fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
+        .then(r => r.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+          const items = data.querySelectorAll("item");
+          let html = '';
+          items.forEach(i => {
+            const t = i.querySelector("title").textContent;
+            const l = i.querySelector("link").textContent;
+            html += `<a href="${l}" target="_blank">🦊 ${t}</a>`;
+          });
+          if (!html) throw new Error('No items found');
+          newsContent.innerHTML = html;
+          localStorage.setItem(cacheKey, JSON.stringify({ html, timestamp: Date.now() }));
+        })
+        .catch(() => newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊');
+    }
+
+    function loadWordOfTheDay() {
+      const title = document.getElementById('word-title');
+      const def = document.getElementById('word-definition');
+      const cacheKey = 'wordOfTheDayCache';
+      const cacheDuration = 24 * 60 * 60 * 1000;
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { word, definition, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < cacheDuration) {
+          title.textContent = word;
+          def.textContent = definition;
+          return;
+        }
+      }
+
+      fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://wordsmith.org/awad/rss1.xml')}`)
+        .then(r => r.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+          const item = data.querySelector("item");
+          const w = item.querySelector("title").textContent;
+          const desc = item.querySelector("description").textContent;
+          const definition = desc.split('<br>')[0].trim();
+
+          title.textContent = w;
+          def.textContent = definition;
+          localStorage.setItem(cacheKey, JSON.stringify({ word: w, definition, timestamp: Date.now() }));
+        })
+        .catch(() => {
+          title.textContent = 'Word of the Day';
+          def.textContent = 'Could not load the word of the day.';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setGreeting();
+      setRandomBackground();
+      loadNewsFeed();
+      loadWordOfTheDay();
+      setInterval(loadNewsFeed, 900000);
+    });
   </script>
 </body>
 </html>
