@@ -20,13 +20,14 @@
     margin: 0;
     padding: 0;
     height: 100%;
+    overflow: hidden; /* <<< no page scroll */
   }
 
   body {
     position: relative;
     min-height: 100svh;
     min-height: 100dvh;
-    padding-top: 50px;
+    padding-top: 50px; /* space for ticker */
     transition: padding-top 0.3s ease;
     background: none; /* disable static background */
   }
@@ -48,11 +49,26 @@
     padding-top: 115px;
   }
 
+  /* Main fits within the viewport below the ticker */
   main {
     position: relative !important;
     background-color: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(20px);
     border-radius: 15px;
+    height: calc(100vh - 50px - 16px); /* viewport minus ticker minus margins */
+    margin: 8px; /* breathing room */
+    overflow: hidden; /* prevent inner scrollbars */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  /* Content that will be scaled to fit */
+  #traichu {
+    transform-origin: top center; /* scale from top */
+    will-change: transform;
   }
 
   #greeting {
@@ -103,16 +119,14 @@
     }
   }
 
-  /* News Ticker (FIXED to blur with background) */
+  /* News Ticker (blur fixed & translucent) */
   #news-ticker {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 50px;
-    /* changed from solid black to translucent so backdrop blur shows through */
-    background: rgba(0, 0, 0, 0.4);
-    /* apply blur to the bar itself */
+    background: rgba(0, 0, 0, 0.4); /* translucent so backdrop blur shows */
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     color: #fff;
@@ -156,7 +170,7 @@
     text-decoration: underline;
   }
 
-  /* ===== Clean, single-icon search bar that matches nav width ===== */
+  /* Search bar */
   #search {
     display: flex;
     justify-content: center;
@@ -204,7 +218,6 @@
     color: #99ccff;
   }
 
-  /* Glow when focused */
   #search .search-container:focus-within {
     box-shadow: 0 0 12px rgba(102,179,255,0.7);
     border-color: #66b3ff;
@@ -264,7 +277,7 @@
         <ul>
           <li><a href="http://www.google.com/voice" target="_blank"><img src="https://icons.duckduckgo.com/ip3/voice.google.com.ico" alt="Google Voice">Google Voice</a></li>
           <li><a href="https://learn.emergencydispatch.org/academy/my_learning/dashboard" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emergencydispatch.org.ico" class="favicon" alt="PRO-QA Class">PRO-QA Class</a></li>
-          <li><a href="https://forms.microsoft.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9Zi2FaRW6gaHhKjeF02t2Aq8tURFAwVDVVUEVVRzZRODNTNkgyUFJNMDBHSS4u"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/ram_drive.ico" class="favicon" alt="Daily Truck Form">Daily Truck Form</a></li>
+          <li><a href="https://forms.microsoft.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9Zi2FaRW6gaHhKjeF02t2Aq8tURFAwVDVVUEVVRzZRODNTNkgyUFJNMDBHSS4u"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/icons/ram_drive.ico" class="favicon" alt="Daily Truck Form">Daily Truck Form</a></li>
           <li><a href="https://support.priorityambulance.com/login" target="_blank"><img src="https://icons.duckduckgo.com/ip3/sndjy.us.com.ico" class="favicon" alt="Priority Support">Work Support</a></li>
           <li><a href="https://www.511sc.org/#zoom=11.5&lon=-82.5555&lat=34.5872" target="_blank"><img src="https://icons.duckduckgo.com/ip3/511sc.org.ico" class="favicon" alt="DOT Cameras">DOT Cams</a></li>
         </ul>
@@ -307,6 +320,31 @@
       const backgrounds = ['background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png', 'background4.jpg', 'background5.jpg', 'xmas.jpg', 'PICTURE.jpg'];
       const chosen = `url('${backgrounds[Math.floor(Math.random() * backgrounds.length)]}')`;
       document.documentElement.style.setProperty('--bg-url', chosen);
+    }
+
+    /**
+     * Fit the main content (#traichu) inside <main> with NO scrolling by scaling down if needed
+     */
+    function fitToViewport() {
+      const main = document.querySelector('main');
+      const section = document.getElementById('traichu');
+      if (!main || !section) return;
+
+      // reset scale to measure true size
+      section.style.transform = 'scale(1)';
+
+      const availableW = main.clientWidth - 24;  // padding buffer
+      const availableH = main.clientHeight - 24;
+
+      // measure content
+      const neededW = section.scrollWidth;
+      const neededH = section.scrollHeight;
+
+      let scale = 1;
+      if (neededW > 0 && neededH > 0) {
+        scale = Math.min(1, availableW / neededW, availableH / neededH);
+      }
+      section.style.transform = `scale(${scale})`;
     }
 
     /**
@@ -390,9 +428,7 @@
       const searchContainer = document.getElementById('searchContainer');
       if (!navUl || !searchContainer) return;
 
-      // Measure the rendered width of the nav and apply it to the search
       const navWidth = Math.ceil(navUl.getBoundingClientRect().width);
-      // Add a small buffer so borders don't wrap
       const finalWidth = Math.min(navWidth, document.documentElement.clientWidth * 0.95);
       searchContainer.style.width = finalWidth + 'px';
     }
@@ -401,7 +437,7 @@
     let __resizeTimer;
     window.addEventListener('resize', () => {
       clearTimeout(__resizeTimer);
-      __resizeTimer = setTimeout(sizeSearchToNav, 120);
+      __resizeTimer = setTimeout(() => { sizeSearchToNav(); fitToViewport(); }, 120);
     });
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -409,7 +445,8 @@
       setRandomBackground();
       loadNewsFeed();
       loadWordOfTheDay();
-      sizeSearchToNav();               // initial sizing to match nav
+      sizeSearchToNav();
+      fitToViewport(); // ensure all content fits without scrolling
       setInterval(loadNewsFeed, 900000); // 15 minutes
     });
   </script>
