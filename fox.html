@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>M3U8 Player</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      display: grid; place-items: center; min-height: 100svh; background: #0b0c10;
+    }
+    .wrap { width: min(100%, 960px); padding: 16px; }
+    .card {
+      background: #111418; border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .title { margin: 0 0 12px; color: #e8eaed; font-weight: 600; letter-spacing: .2px; }
+    .player {
+      position: relative; aspect-ratio: 16 / 9; width: 100%; overflow: hidden; border-radius: 12px;
+      background: #000;
+    }
+    video { width: 100%; height: 100%; display: block; background: #000; }
+    .msg {
+      margin-top: 10px; font-size: 0.95rem; color: #cbd5e1;
+      line-height: 1.35;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 class="title">M3U8 Player</h1>
+
+      <div class="player">
+        <!-- Native controls include pause, volume, and fullscreen -->
+        <video id="video"
+               controls
+               playsinline
+               preload="metadata"
+               crossorigin="anonymous">
+          <!-- Safari/iOS will use the source below directly if supported -->
+          <source id="nativeSource" type="application/vnd.apple.mpegurl" />
+          Your browser doesn’t support HTML5 video.
+        </video>
+      </div>
+
+      <div id="status" class="msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- hls.js for non-Safari browsers; loaded after HTML to avoid blocking -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    (function () {
+      const src = "https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=1c375518aea64b6c998758e3da4e996e";
+      const video = document.getElementById("video");
+      const nativeSource = document.getElementById("nativeSource");
+      const statusEl = document.getElementById("status");
+
+      function showStatus(msg) {
+        statusEl.textContent = msg;
+        statusEl.classList.remove("hidden");
+      }
+
+      // If the browser can handle HLS natively (Safari, iOS), use the <source>
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        nativeSource.src = src;
+        video.load();
+        // Autoplay policies vary; don't force play. User can press play.
+        video.addEventListener("error", () => {
+          showStatus("Playback error (native). If this persists, check the stream URL and CORS settings.");
+        });
+      } else if (window.Hls && Hls.isSupported()) {
+        // Use hls.js for MSE-compatible browsers (Chrome/Edge/Firefox)
+        const hls = new Hls({
+          // Tweak as desired:
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 90
+        });
+        hls.loadSource(src);
+        hls.attachMedia(video);
+
+        let lastErrorType = null;
+
+        hls.on(Hls.Events.ERROR, function (event, data) {
+          if (!data) return;
+          const { type, details, fatal } = data;
+
+          // Basic error recovery strategy
+          if (fatal) {
+            switch (type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                showStatus("Network error. Retrying…");
+                hls.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                showStatus("Media error. Attempting recovery…");
+                hls.recoverMediaError();
+                break;
+              default:
+                showStatus("Fatal error. Reloading player…");
+                hls.destroy();
+                // Rebuild quickly
+                setTimeout(() => {
+                  const newHls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 90 });
+                  newHls.loadSource(src);
+                  newHls.attachMedia(video);
+                }, 250);
+                break;
+            }
+          } else {
+            // Non-fatal; optionally surface info
+            if (lastErrorType !== details) {
+              lastErrorType = details;
+              // Uncomment to verbose-log: console.warn("[hls.js]", type, details);
+            }
+          }
+        });
+
+        video.addEventListener("error", () => {
+          showStatus("Playback error (MSE). If this persists, check the stream URL and CORS settings.");
+        });
+      } else {
+        // Neither native HLS nor hls.js supported
+        showStatus("Your browser doesn’t support HLS playback. Try a modern browser (Chrome, Edge, Firefox, Safari).");
+      }
+
+      // Optional: basic keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (document.activeElement && ["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
+
+        switch (e.key.toLowerCase()) {
+          case " ":
+          case "k":
+            e.preventDefault();
+            if (video.paused) video.play(); else video.pause();
+            break;
+          case "m":
+            video.muted = !video.muted;
+            break;
+          case "f":
+            if (!document.fullscreenElement) video.requestFullscreen?.(); else document.exitFullscreen?.();
+            break;
+          case "arrowup":
+            e.preventDefault();
+            video.volume = Math.min(1, video.volume + 0.05);
+            break;
+          case "arrowdown":
+            e.preventDefault();
+            video.volume = Math.max(0, video.volume - 0.05);
+            break;
+          case "arrowleft":
+            e.preventDefault();
+            video.currentTime = Math.max(0, video.currentTime - 5);
+            break;
+          case "arrowright":
+            e.preventDefault();
+            video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 5);
+            break;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
