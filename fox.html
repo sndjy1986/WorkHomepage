@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="referrer" content="no-referrer" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fox Carolina</title>
+  <title>M3U8 Player • 2 Channels • 4-Stage Full Page</title>
   <style>
     :root { color-scheme: light dark; }
     body {
@@ -19,7 +19,14 @@
       box-shadow:0 10px 30px rgba(0,0,0,.35);
       transition: border-radius .2s ease, padding .2s ease, box-shadow .2s ease;
     }
-    .chrome h1 { margin:0 0 12px; color:#e8eaed; font-weight:600; }
+    .chrome h1 { margin:0 0 10px; color:#e8eaed; font-weight:600; }
+    .channels { display:flex; gap:8px; flex-wrap:wrap; margin: 0 0 12px; }
+    .chan {
+      appearance:none; border:1px solid rgba(255,255,255,.25);
+      background:#1f2937; color:#fff; border-radius:10px; cursor:pointer;
+      padding:8px 12px; font:600 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    .chan.active { background:#334155; }
     .player { position:relative; width:100%; aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; }
     video { width:100%; height:100%; display:block; background:#000; }
     .toolbar {
@@ -34,22 +41,20 @@
     }
     .note { margin-top:10px; color:#cbd5e1; font-size:.95rem; }
 
-    /* -------- Stage 2: CLEAN (hide outer UI, keep layout flow) -------- */
+    /* -------- Stage 2: CLEAN (hide outer UI, keep layout) -------- */
     body.stage2 .wrap { padding: 0; }
     body.stage2 .card { padding:0; border:none; border-radius:0; box-shadow:none; }
     body.stage2 .chrome { display:none; } /* “remove all the extras on the outside of the video” */
+    body.stage2 .channels { display:none; }
     body.stage2 .player { border-radius:0; }
     body.stage2 .note { display:none; }
 
-    /* -------- Stage 3: MAXIMIZED (pin player to viewport, edge-to-edge) -------- */
-    body.stage3 { display: block; } /* allow absolute/fixed child */
+    /* -------- Stage 3: MAXIMIZED (pin to viewport) -------- */
+    body.stage3 { display:block; }
     body.stage3 .wrap, body.stage3 .card { padding:0; border:none; border-radius:0; box-shadow:none; }
-    body.stage3 .chrome, body.stage3 .note { display:none; }
-    body.stage3 .player {
-      position: fixed; inset: 0; z-index: 9999; border-radius:0;
-    }
+    body.stage3 .chrome, body.stage3 .channels, body.stage3 .note { display:none; }
+    body.stage3 .player { position:fixed; inset:0; z-index:9999; border-radius:0; }
 
-    /* Basic responsive safeguard if aspect-ratio not supported */
     @supports not (aspect-ratio: 1/1) {
       .player::before { content:""; float:left; padding-top:56.25%; }
       .player::after { content:""; display:block; clear:both; }
@@ -61,7 +66,13 @@
   <div class="wrap">
     <div class="card">
       <div class="chrome">
-        <h1>Fox Carolina</h1>
+        <h1>M3U8 Player</h1>
+        <div class="channels">
+          <button class="chan active" id="chan1"
+            data-url="https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=1c375518aea64b6c998758e3da4e996e">Channel 1</button>
+          <button class="chan" id="chan2"
+            data-url="https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=0c06c8763e774a7cbb7a71008bf7d20f">Channel 2</button>
+        </div>
       </div>
 
       <div class="player" id="playerBox">
@@ -74,62 +85,106 @@
           <!-- iOS Safari: we set .src in JS -->
         </video>
 
-        <!-- Custom mini toolbar with the 4-stage button -->
+        <!-- 4-stage toggle -->
         <div class="toolbar">
-          <button class="btn" id="cycleBtn" title="Cycle Full Page (Normal → Clean → Maximized → Fullscreen)">⤢ Full Page</button>
+          <button class="btn" id="cycleBtn" title="Normal → Clean → Maximized → Fullscreen">⤢ Full Page</button>
         </div>
       </div>
 
-      <p class="note" id="status">Tip: press <kbd>F</kbd> to cycle stages. On iPad, you may need to tap Play once.</p>
+      <p class="note" id="status">Keys: 1/2 to switch channels, F to cycle stages.</p>
     </div>
   </div>
 
-  <!-- hls.js for non-Safari / non-iOS -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     (function () {
-      const SRC = "https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=1c375518aea64b6c998758e3da4e996e";
+      /* ------- Setup ------- */
       const video = document.getElementById("video");
       const statusEl = document.getElementById("status");
       const cycleBtn = document.getElementById("cycleBtn");
+      const chanBtns = Array.from(document.querySelectorAll(".chan"));
+      const playerBox = document.getElementById("playerBox");
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
         || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-      /* ---------- HLS attach: iOS native, otherwise hls.js ---------- */
-      function attachNative() {
-        video.src = SRC;
+      let hls = null;
+      let currentUrl = document.getElementById("chan1").dataset.url;
+
+      /* ------- Player attach helpers ------- */
+      function destroyHls() {
+        if (hls) { try { hls.destroy(); } catch {} hls = null; }
+      }
+      function useNative() {
+        return (isIOS || video.canPlayType("application/vnd.apple.mpegurl"));
+      }
+      function attachNative(url) {
+        destroyHls();
+        video.removeAttribute("crossorigin");
+        video.src = url;
         video.load();
       }
-      function attachHlsJs() {
+      function attachHlsJs(url) {
+        destroyHls();
         if (!(window.Hls && Hls.isSupported())) return false;
         video.setAttribute("crossorigin", "anonymous");
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 90 });
-        hls.loadSource(SRC);
+        hls = new Hls({ enableWorker:true, lowLatencyMode:true, backBufferLength:90 });
+        hls.loadSource(url);
         hls.attachMedia(video);
         hls.on(Hls.Events.ERROR, (evt, data) => {
-          if (data && data.fatal) {
+          if (!data) return;
+          if (data.fatal) {
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
               case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
-              default: hls.destroy();
+              default: destroyHls();
             }
           }
         });
         return true;
       }
+      async function loadChannel(url, autoPlay = true) {
+        currentUrl = url;
+        // Clear current
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
 
-      if (isIOS || video.canPlayType("application/vnd.apple.mpegurl")) {
-        attachNative();
-      } else {
-        const ok = attachHlsJs();
-        if (!ok) {
-          statusEl.textContent = "Your browser doesn’t support HLS/MSE.";
+        if (useNative()) {
+          attachNative(url);
+        } else {
+          const ok = attachHlsJs(url);
+          if (!ok) statusEl.textContent = "Your browser doesn’t support HLS/MSE.";
+        }
+
+        if (autoPlay) {
+          try { await video.play(); }
+          catch { /* user gesture may be required */ }
         }
       }
 
-      /* ---------- 4-stage cycle logic ---------- */
-      // 1: normal (default), 2: clean, 3: maximized, 4: fullscreen
+      /* ------- Channel switching UI ------- */
+      chanBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          chanBtns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const url = btn.dataset.url;
+          loadChannel(url, true);
+        });
+      });
+
+      // Keyboard: 1/2 to switch channels
+      document.addEventListener("keydown", (e) => {
+        if (["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
+        if (e.key === "1") document.getElementById("chan1").click();
+        if (e.key === "2") document.getElementById("chan2").click();
+        if (e.key.toLowerCase() === "f") {
+          e.preventDefault(); cycleBtn.click();
+        }
+      });
+
+      /* ------- 4-stage cycle logic ------- */
+      // 1: normal, 2: clean, 3: maximized, 4: fullscreen
       let stage = 1;
 
       function applyStage(next) {
@@ -137,81 +192,50 @@
         document.body.classList.remove("stage2", "stage3");
 
         if (stage === 1) {
-          // Normal
           if (document.fullscreenElement) document.exitFullscreen?.();
           statusEl.textContent = "Normal.";
         } else if (stage === 2) {
-          // Clean (hide chrome/outer UI)
           document.body.classList.add("stage2");
-          statusEl.textContent = "Clean mode (extras hidden).";
+          statusEl.textContent = "Clean mode.";
         } else if (stage === 3) {
-          // Maximized (pin to viewport)
           document.body.classList.add("stage3");
-          statusEl.textContent = "Maximized (edge-to-edge).";
+          statusEl.textContent = "Maximized.";
         } else if (stage === 4) {
-          // Fullscreen (API)
           statusEl.textContent = "Fullscreen.";
-          // iOS special case: prefer native video fullscreen
           if (isIOS && typeof video.webkitEnterFullscreen === "function") {
             try { video.webkitEnterFullscreen(); } catch {}
           } else {
-            // Try fullscreen on the player box or video
-            const box = document.getElementById("playerBox");
-            const el = box.requestFullscreen ? box : video;
-            el.requestFullscreen?.().catch(() => {
-              // If it fails (e.g., no user gesture), roll back to stage 3
-              applyStage(3);
-            });
+            const el = playerBox.requestFullscreen ? playerBox : video;
+            el.requestFullscreen?.().catch(() => applyStage(3));
           }
         }
       }
-
       function nextStage() {
-        // If currently in real fullscreen and the user taps, go back to 1
-        if (document.fullscreenElement && stage !== 4) {
-          applyStage(1);
-          return;
-        }
         const next = stage === 4 ? 1 : stage + 1;
         applyStage(next);
       }
 
       cycleBtn.addEventListener("click", () => {
         nextStage();
-        // Try to play after user gesture if needed
-        if (video.paused) {
-          video.play().catch(() => {});
-        }
+        if (video.paused) video.play().catch(()=>{});
       });
 
-      // Keyboard shortcut: F
-      document.addEventListener("keydown", (e) => {
-        if (e.key.toLowerCase() === "f") {
-          e.preventDefault();
-          cycleBtn.click();
-        }
-      });
-
-      // When user exits fullscreen (ESC, system gesture), return to Normal
-      ["fullscreenchange", "webkitfullscreenchange"].forEach(ev => {
+      ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>{
         document.addEventListener(ev, () => {
-          if (!document.fullscreenElement && stage === 4) {
-            applyStage(1);
-          }
+          if (!document.fullscreenElement && stage === 4) applyStage(1);
         });
       });
+      video.addEventListener("webkitendfullscreen", () => { if (stage === 4) applyStage(1); });
 
-      // iOS native fullscreen exit handler (no standard event; best-effort)
-      video.addEventListener("webkitendfullscreen", () => {
-        if (stage === 4) applyStage(1);
-      });
-
-      // Light error text (optional)
+      // Light error text
       video.addEventListener("error", () => {
         if (!video.error) return;
         const map = {1:"ABORTED",2:"NETWORK",3:"DECODE",4:"SRC_NOT_SUPPORTED"};
         statusEl.textContent = `Video error: ${video.error.code} (${map[video.error.code]||"UNKNOWN"}).`;
       });
+
+      /* ------- Initial load (Channel 1) ------- */
+      loadChannel(currentUrl, false);
     })();
   </script>
 </body>
