@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="referrer" content="no-referrer" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>M3U8 Player • 2 Channels • 4-Stage Full Page</title>
+  <title>M3U8 Player • 5 Channels</title>
   <style>
     :root { color-scheme: light dark; }
     body {
@@ -29,6 +29,21 @@
     .chan.active { background:#334155; }
     .player { position:relative; width:100%; aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; }
     video { width:100%; height:100%; display:block; background:#000; }
+
+    .chanLabel {
+      position:absolute; left:12px; top:12px; z-index:10000;
+      padding:6px 10px; border-radius:999px;
+      background:rgba(0,0,0,.55); color:#fff;
+      font:600 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      backdrop-filter: blur(6px);
+      user-select:none;
+    }
+    .chanLabel[contenteditable="true"] {
+      outline: 2px solid rgba(255,255,255,.45);
+      background: rgba(0,0,0,.75);
+      cursor:text;
+    }
+
     .toolbar {
       position:absolute; right:8px; bottom:8px; display:flex; gap:8px;
       padding:6px; border-radius:10px; background: rgba(0,0,0,.35); backdrop-filter: blur(6px);
@@ -41,15 +56,11 @@
     }
     .note { margin-top:10px; color:#cbd5e1; font-size:.95rem; }
 
-    /* -------- Stage 2: CLEAN (hide outer UI, keep layout) -------- */
     body.stage2 .wrap { padding: 0; }
     body.stage2 .card { padding:0; border:none; border-radius:0; box-shadow:none; }
-    body.stage2 .chrome { display:none; } /* “remove all the extras on the outside of the video” */
-    body.stage2 .channels { display:none; }
+    body.stage2 .chrome, body.stage2 .channels, body.stage2 .note { display:none; }
     body.stage2 .player { border-radius:0; }
-    body.stage2 .note { display:none; }
 
-    /* -------- Stage 3: MAXIMIZED (pin to viewport) -------- */
     body.stage3 { display:block; }
     body.stage3 .wrap, body.stage3 .card { padding:0; border:none; border-radius:0; box-shadow:none; }
     body.stage3 .chrome, body.stage3 .channels, body.stage3 .note { display:none; }
@@ -67,69 +78,77 @@
     <div class="card">
       <div class="chrome">
         <h1>M3U8 Player</h1>
-        <div class="channels">
+        <div class="channels" id="channelsBar">
           <button class="chan active" id="chan1"
-            data-url="https://turnerlive.warnermediacdn.com/hls/live/586495/cnngo/cnn_slate/VIDEO_0_3564000.m3u8">CNN Live</button>
+            data-url="https://turnerlive.warnermediacdn.com/hls/live/586495/cnngo/cnn_slate/VIDEO_0_3564000.m3u8"
+            data-name="CNN Live">CNN Live</button>
           <button class="chan" id="chan2"
-            data-url="https://livetv-fa.tubi.video/nbc-news-now/master.m3u8">NBC News Now</button>
+            data-url="https://livetv-fa.tubi.video/nbc-news-now/master.m3u8"
+            data-name="NBC News Now">NBC News Now</button>
           <button class="chan" id="chan3"
-            data-url="https://content.uplynk.com/channel/3324f2467c414329b3b0cc5cd987b6be.m3u8">ABC News</button>
-        <button class="chan" id="chan4"
-            data-url="https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=71abe3dcc513496c9431df74337653cc">Channel 4</button>
+            data-url="https://content.uplynk.com/channel/3324f2467c414329b3b0cc5cd987b6be.m3u8"
+            data-name="ABC News">ABC News</button>
           <button class="chan" id="chan4"
-            data-url="https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=4abc743d3b7a4c83b0fc1d9ede176617">Channel 5</button>
+            data-url="https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=71abe3dcc513496c9431df74337653cc"
+            data-name="Channel 4">Channel 4</button>
+          <button class="chan" id="chan5"
+            data-url="https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=4abc743d3b7a4c83b0fc1d9ede176617"
+            data-name="Channel 5">Channel 5</button>
         </div>
       </div>
 
       <div class="player" id="playerBox">
+        <div class="chanLabel" id="chanLabel" title="Double-click to rename"></div>
+
         <video id="video"
                controls
                playsinline
                webkit-playsinline
                preload="metadata"
                controlsList="nodownload">
-          <!-- iOS Safari: we set .src in JS -->
         </video>
 
-        <!-- 4-stage toggle -->
         <div class="toolbar">
+          <button class="btn" id="editNameBtn" title="Rename current channel">✏️ Name</button>
           <button class="btn" id="cycleBtn" title="Normal → Clean → Maximized → Fullscreen">⤢ Full Page</button>
         </div>
       </div>
 
-      <p class="note" id="status">Keys: 1/2 to switch channels, F to cycle stages.</p>
+      <p class="note" id="status">Keys: 1–9/0 switch channels (0 = #10). Double-click the name to edit. F cycles stages.</p>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     (function () {
-      /* ------- Setup ------- */
       const video = document.getElementById("video");
       const statusEl = document.getElementById("status");
       const cycleBtn = document.getElementById("cycleBtn");
-      const chanBtns = Array.from(document.querySelectorAll(".chan"));
+      const editNameBtn = document.getElementById("editNameBtn");
       const playerBox = document.getElementById("playerBox");
+      const chanLabel = document.getElementById("chanLabel");
+      const chanBtns = Array.from(document.querySelectorAll(".chan"));
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
         || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-      let hls = null;
-      let currentUrl = document.getElementById("chan1").dataset.url;
+      const channels = chanBtns.map((btn, idx) => ({
+        index: idx + 1,
+        button: btn,
+        get url(){ return btn.dataset.url; },
+        set url(v){ btn.dataset.url = v; },
+        get name(){ return btn.dataset.name || btn.textContent.trim() || ("Channel " + (idx+1)); },
+        set name(v){ btn.dataset.name = v; btn.textContent = v; }
+      }));
 
-      /* ------- Player attach helpers ------- */
-      function destroyHls() {
-        if (hls) { try { hls.destroy(); } catch {} hls = null; }
-      }
-      function useNative() {
-        return (isIOS || video.canPlayType("application/vnd.apple.mpegurl"));
-      }
-      function attachNative(url) {
-        destroyHls();
-        video.removeAttribute("crossorigin");
-        video.src = url;
-        video.load();
-      }
+      let hls = null;
+      let currentIndex = 1;
+      let stage = 1;
+
+      function destroyHls() { if (hls) { try { hls.destroy(); } catch {} hls = null; } }
+      function useNative() { return (isIOS || video.canPlayType("application/vnd.apple.mpegurl")); }
+
+      function attachNative(url) { destroyHls(); video.removeAttribute("crossorigin"); video.src = url; video.load(); }
       function attachHlsJs(url) {
         destroyHls();
         if (!(window.Hls && Hls.isSupported())) return false;
@@ -137,111 +156,86 @@
         hls = new Hls({ enableWorker:true, lowLatencyMode:true, backBufferLength:90 });
         hls.loadSource(url);
         hls.attachMedia(video);
-        hls.on(Hls.Events.ERROR, (evt, data) => {
-          if (!data) return;
-          if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
-              case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
-              default: destroyHls();
-            }
-          }
-        });
         return true;
       }
-      async function loadChannel(url, autoPlay = true) {
-        currentUrl = url;
-        // Clear current
+
+      async function loadChannelByIndex(idx, autoPlay = true) {
+        const ch = channels[idx - 1];
+        if (!ch) return;
+        currentIndex = idx;
+
+        chanBtns.forEach(b => b.classList.remove("active"));
+        ch.button.classList.add("active");
+
+        chanLabel.textContent = ch.name;
+
         video.pause();
         video.removeAttribute("src");
         video.load();
 
-        if (useNative()) {
-          attachNative(url);
-        } else {
-          const ok = attachHlsJs(url);
-          if (!ok) statusEl.textContent = "Your browser doesn’t support HLS/MSE.";
-        }
+        if (useNative()) attachNative(ch.url);
+        else attachHlsJs(ch.url);
 
-        if (autoPlay) {
-          try { await video.play(); }
-          catch { /* user gesture may be required */ }
-        }
+        if (autoPlay) { try { await video.play(); } catch {} }
       }
 
-      /* ------- Channel switching UI ------- */
-      chanBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-          chanBtns.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          const url = btn.dataset.url;
-          loadChannel(url, true);
-        });
-      });
+      chanBtns.forEach((btn, i) => btn.addEventListener("click", () => loadChannelByIndex(i+1, true)));
 
-      // Keyboard: 1/2 to switch channels
       document.addEventListener("keydown", (e) => {
         if (["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
-        if (e.key === "1") document.getElementById("chan1").click();
-        if (e.key === "2") document.getElementById("chan2").click();
-        if (e.key.toLowerCase() === "f") {
-          e.preventDefault(); cycleBtn.click();
-        }
+        const k = e.key;
+        if (k >= "1" && k <= "9") loadChannelByIndex(parseInt(k, 10), true);
+        if (k === "0") loadChannelByIndex(10, true);
+        if (k.toLowerCase() === "f") { e.preventDefault(); cycleBtn.click(); }
       });
 
-      /* ------- 4-stage cycle logic ------- */
-      // 1: normal, 2: clean, 3: maximized, 4: fullscreen
-      let stage = 1;
+      function startInlineEdit() {
+        chanLabel.setAttribute("contenteditable","true");
+        const sel = window.getSelection(), range = document.createRange();
+        range.selectNodeContents(chanLabel); range.collapse(false);
+        sel.removeAllRanges(); sel.addRange(range);
+        chanLabel.focus();
+      }
+      function finishInlineEdit(save = true) {
+        if (!chanLabel.isContentEditable) return;
+        chanLabel.removeAttribute("contenteditable");
+        if (!save) { chanLabel.textContent = channels[currentIndex-1].name; return; }
+        const newName = chanLabel.textContent.trim();
+        if (newName) channels[currentIndex-1].name = newName;
+        else chanLabel.textContent = channels[currentIndex-1].name;
+      }
+
+      editNameBtn.addEventListener("click", () => {
+        if (!chanLabel.isContentEditable) startInlineEdit(); else finishInlineEdit(true);
+      });
+      chanLabel.addEventListener("dblclick", () => startInlineEdit());
+      chanLabel.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); finishInlineEdit(true); }
+        if (e.key === "Escape") { e.preventDefault(); finishInlineEdit(false); }
+      });
+      chanLabel.addEventListener("blur", () => finishInlineEdit(true));
 
       function applyStage(next) {
         stage = next;
         document.body.classList.remove("stage2", "stage3");
-
-        if (stage === 1) {
-          if (document.fullscreenElement) document.exitFullscreen?.();
-          statusEl.textContent = "Normal.";
-        } else if (stage === 2) {
-          document.body.classList.add("stage2");
-          statusEl.textContent = "Clean mode.";
-        } else if (stage === 3) {
-          document.body.classList.add("stage3");
-          statusEl.textContent = "Maximized.";
-        } else if (stage === 4) {
-          statusEl.textContent = "Fullscreen.";
-          if (isIOS && typeof video.webkitEnterFullscreen === "function") {
-            try { video.webkitEnterFullscreen(); } catch {}
-          } else {
-            const el = playerBox.requestFullscreen ? playerBox : video;
-            el.requestFullscreen?.().catch(() => applyStage(3));
-          }
+        if (stage === 1) { if (document.fullscreenElement) document.exitFullscreen?.(); }
+        else if (stage === 2) document.body.classList.add("stage2");
+        else if (stage === 3) document.body.classList.add("stage3");
+        else if (stage === 4) {
+          if (isIOS && typeof video.webkitEnterFullscreen === "function") video.webkitEnterFullscreen();
+          else playerBox.requestFullscreen?.().catch(()=>applyStage(3));
         }
       }
-      function nextStage() {
-        const next = stage === 4 ? 1 : stage + 1;
-        applyStage(next);
-      }
+      function nextStage() { applyStage(stage === 4 ? 1 : stage + 1); }
 
-      cycleBtn.addEventListener("click", () => {
-        nextStage();
-        if (video.paused) video.play().catch(()=>{});
-      });
+      cycleBtn.addEventListener("click", () => { nextStage(); if (video.paused) video.play().catch(()=>{}); });
 
-      ["fullscreenchange","webkitfullscreenchange"].forEach(ev=>{
-        document.addEventListener(ev, () => {
-          if (!document.fullscreenElement && stage === 4) applyStage(1);
-        });
-      });
+      ["fullscreenchange","webkitfullscreenchange"].forEach(ev =>
+        document.addEventListener(ev, () => { if (!document.fullscreenElement && stage === 4) applyStage(1); })
+      );
       video.addEventListener("webkitendfullscreen", () => { if (stage === 4) applyStage(1); });
 
-      // Light error text
-      video.addEventListener("error", () => {
-        if (!video.error) return;
-        const map = {1:"ABORTED",2:"NETWORK",3:"DECODE",4:"SRC_NOT_SUPPORTED"};
-        statusEl.textContent = `Video error: ${video.error.code} (${map[video.error.code]||"UNKNOWN"}).`;
-      });
-
-      /* ------- Initial load (Channel 1) ------- */
-      loadChannel(currentUrl, false);
+      loadChannelByIndex(1, false);
     })();
   </script>
 </body>
