@@ -4,218 +4,214 @@
   <meta charset="utf-8" />
   <meta name="referrer" content="no-referrer" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>M3U8 Player • iPad Native/MSE Toggle</title>
+  <title>M3U8 Player • 4-Stage Full Page</title>
   <style>
     :root { color-scheme: light dark; }
-    body { margin:0; min-height:100svh; display:grid; place-items:center; background:#0b0c10; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    .wrap { width:min(100%, 980px); padding:16px; }
-    .grid { display:grid; gap:16px; grid-template-columns: 1fr; }
-    @media (min-width: 900px) { .grid { grid-template-columns: 2fr 1fr; } }
-    .card { background:#111418; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
-    h1 { margin:0 0 12px; color:#e8eaed; font-weight:600; }
-    .player { position:relative; aspect-ratio:16/9; width:100%; background:#000; border-radius:12px; overflow:hidden; }
+    body {
+      margin: 0; min-height: 100svh; background: #0b0c10;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      display: grid; place-items: center;
+    }
+    .wrap { width: min(100%, 960px); padding: 16px; transition: padding .2s ease; }
+    .card {
+      background:#111418; border:1px solid rgba(255,255,255,.08);
+      border-radius:16px; padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      transition: border-radius .2s ease, padding .2s ease, box-shadow .2s ease;
+    }
+    .chrome h1 { margin:0 0 12px; color:#e8eaed; font-weight:600; }
+    .player { position:relative; width:100%; aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; }
     video { width:100%; height:100%; display:block; background:#000; }
-    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:10px 0; }
-    .row > * { flex: 1 1 auto; min-width: 180px; }
-    .controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    label { color:#cbd5e1; font-size:13px; }
-    input[type="text"] { width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.15); background:#0b0c10; color:#e5e7eb; }
+    .toolbar {
+      position:absolute; right:8px; bottom:8px; display:flex; gap:8px;
+      padding:6px; border-radius:10px; background: rgba(0,0,0,.35); backdrop-filter: blur(6px);
+    }
     .btn {
-      font:600 14px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.25);
-      background:#1f2937; color:#fff; cursor:pointer;
+      appearance: none; border:1px solid rgba(255,255,255,.25);
+      background: rgba(31,41,55,.85); color:#fff; border-radius:10px;
+      font:600 13px/1 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      padding:8px 10px; cursor:pointer;
     }
-    .log {
-      height: 320px; overflow:auto; background:#0b0c10; border-radius:12px; padding:12px;
-      font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; color:#e5e7eb;
-      border:1px solid rgba(255,255,255,.08);
+    .note { margin-top:10px; color:#cbd5e1; font-size:.95rem; }
+
+    /* -------- Stage 2: CLEAN (hide outer UI, keep layout flow) -------- */
+    body.stage2 .wrap { padding: 0; }
+    body.stage2 .card { padding:0; border:none; border-radius:0; box-shadow:none; }
+    body.stage2 .chrome { display:none; } /* “remove all the extras on the outside of the video” */
+    body.stage2 .player { border-radius:0; }
+    body.stage2 .note { display:none; }
+
+    /* -------- Stage 3: MAXIMIZED (pin player to viewport, edge-to-edge) -------- */
+    body.stage3 { display: block; } /* allow absolute/fixed child */
+    body.stage3 .wrap, body.stage3 .card { padding:0; border:none; border-radius:0; box-shadow:none; }
+    body.stage3 .chrome, body.stage3 .note { display:none; }
+    body.stage3 .player {
+      position: fixed; inset: 0; z-index: 9999; border-radius:0;
     }
-    .note { color:#cbd5e1; font-size:.95rem; margin:8px 0 0; }
-    .err { color:#fecaca; }
-    .ok { color:#bbf7d0; }
+
+    /* Basic responsive safeguard if aspect-ratio not supported */
+    @supports not (aspect-ratio: 1/1) {
+      .player::before { content:""; float:left; padding-top:56.25%; }
+      .player::after { content:""; display:block; clear:both; }
+      video { position:absolute; inset:0; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="grid">
-      <div class="card">
-        <h1>M3U8 Player (iPad Native/MSE Toggle)</h1>
-
-        <div class="row">
-          <label for="url">Stream URL</label>
-          <input id="url" type="text" value="https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=1c375518aea64b6c998758e3da4e996e" />
-        </div>
-
-        <div class="row controls">
-          <label><input type="checkbox" id="forceMSE" /> Force MSE (hls.js)</label>
-          <label><input type="checkbox" id="useCreds" /> Use credentials (cookies)</label>
-          <button class="btn" id="startBtn">Start</button>
-          <button class="btn" id="stopBtn">Stop</button>
-        </div>
-
-        <div class="player">
-          <video id="video"
-            controls
-            playsinline
-            webkit-playsinline
-            x-webkit-airplay="allow"
-            preload="metadata">
-          </video>
-        </div>
-
-        <p class="note" id="status">Idle.</p>
+    <div class="card">
+      <div class="chrome">
+        <h1>M3U8 Player</h1>
       </div>
 
-      <div class="card">
-        <h2 style="margin:0 0 10px; color:#e8eaed; font-weight:600;">Diagnostics</h2>
-        <div class="log" id="log" aria-live="polite"></div>
-        <p class="note">
-          MediaError codes: 1=ABORTED, 2=NETWORK, 3=DECODE, 4=SRC_NOT_SUPPORTED.  
-          If native fails with 4, try “Force MSE”. If MSE fails with CORS errors, try “Use credentials” (server must allow it).
-        </p>
+      <div class="player" id="playerBox">
+        <video id="video"
+               controls
+               playsinline
+               webkit-playsinline
+               preload="metadata"
+               controlsList="nodownload">
+          <!-- iOS Safari: we set .src in JS -->
+        </video>
+
+        <!-- Custom mini toolbar with the 4-stage button -->
+        <div class="toolbar">
+          <button class="btn" id="cycleBtn" title="Cycle Full Page (Normal → Clean → Maximized → Fullscreen)">⤢ Full Page</button>
+        </div>
       </div>
+
+      <p class="note" id="status">Tip: press <kbd>F</kbd> to cycle stages. On iPad, you may need to tap Play once.</p>
     </div>
   </div>
 
+  <!-- hls.js for non-Safari / non-iOS -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    (function(){
-      const video = document.getElementById('video');
-      const urlInput = document.getElementById('url');
-      const forceMSE = document.getElementById('forceMSE');
-      const useCreds = document.getElementById('useCreds');
-      const startBtn = document.getElementById('startBtn');
-      const stopBtn = document.getElementById('stopBtn');
-      const logEl = document.getElementById('log');
-      const statusEl = document.getElementById('status');
+    (function () {
+      const SRC = "https://dai2-playlistserver.aws.syncbak.com/media.m3u8?bitrate=3659760&session=1c375518aea64b6c998758e3da4e996e";
+      const video = document.getElementById("video");
+      const statusEl = document.getElementById("status");
+      const cycleBtn = document.getElementById("cycleBtn");
 
-      let hls = null;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-      function log(msg, cls) {
-        const time = new Date().toISOString().split('T')[1].replace('Z','');
-        const line = document.createElement('div');
-        line.textContent = `[${time}] ${msg}`;
-        if (cls) line.className = cls;
-        logEl.appendChild(line);
-        logEl.scrollTop = logEl.scrollHeight;
-      }
-      function setStatus(msg, cls='') {
-        statusEl.textContent = msg;
-        statusEl.className = `note ${cls}`;
-      }
-      function explainMediaError(err) {
-        if (!err) return 'Unknown';
-        const map = { 1:'ABORTED', 2:'NETWORK', 3:'DECODE', 4:'SRC_NOT_SUPPORTED' };
-        return `${err.code} (${map[err.code] || 'UNKNOWN'})`;
-      }
-      function wireVideoEvents() {
-        video.addEventListener('loadedmetadata', () => log('Event: loadedmetadata', 'ok'));
-        video.addEventListener('canplay', () => log('Event: canplay', 'ok'));
-        video.addEventListener('play', () => log('Event: play', 'ok'));
-        video.addEventListener('error', () => {
-          const err = video.error;
-          log(`Video error: ${explainMediaError(err)}`, 'err');
-          setStatus(`Video error: ${explainMediaError(err)}.`, 'err');
-        });
-      }
-      wireVideoEvents();
-
-      function destroyHls() {
-        if (hls) {
-          try { hls.destroy(); } catch {}
-          hls = null;
-        }
-      }
-
-      async function start() {
-        destroyHls();
-        const src = urlInput.value.trim();
-        const useMSE = forceMSE.checked;
-
-        // Clean state
-        video.removeAttribute('src');
+      /* ---------- HLS attach: iOS native, otherwise hls.js ---------- */
+      function attachNative() {
+        video.src = SRC;
         video.load();
-
-        if (!useMSE && video.canPlayType('application/vnd.apple.mpegurl')) {
-          log('Starting with native HLS.');
-          setStatus('Attaching native HLS…');
-          video.src = src;
-          video.load();
-          try {
-            await video.play();
-            setStatus('Playing (native).', 'ok');
-          } catch {
-            setStatus('Press play to start (native).');
-          }
-          return;
-        }
-
-        // MSE path via hls.js
-        if (!(window.Hls && Hls.isSupported())) {
-          log('hls.js not supported on this browser.', 'err');
-          setStatus('MSE not supported here.', 'err');
-          return;
-        }
-        setStatus('Attaching hls.js (MSE)…');
-        log('Starting with hls.js (MSE).');
-
-        // If server requires cookies, enable withCredentials and ensure CORS is configured correctly on server.
-        const creds = !!useCreds.checked;
-
-        hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: true,
-          backBufferLength: 90,
-          // XHR setup lets us pass credentials and adjust headers if needed
-          xhrSetup: function(xhr, url) {
-            xhr.withCredentials = creds;
-            // If you need custom headers, uncomment and adjust:
-            // xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-          }
-        });
-
-        hls.on(Hls.Events.ERROR, (evt, data) => {
-          if (!data) return;
-          if (data.fatal) {
-            log(`hls.js fatal: ${data.type} / ${data.details}`, 'err');
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                setStatus('Network error. Retrying…', 'err');
-                hls.startLoad(); break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                setStatus('Media error. Recovering…', 'err');
-                hls.recoverMediaError(); break;
-              default:
-                setStatus('Fatal error. Reinitializing…', 'err');
-                destroyHls();
-                setTimeout(start, 300);
-            }
-          } else {
-            log(`hls.js non-fatal: ${data.type} / ${data.details}`);
-          }
-        });
-
-        hls.loadSource(src);
+      }
+      function attachHlsJs() {
+        if (!(window.Hls && Hls.isSupported())) return false;
+        video.setAttribute("crossorigin", "anonymous");
+        const hls = new Hls({ enableWorker: true, lowLatencyMode: true, backBufferLength: 90 });
+        hls.loadSource(SRC);
         hls.attachMedia(video);
+        hls.on(Hls.Events.ERROR, (evt, data) => {
+          if (data && data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
+              case Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
+              default: hls.destroy();
+            }
+          }
+        });
+        return true;
+      }
 
-        try {
-          await video.play();
-          setStatus('Playing (MSE).', 'ok');
-        } catch {
-          setStatus('Press play to start (MSE).');
+      if (isIOS || video.canPlayType("application/vnd.apple.mpegurl")) {
+        attachNative();
+      } else {
+        const ok = attachHlsJs();
+        if (!ok) {
+          statusEl.textContent = "Your browser doesn’t support HLS/MSE.";
         }
       }
 
-      function stop() {
-        setStatus('Stopped.');
-        destroyHls();
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
+      /* ---------- 4-stage cycle logic ---------- */
+      // 1: normal (default), 2: clean, 3: maximized, 4: fullscreen
+      let stage = 1;
+
+      function applyStage(next) {
+        stage = next;
+        document.body.classList.remove("stage2", "stage3");
+
+        if (stage === 1) {
+          // Normal
+          if (document.fullscreenElement) document.exitFullscreen?.();
+          statusEl.textContent = "Normal.";
+        } else if (stage === 2) {
+          // Clean (hide chrome/outer UI)
+          document.body.classList.add("stage2");
+          statusEl.textContent = "Clean mode (extras hidden).";
+        } else if (stage === 3) {
+          // Maximized (pin to viewport)
+          document.body.classList.add("stage3");
+          statusEl.textContent = "Maximized (edge-to-edge).";
+        } else if (stage === 4) {
+          // Fullscreen (API)
+          statusEl.textContent = "Fullscreen.";
+          // iOS special case: prefer native video fullscreen
+          if (isIOS && typeof video.webkitEnterFullscreen === "function") {
+            try { video.webkitEnterFullscreen(); } catch {}
+          } else {
+            // Try fullscreen on the player box or video
+            const box = document.getElementById("playerBox");
+            const el = box.requestFullscreen ? box : video;
+            el.requestFullscreen?.().catch(() => {
+              // If it fails (e.g., no user gesture), roll back to stage 3
+              applyStage(3);
+            });
+          }
+        }
       }
 
-      startBtn.addEventListener('click', start);
-      stopBtn.addEventListener('click', stop);
+      function nextStage() {
+        // If currently in real fullscreen and the user taps, go back to 1
+        if (document.fullscreenElement && stage !== 4) {
+          applyStage(1);
+          return;
+        }
+        const next = stage === 4 ? 1 : stage + 1;
+        applyStage(next);
+      }
+
+      cycleBtn.addEventListener("click", () => {
+        nextStage();
+        // Try to play after user gesture if needed
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+      });
+
+      // Keyboard shortcut: F
+      document.addEventListener("keydown", (e) => {
+        if (e.key.toLowerCase() === "f") {
+          e.preventDefault();
+          cycleBtn.click();
+        }
+      });
+
+      // When user exits fullscreen (ESC, system gesture), return to Normal
+      ["fullscreenchange", "webkitfullscreenchange"].forEach(ev => {
+        document.addEventListener(ev, () => {
+          if (!document.fullscreenElement && stage === 4) {
+            applyStage(1);
+          }
+        });
+      });
+
+      // iOS native fullscreen exit handler (no standard event; best-effort)
+      video.addEventListener("webkitendfullscreen", () => {
+        if (stage === 4) applyStage(1);
+      });
+
+      // Light error text (optional)
+      video.addEventListener("error", () => {
+        if (!video.error) return;
+        const map = {1:"ABORTED",2:"NETWORK",3:"DECODE",4:"SRC_NOT_SUPPORTED"};
+        statusEl.textContent = `Video error: ${video.error.code} (${map[video.error.code]||"UNKNOWN"}).`;
+      });
     })();
   </script>
 </body>
