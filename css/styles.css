@@ -215,7 +215,7 @@ aside svg { height: 4.5rem; }
     align-items: center;
     list-style-type: none;
     margin: 0;
-    padding: 0;
+    padding: -20;
     width: 100%;
 }
 
