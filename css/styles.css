@@ -11,7 +11,7 @@ main {
     flex-direction: column;
     justify-content: center;
     min-height: 100vh;
-    padding-bottom: 6rem; /* This pushes the content up */
+    padding-bottom: 60rem; /* This pushes the content up */
 }
 
 #traichu {
