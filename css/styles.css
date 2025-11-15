@@ -32,7 +32,7 @@ header {
     justify-content: center;
     padding: var(--spacing-m) var(--spacing-m) 0 var(--spacing-m);
     position: absolute;
-    top: 0;
+    top: -10;
     width: 100%;
 }
 
