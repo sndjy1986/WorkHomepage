@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Unit Distance Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      background: #0b0c10;
+      color: #f5f5f5;
+    }
+
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      margin-bottom: 1.5rem;
+      color: #c7c7c7;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: #151821;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      max-width: 800px;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    input[type="text"] {
+      flex: 1 1 260px;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.5rem;
+      border: 1px solid #333;
+      background: #0e1017;
+      color: #f5f5f5;
+    }
+
+    input[type="text"]::placeholder {
+      color: #777;
+    }
+
+    button {
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      background: #2c82ff;
+      color: white;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.15s;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: #1f6ad4;
+      box-shadow: 0 6px 16px rgba(31,106,212,0.45);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .status {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      min-height: 1.2em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.55rem 0.4rem;
+      text-align: left;
+    }
+
+    th {
+      border-bottom: 1px solid #333;
+      color: #d7d7d7;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(255,255,255,0.01);
+    }
+
+    tr.highlight td {
+      background: rgba(44,130,255,0.12);
+    }
+
+    .small {
+      font-size: 0.78rem;
+      color: #a0a0a0;
+    }
+
+    /* Hide the map div; we only use the services, not the visual map */
+    #hidden-map {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Unit Distance Checker</h1>
+  <div class="subtitle">
+    Enter a call address to see driving distance & ETA from each unit. Units are hard-coded to their normal posts.
+  </div>
+
+  <div class="card">
+    <form id="address-form">
+      <input
+        type="text"
+        id="address-input"
+        placeholder="123 Main St, YourCity, ST"
+        autocomplete="off"
+      />
+      <button type="submit">Check Distances</button>
+    </form>
+
+    <div class="status" id="status"></div>
+
+    <table id="results-table" style="display:none;">
+      <thead>
+        <tr>
+          <th>Unit</th>
+          <th>Post / Address</th>
+          <th>Distance</th>
+          <th>ETA</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Hidden map container (services work without displaying a map, but we keep this div just in case) -->
+  <div id="hidden-map"></div>
+
+  <script>
+    // 1. Hard-code your unit posts here
+    // Replace these with real unit names + real address strings
+    const UNITS = [
+      { name: "Truck 1", address: "123 Main St, YourCity, ST" },
+      { name: "Truck 2", address: "456 Oak Ave, YourCity, ST" },
+      { name: "Truck 3", address: "789 Pine Rd, YourCity, ST" },
+      // Add as many as you want...
+    ];
+
+    let geocoder;
+    let distanceMatrix;
+
+    function initMapsServices() {
+      geocoder = new google.maps.Geocoder();
+      distanceMatrix = new google.maps.DistanceMatrixService();
+    }
+
+    const form = document.getElementById("address-form");
+    const addressInput = document.getElementById("address-input");
+    const statusEl = document.getElementById("status");
+    const resultsTable = document.getElementById("results-table");
+    const resultsTbody = resultsTable.querySelector("tbody");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const address = addressInput.value.trim();
+
+      if (!address) {
+        statusEl.textContent = "Please enter a valid address.";
+        return;
+      }
+
+      statusEl.textContent = "Geocoding address and calculating distances...";
+      resultsTable.style.display = "none";
+      resultsTbody.innerHTML = "";
+
+      geocodeAddress(address);
+    });
+
+    function geocodeAddress(address) {
+      if (!geocoder) {
+        statusEl.textContent = "Maps service not ready yet. Try again in a moment.";
+        return;
+      }
+
+      geocoder.geocode({ address: address }, function (results, status) {
+        if (status !== "OK" || !results || !results.length) {
+          statusEl.textContent = "Could not find that address. Please check spelling.";
+          return;
+        }
+
+        const destination = results[0].geometry.location;
+        calculateDistances(destination);
+      });
+    }
+
+    function calculateDistances(destination) {
+      if (!distanceMatrix) {
+        statusEl.textContent = "Distance service not ready yet. Try again in a moment.";
+        return;
+      }
+
+      const origins = UNITS.map((u) => u.address);
+
+      distanceMatrix.getDistanceMatrix(
+        {
+          origins: origins,
+          destinations: [destination],
+          travelMode: google.maps.TravelMode.DRIVING,
+          unitSystem: google.maps.UnitSystem.IMPERIAL,
+        },
+        function (response, status) {
+          if (status !== "OK") {
+            statusEl.textContent = "Error from Distance Matrix: " + status;
+            return;
+          }
+
+          const rows = response.rows;
+          const results = [];
+
+          for (let i = 0; i < rows.length; i++) {
+            const element = rows[i].elements[0];
+            if (element.status !== "OK") {
+              results.push({
+                unit: UNITS[i],
+                distanceText: "N/A",
+                distanceValue: Infinity,
+                durationText: "N/A",
+              });
+            } else {
+              results.push({
+                unit: UNITS[i],
+                distanceText: element.distance.text,
+                distanceValue: element.distance.value, // meters
+                durationText: element.duration.text,
+              });
+            }
+          }
+
+          // Sort by distance (closest first)
+          results.sort((a, b) => a.distanceValue - b.distanceValue);
+
+          renderResults(results);
+        }
+      );
+    }
+
+    function renderResults(results) {
+      resultsTbody.innerHTML = "";
+
+      results.forEach((result, index) => {
+        const tr = document.createElement("tr");
+        if (index === 0) {
+          tr.classList.add("highlight");
+        }
+
+        const tdUnit = document.createElement("td");
+        tdUnit.textContent = result.unit.name;
+
+        const tdAddress = document.createElement("td");
+        tdAddress.innerHTML = result.unit.address + "<br><span class='small'>Post location</span>";
+
+        const tdDistance = document.createElement("td");
+        tdDistance.textContent = result.distanceText;
+
+        const tdDuration = document.createElement("td");
+        tdDuration.textContent = result.durationText;
+
+        tr.appendChild(tdUnit);
+        tr.appendChild(tdAddress);
+        tr.appendChild(tdDistance);
+        tr.appendChild(tdDuration);
+        resultsTbody.appendChild(tr);
+      });
+
+      resultsTable.style.display = "table";
+      statusEl.textContent = results.length
+        ? "Closest unit highlighted. All distances are driving estimates."
+        : "No units configured.";
+    }
+  </script>
+
+  <!-- Load Google Maps JS API (replace YOUR_API_KEY_HERE with your real key) -->
+  <script
+    async
+    defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMapsServices">
+  </script>
+</body>
+</html>
 
