@@ -23,12 +23,19 @@
       font-size: 0.95rem;
     }
 
+    .layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
     .card {
       background: #151821;
       border-radius: 0.75rem;
       padding: 1rem 1.25rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      max-width: 800px;
+      flex: 1 1 380px;
+      min-width: 360px;
     }
 
     form {
@@ -114,51 +121,74 @@
       color: #a0a0a0;
     }
 
-    /* Hide the map div; we only use the services, not the visual map */
     #hidden-map {
       display: none;
     }
   </style>
 </head>
+
 <body>
   <h1>Unit Distance Checker</h1>
   <div class="subtitle">
-    Enter a call address to see driving distance & ETA from each unit. Units are hard-coded to their normal posts.
+    Enter a call address to see driving distance & ETA from both Transport Trucks and QRV Paramedics.
   </div>
 
+  <!-- MAIN INPUT -->
   <div class="card">
     <form id="address-form">
       <input
         type="text"
         id="address-input"
         placeholder="5531 Airport Rd. Anderson, SC 29625"
-        autocomplete="On"
+        autocomplete="on"
       />
       <button type="submit">Check Distances</button>
     </form>
-
     <div class="status" id="status"></div>
-
-    <table id="results-table" style="display:none;">
-      <thead>
-        <tr>
-          <th>Unit</th>
-          <th>Post / Address</th>
-          <th>Distance</th>
-          <th>ETA</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
   </div>
 
-  <!-- Hidden map container (services work without displaying a map, but we keep this div just in case) -->
+  <div class="layout">
+
+    <!-- TRANSPORT TRUCKS -->
+    <div class="card">
+      <h2>Transport Trucks</h2>
+      <table id="results-transport" style="display:none;">
+        <thead>
+          <tr>
+            <th>Unit</th>
+            <th>Post / Address</th>
+            <th>Distance</th>
+            <th>ETA</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- QRV PARAMEDICS -->
+    <div class="card">
+      <h2>QRV - Paramedics</h2>
+      <table id="results-qrv" style="display:none;">
+        <thead>
+          <tr>
+            <th>Unit</th>
+            <th>Post / Address</th>
+            <th>Distance</th>
+            <th>ETA</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </div>
+
   <div id="hidden-map"></div>
 
   <script>
-    // 1. Hard-code your unit posts here
-    // Replace these with real unit names + real address strings
-    const UNITS = [
+    /* ------------------------- HARD-CODED UNITS ------------------------- */
+
+    const TRANSPORT_UNITS = [
       { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
       { name: "Med-1", address: "1009 N Fant St. Anderson, SC 29625" },
       { name: "Med-2", address: "135 HWY 413, Belton SC 29627" },
@@ -179,8 +209,16 @@
       { name: "Med-17", address: "1009 N Fant St. Anderson, SC 29625" },
       { name: "Med-18", address: "1009 N Fant St. Anderson, SC 29625" },
       { name: "Med-19", address: "1009 N Fant St. Anderson, SC 29625" },
-      // Add as many as you want...
     ];
+
+    /* Example QRV units — replace with your actual list */
+    const QRV_UNITS = [
+      { name: "QRV-1", address: "3228 S Main St, Anderson, SC 29624" },
+      { name: "QRV-2", address: "902 Anderson Dr. Williamston SC 29697" },
+      { name: "QRV-3", address: "8508 SC-24, Townville, SC 29689" },
+    ];
+
+    /* ------------------------- GOOGLE SERVICES ------------------------- */
 
     let geocoder;
     let distanceMatrix;
@@ -193,134 +231,84 @@
     const form = document.getElementById("address-form");
     const addressInput = document.getElementById("address-input");
     const statusEl = document.getElementById("status");
-    const resultsTable = document.getElementById("results-table");
-    const resultsTbody = resultsTable.querySelector("tbody");
+
+    /* ------------------------- EVENT HANDLER ------------------------- */
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       const address = addressInput.value.trim();
 
-      if (!address) {
-        statusEl.textContent = "Please enter a valid address.";
-        return;
-      }
-
       statusEl.textContent = "Geocoding address and calculating distances...";
-      resultsTable.style.display = "none";
-      resultsTbody.innerHTML = "";
 
-      geocodeAddress(address);
-    });
-
-    function geocodeAddress(address) {
-      if (!geocoder) {
-        statusEl.textContent = "Maps service not ready yet. Try again in a moment.";
-        return;
-      }
-
-      geocoder.geocode({ address: address }, function (results, status) {
-        if (status !== "OK" || !results || !results.length) {
-          statusEl.textContent = "Could not find that address. Please check spelling.";
+      geocoder.geocode({ address }, (results, status) => {
+        if (status !== "OK") {
+          statusEl.textContent = "Invalid address.";
           return;
         }
-
         const destination = results[0].geometry.location;
-        calculateDistances(destination);
-      });
-    }
 
-    function calculateDistances(destination) {
-      if (!distanceMatrix) {
-        statusEl.textContent = "Distance service not ready yet. Try again in a moment.";
-        return;
-      }
+        calculateForGroup(TRANSPORT_UNITS, "results-transport");
+        calculateForGroup(QRV_UNITS, "results-qrv");
 
-      const origins = UNITS.map((u) => u.address);
+        function calculateForGroup(units, tableId) {
+          const origins = units.map(u => u.address);
 
-      distanceMatrix.getDistanceMatrix(
-        {
-          origins: origins,
-          destinations: [destination],
-          travelMode: google.maps.TravelMode.DRIVING,
-          unitSystem: google.maps.UnitSystem.IMPERIAL,
-        },
-        function (response, status) {
-          if (status !== "OK") {
-            statusEl.textContent = "Error from Distance Matrix: " + status;
-            return;
-          }
+          distanceMatrix.getDistanceMatrix(
+            {
+              origins,
+              destinations: [destination],
+              travelMode: google.maps.TravelMode.DRIVING,
+              unitSystem: google.maps.UnitSystem.IMPERIAL
+            },
+            (response, matrixStatus) => {
+              if (matrixStatus !== "OK") return;
 
-          const rows = response.rows;
-          const results = [];
+              const rows = response.rows;
+              const results = [];
 
-          for (let i = 0; i < rows.length; i++) {
-            const element = rows[i].elements[0];
-            if (element.status !== "OK") {
-              results.push({
-                unit: UNITS[i],
-                distanceText: "N/A",
-                distanceValue: Infinity,
-                durationText: "N/A",
-              });
-            } else {
-              results.push({
-                unit: UNITS[i],
-                distanceText: element.distance.text,
-                distanceValue: element.distance.value, // meters
-                durationText: element.duration.text,
-              });
+              for (let i = 0; i < rows.length; i++) {
+                const el = rows[i].elements[0];
+                results.push({
+                  unit: units[i],
+                  distanceText: el.status === "OK" ? el.distance.text : "N/A",
+                  distanceValue: el.status === "OK" ? el.distance.value : Infinity,
+                  durationText: el.status === "OK" ? el.duration.text : "N/A",
+                });
+              }
+
+              results.sort((a, b) => a.distanceValue - b.distanceValue);
+              renderResults(results, tableId);
             }
-          }
-
-          // Sort by distance (closest first)
-          results.sort((a, b) => a.distanceValue - b.distanceValue);
-
-          renderResults(results);
+          );
         }
-      );
-    }
+      });
+    });
 
-    function renderResults(results) {
-      resultsTbody.innerHTML = "";
+    /* ------------------------- RENDERING ------------------------- */
 
-      results.forEach((result, index) => {
+    function renderResults(results, tableId) {
+      const table = document.getElementById(tableId);
+      const tbody = table.querySelector("tbody");
+
+      tbody.innerHTML = "";
+      results.forEach((r, i) => {
         const tr = document.createElement("tr");
-        if (index === 0) {
-          tr.classList.add("highlight");
-        }
+        if (i === 0) tr.classList.add("highlight");
 
-        const tdUnit = document.createElement("td");
-        tdUnit.textContent = result.unit.name;
-
-        const tdAddress = document.createElement("td");
-        tdAddress.innerHTML = result.unit.address + "<br><span class='small'>Post location</span>";
-
-        const tdDistance = document.createElement("td");
-        tdDistance.textContent = result.distanceText;
-
-        const tdDuration = document.createElement("td");
-        tdDuration.textContent = result.durationText;
-
-        tr.appendChild(tdUnit);
-        tr.appendChild(tdAddress);
-        tr.appendChild(tdDistance);
-        tr.appendChild(tdDuration);
-        resultsTbody.appendChild(tr);
+        tr.innerHTML = `
+          <td>${r.unit.name}</td>
+          <td>${r.unit.address}<br><span class="small">Post</span></td>
+          <td>${r.distanceText}</td>
+          <td>${r.durationText}</td>
+        `;
+        tbody.appendChild(tr);
       });
 
-      resultsTable.style.display = "table";
-      statusEl.textContent = results.length
-        ? "Closest unit highlighted. All distances are driving estimates."
-        : "No units configured.";
+      table.style.display = "table";
+      statusEl.textContent = "Closest units highlighted.";
     }
   </script>
 
-  <!-- Load Google Maps JS API (replace YOUR_API_KEY_HERE with your real key) -->
-  <script
-    async
-    defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD6nSsnOuLe5-BBep0DnfkxaXkPrTtYCM&callback=initMapsServices">
-  </script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD6nSsnOuLe5-BBep0DnfkxaXkPrTtYCM&callback=initMapsServices"></script>
 </body>
 </html>
-
