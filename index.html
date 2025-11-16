@@ -32,7 +32,6 @@
       background: none; /* disable static background */
     }
 
-    /* Full-viewport blurred background */
     body::before {
       content: "";
       position: fixed;
@@ -49,15 +48,14 @@
       padding-top: 100px;
     }
 
-    /* Main fits within the viewport below the ticker */
     main {
       position: relative !important;
       background-color: rgba(0, 0, 0, 0.2);
       backdrop-filter: blur(20px);
       border-radius: 0px;
-      height: calc(100vh - 50px - 0px); /* viewport minus ticker minus margins */
-      margin: 0px; /* breathing room */
-      overflow: hidden; /* prevent inner scrollbars */
+      height: calc(100vh - 50px - 0px);
+      margin: 0px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -65,9 +63,8 @@
       box-sizing: border-box;
     }
 
-    /* Content that will be scaled to fit */
     #traichu {
-      transform-origin: top center; /* scale from top */
+      transform-origin: top center;
       will-change: transform;
     }
 
@@ -80,8 +77,8 @@
       margin-bottom: -10px;
     }
 
-    /* API usage line under greeting */
-    #api-usage {
+    #api-usage,
+    #global-api-usage {
       font-size: 0.8rem;
       color: var(--text-color);
       text-align: center;
@@ -128,14 +125,13 @@
       }
     }
 
-    /* News Ticker (blur fixed & translucent) */
     #news-ticker {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 50px;
-      background: rgba(0, 0, 0, 0.4); /* translucent so backdrop blur shows */
+      background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
       color: #fff;
@@ -179,7 +175,6 @@
       text-decoration: underline;
     }
 
-    /* Search bar */
     #search {
       display: flex;
       justify-content: center;
@@ -190,7 +185,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      /* width is set dynamically in JS to match #dock ul width */
       max-width: 95vw;
       background: rgba(0, 0, 0, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -252,6 +246,7 @@
 
       <div id="greeting"></div>
       <div id="api-usage"></div>
+      <div id="global-api-usage"></div>
 
       <nav id="dock">
         <ul>
@@ -308,9 +303,9 @@
   </main>
 
   <script>
-    /**
-     * Sets a random greeting based on the time of day.
-     */
+    // Cloudflare Worker base URL — SAME as in map.html
+    const WORKER_BASE_URL = "https://your-worker-name.your-subdomain.workers.dev";
+
     function setGreeting() {
       const greetingElement = document.getElementById('greeting');
       const currentHour = new Date().getHours();
@@ -339,9 +334,6 @@
       greetingElement.textContent = greeting;
     }
 
-    /**
-     * Shows Google API usage (from map.html) based on localStorage counter.
-     */
     function showApiUsage() {
       const el = document.getElementById('api-usage');
       if (!el) return;
@@ -356,9 +348,25 @@
       el.textContent = `Google map requests (this browser): ${count}`;
     }
 
-    /**
-     * Sets a random background image.
-     */
+    async function showGlobalApiUsage() {
+      const el = document.getElementById('global-api-usage');
+      if (!el) return;
+      if (!WORKER_BASE_URL) {
+        el.textContent = "Global counter: Worker URL not set.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${WORKER_BASE_URL}/api/get`);
+        if (!res.ok) throw new Error("Bad response");
+        const data = await res.json();
+        el.textContent = `Google map requests (global): ${data.count}`;
+      } catch (e) {
+        console.warn("Unable to load global counter:", e);
+        el.textContent = "Google map requests (global): unavailable";
+      }
+    }
+
     function setRandomBackground() {
       const backgrounds = [
         'background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png',
@@ -368,21 +376,16 @@
       document.documentElement.style.setProperty('--bg-url', chosen);
     }
 
-    /**
-     * Fit the main content (#traichu) inside <main> with NO scrolling by scaling down if needed
-     */
     function fitToViewport() {
       const main = document.querySelector('main');
       const section = document.getElementById('traichu');
       if (!main || !section) return;
 
-      // reset scale to measure true size
       section.style.transform = 'scale(1)';
 
-      const availableW = main.clientWidth - 24;  // padding buffer
+      const availableW = main.clientWidth - 24;
       const availableH = main.clientHeight - 24;
 
-      // measure content
       const neededW = section.scrollWidth;
       const neededH = section.scrollHeight;
 
@@ -393,9 +396,6 @@
       section.style.transform = `scale(${scale})`;
     }
 
-    /**
-     * Fox News RSS
-     */
     function loadNewsFeed() {
       const newsContent = document.getElementById('news-content');
       const cacheKey = 'foxNewsFeedCache';
@@ -412,27 +412,22 @@
 
       fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
         .then(r => r.text())
-        .then(str => new DOMParser().parseFromString(str, 'application/xml'))
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
         .then(data => {
-          const items = data.querySelectorAll('item');
+          const items = data.querySelectorAll("item");
           let html = '';
           items.forEach(i => {
-            const t = i.querySelector('title').textContent;
-            const l = i.querySelector('link').textContent;
+            const t = i.querySelector("title").textContent;
+            const l = i.querySelector("link").textContent;
             html += `<a href="${l}" target="_blank">🦊 ${t}</a>`;
           });
           if (!html) throw new Error('No items found');
           newsContent.innerHTML = html;
           localStorage.setItem(cacheKey, JSON.stringify({ html, timestamp: Date.now() }));
         })
-        .catch(() => {
-          newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊';
-        });
+        .catch(() => newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊');
     }
 
-    /**
-     * Word of the Day
-     */
     function loadWordOfTheDay() {
       const title = document.getElementById('word-title');
       const def = document.getElementById('word-definition');
@@ -451,11 +446,11 @@
 
       fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://wordsmith.org/awad/rss1.xml')}`)
         .then(r => r.text())
-        .then(str => new DOMParser().parseFromString(str, 'application/xml'))
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
         .then(data => {
-          const item = data.querySelector('item');
-          const w = item.querySelector('title').textContent;
-          const desc = item.querySelector('description').textContent;
+          const item = data.querySelector("item");
+          const w = item.querySelector("title").textContent;
+          const desc = item.querySelector("description").textContent;
           const definition = desc.split('<br>')[0].trim();
 
           title.textContent = w;
@@ -468,9 +463,6 @@
         });
     }
 
-    /**
-     * Make the search bar the exact width of the nav bar
-     */
     function sizeSearchToNav() {
       const navUl = document.querySelector('#dock ul');
       const searchContainer = document.getElementById('searchContainer');
@@ -481,7 +473,6 @@
       searchContainer.style.width = finalWidth + 'px';
     }
 
-    // Debounce resize for performance
     let __resizeTimer;
     window.addEventListener('resize', () => {
       clearTimeout(__resizeTimer);
@@ -497,9 +488,10 @@
       loadNewsFeed();
       loadWordOfTheDay();
       sizeSearchToNav();
-      fitToViewport(); // ensure all content fits without scrolling
-      showApiUsage();  // show Google API count from map.html
-      setInterval(loadNewsFeed, 900000); // 15 minutes
+      fitToViewport();
+      showApiUsage();
+      showGlobalApiUsage();
+      setInterval(loadNewsFeed, 900000);
     });
   </script>
 </body>
