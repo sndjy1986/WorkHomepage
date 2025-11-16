@@ -185,141 +185,164 @@
 
   <div id="hidden-map"></div>
 
-  <script>
-    /* ------------------------- HARD-CODED UNITS ------------------------- */
+<script>
+  /* ------------------------- HARD-CODED UNITS ------------------------- */
 
-    const TRANSPORT_UNITS = [
-      { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-1", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-2", address: "135 HWY 413, Belton SC 29627" },
-      { name: "Med-3", address: "3228 S Main St, Anderson, SC 29624" },
-      { name: "Med-4", address: "902 Anderson Dr. Williamston SC 29697" },
-      { name: "Med-5", address: "2850 Concord Rd Anderson SC, 29621" },
-      { name: "Med-6", address: "9711 SC-81, Iva, SC 29655" },
-      { name: "Med-7", address: "108 N Depot St, Pendleton, SC 29670" },
-      { name: "Med-8", address: "8508 SC-24, Townville, SC 29689" },
-      { name: "Med-9", address: "103 Construction Way. Anderson, SC 29625" },
-      { name: "Med-10", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-11", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-12", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-13", address: "6 Gaines Rd, Honea Path, SC 29654" },
-      { name: "Med-14", address: "10600 Anderson Rd, Easley, SC 29642" },
-      { name: "Med-15", address: "2209 SC-86, Piedmont, SC 29673" },
-      { name: "Med-16", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-17", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-18", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "Med-19", address: "1009 N Fant St. Anderson, SC 29625" },
-    ];
+  const TRANSPORT_UNITS = [
+    { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-1", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-2", address: "135 HWY 413, Belton SC 29627" },
+    { name: "Med-3", address: "3228 S Main St, Anderson, SC 29624" },
+    { name: "Med-4", address: "902 Anderson Dr. Williamston SC 29697" },
+    { name: "Med-5", address: "2850 Concord Rd Anderson SC, 29621" },
+    { name: "Med-6", address: "9711 SC-81, Iva, SC 29655" },
+    { name: "Med-7", address: "108 N Depot St, Pendleton, SC 29670" },
+    { name: "Med-8", address: "8508 SC-24, Townville, SC 29689" },
+    { name: "Med-9", address: "103 Construction Way. Anderson, SC 29625" },
+    { name: "Med-10", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-11", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-12", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-13", address: "6 Gaines Rd, Honea Path, SC 29654" },
+    { name: "Med-14", address: "10600 Anderson Rd, Easley, SC 29642" },
+    { name: "Med-15", address: "2209 SC-86, Piedmont, SC 29673" },
+    { name: "Med-16", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-17", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-18", address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "Med-19", address: "1009 N Fant St. Anderson, SC 29625" },
+  ];
 
-    /* Example QRV units — replace with your actual list */
-    const QRV_UNITS = [
-      { name: "A-5", address: "103 Construction Way. Anderson, SC 29625" },
-      { name: "A-8", address: "1009 N Fant St. Anderson, SC 29625" },
-      { name: "ALS-2", address: "5321 US-76, Pendleton, SC 29670" },
-      { name: "ALS-3", address: "3228 S Main St, Anderson, SC 29624" },
-      { name: "ALS-4", address: "7715 SC-81, Starr, SC 29684" },
-      { name: "ALS-6", address: "101 Main St, Pelzer, SC 29669" },
-      { name: "ALS-7", address: "10600 Anderson Rd, Easley, SC 29642" },
-      { name: "ALS-11", address: "5125 Dobbins Bridge Rd, Anderson, SC 29626" },
-      { name: "ALS-12", address: "1 Holmes St, Belton SC, 29627" },
-      { name: "ALS-17", address: "316 Hattons Ford Rd, Townville, SC 29689" },
-      { name: "ALS-19", address: "1058 Martin Rd, Anderson, SC 29621" },
-      { name: "ALS-21", address: "1118 Trail Rd, Honea Path, SC 29654" },
-      { name: "ALS-23", address: "1416 Due West Hwy, Anderson, SC 29621" },
-      { name: "ALS-24", address: "2209 SC-86, Piedmont, SC 29673" },
-      { name: "ALS-27", address: "3738 SC-187, Anderson, SC 29626" },
-    ];
+  const QRV_UNITS = [
+    { name: "A-5",  address: "103 Construction Way. Anderson, SC 29625" },
+    { name: "A-8",  address: "1009 N Fant St. Anderson, SC 29625" },
+    { name: "ALS-2", address: "5321 US-76, Pendleton, SC 29670" },
+    { name: "ALS-3", address: "3228 S Main St, Anderson, SC 29624" },
+    { name: "ALS-4", address: "7715 SC-81, Starr, SC 29684" },
+    { name: "ALS-6", address: "101 Main St, Pelzer, SC 29669" },
+    { name: "ALS-7", address: "10600 Anderson Rd, Easley, SC 29642" },
+    { name: "ALS-11", address: "5125 Dobbins Bridge Rd, Anderson, SC 29626" },
+    { name: "ALS-12", address: "1 Holmes St, Belton SC, 29627" },
+    { name: "ALS-17", address: "316 Hattons Ford Rd, Townville, SC 29689" },
+    { name: "ALS-19", address: "1058 Martin Rd, Anderson, SC 29621" },
+    { name: "ALS-21", address: "1118 Trail Rd, Honea Path, SC 29654" },
+    { name: "ALS-23", address: "1416 Due West Hwy, Anderson, SC 29621" },
+    { name: "ALS-24", address: "2209 SC-86, Piedmont, SC 29673" },
+    { name: "ALS-27", address: "3738 SC-187, Anderson, SC 29626" },
+  ];
 
-    /* ------------------------- GOOGLE SERVICES ------------------------- */
+  /* ------------------------- API COUNTER (localStorage) ------------------------- */
 
-    let geocoder;
-    let distanceMatrix;
+  const API_COUNT_KEY = "googleApiCallCount";
 
-    function initMapsServices() {
-      geocoder = new google.maps.Geocoder();
-      distanceMatrix = new google.maps.DistanceMatrixService();
+  function incrementApiCount() {
+    try {
+      const current = Number(localStorage.getItem(API_COUNT_KEY) || "0");
+      localStorage.setItem(API_COUNT_KEY, String(current + 1));
+    } catch (e) {
+      // If localStorage is blocked, just ignore
+      console.warn("Could not update API counter:", e);
+    }
+  }
+
+  /* ------------------------- GOOGLE SERVICES ------------------------- */
+
+  let geocoder;
+  let distanceMatrix;
+
+  function initMapsServices() {
+    geocoder = new google.maps.Geocoder();
+    distanceMatrix = new google.maps.DistanceMatrixService();
+  }
+
+  const form = document.getElementById("address-form");
+  const addressInput = document.getElementById("address-input");
+  const statusEl = document.getElementById("status");
+
+  /* ------------------------- EVENT HANDLER ------------------------- */
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const address = addressInput.value.trim();
+
+    if (!address) {
+      statusEl.textContent = "Please enter a valid address.";
+      return;
     }
 
-    const form = document.getElementById("address-form");
-    const addressInput = document.getElementById("address-input");
-    const statusEl = document.getElementById("status");
+    statusEl.textContent = "Geocoding address and calculating distances...";
 
-    /* ------------------------- EVENT HANDLER ------------------------- */
+    // Count the geocode request
+    incrementApiCount();
+    geocoder.geocode({ address }, (results, status) => {
+      if (status !== "OK" || !results || !results.length) {
+        statusEl.textContent = "Invalid address.";
+        return;
+      }
+      const destination = results[0].geometry.location;
 
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const address = addressInput.value.trim();
+      calculateForGroup(TRANSPORT_UNITS, "results-transport", destination);
+      calculateForGroup(QRV_UNITS, "results-qrv", destination);
+    });
+  });
 
-      statusEl.textContent = "Geocoding address and calculating distances...";
+  function calculateForGroup(units, tableId, destination) {
+    const origins = units.map(u => u.address);
 
-      geocoder.geocode({ address }, (results, status) => {
-        if (status !== "OK") {
-          statusEl.textContent = "Invalid address.";
-          return;
+    // Count each Distance Matrix request
+    incrementApiCount();
+    distanceMatrix.getDistanceMatrix(
+      {
+        origins,
+        destinations: [destination],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.IMPERIAL
+      },
+      (response, matrixStatus) => {
+        if (matrixStatus !== "OK") return;
+
+        const rows = response.rows;
+        const results = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          const el = rows[i].elements[0];
+          results.push({
+            unit: units[i],
+            distanceText: el.status === "OK" ? el.distance.text : "N/A",
+            distanceValue: el.status === "OK" ? el.distance.value : Infinity,
+            durationText: el.status === "OK" ? el.duration.text : "N/A",
+          });
         }
-        const destination = results[0].geometry.location;
 
-        calculateForGroup(TRANSPORT_UNITS, "results-transport");
-        calculateForGroup(QRV_UNITS, "results-qrv");
+        results.sort((a, b) => a.distanceValue - b.distanceValue);
+        renderResults(results, tableId);
+      }
+    );
+  }
 
-        function calculateForGroup(units, tableId) {
-          const origins = units.map(u => u.address);
+  /* ------------------------- RENDERING ------------------------- */
 
-          distanceMatrix.getDistanceMatrix(
-            {
-              origins,
-              destinations: [destination],
-              travelMode: google.maps.TravelMode.DRIVING,
-              unitSystem: google.maps.UnitSystem.IMPERIAL
-            },
-            (response, matrixStatus) => {
-              if (matrixStatus !== "OK") return;
+  function renderResults(results, tableId) {
+    const table = document.getElementById(tableId);
+    const tbody = table.querySelector("tbody");
 
-              const rows = response.rows;
-              const results = [];
+    tbody.innerHTML = "";
+    results.forEach((r, i) => {
+      const tr = document.createElement("tr");
+      if (i === 0) tr.classList.add("highlight");
 
-              for (let i = 0; i < rows.length; i++) {
-                const el = rows[i].elements[0];
-                results.push({
-                  unit: units[i],
-                  distanceText: el.status === "OK" ? el.distance.text : "N/A",
-                  distanceValue: el.status === "OK" ? el.distance.value : Infinity,
-                  durationText: el.status === "OK" ? el.duration.text : "N/A",
-                });
-              }
-
-              results.sort((a, b) => a.distanceValue - b.distanceValue);
-              renderResults(results, tableId);
-            }
-          );
-        }
-      });
+      tr.innerHTML = `
+        <td>${r.unit.name}</td>
+        <td>${r.unit.address}<br><span class="small">Post</span></td>
+        <td>${r.distanceText}</td>
+        <td>${r.durationText}</td>
+      `;
+      tbody.appendChild(tr);
     });
 
-    /* ------------------------- RENDERING ------------------------- */
+    table.style.display = "table";
+    statusEl.textContent = "Closest units highlighted.";
+  }
+</script>
 
-    function renderResults(results, tableId) {
-      const table = document.getElementById(tableId);
-      const tbody = table.querySelector("tbody");
-
-      tbody.innerHTML = "";
-      results.forEach((r, i) => {
-        const tr = document.createElement("tr");
-        if (i === 0) tr.classList.add("highlight");
-
-        tr.innerHTML = `
-          <td>${r.unit.name}</td>
-          <td>${r.unit.address}<br><span class="small">Post</span></td>
-          <td>${r.distanceText}</td>
-          <td>${r.durationText}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      table.style.display = "table";
-      statusEl.textContent = "Closest units highlighted.";
-    }
-  </script>
 
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD6nSsnOuLe5-BBep0DnfkxaXkPrTtYCM&callback=initMapsServices"></script>
 </body>
