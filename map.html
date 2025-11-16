@@ -191,7 +191,7 @@
     // Local per-browser counter key
     const LOCAL_API_COUNT_KEY = "googleApiCallCount";
 
-    // Cloudflare Worker base URL (CHANGE THIS to your actual worker URL)
+    // Cloudflare Worker base URL
     const WORKER_BASE_URL = "https://api.sndjy.us";
 
     /* ------------------------- HARD-CODED UNITS ------------------------- */
@@ -251,11 +251,19 @@
     function incrementGlobalApiCount() {
       if (!WORKER_BASE_URL) return;
       try {
-        fetch(`${WORKER_BASE_URL}/api/increment`, { method: "POST" })
-          .catch(err => console.warn("Global counter increment failed:", err));
+        fetch(`${WORKER_BASE_URL}/api/increment`, {
+          method: "POST",
+          mode: "cors",
+        }).catch(err => console.warn("Global counter increment failed:", err));
       } catch (e) {
         console.warn("Global counter error:", e);
       }
+    }
+
+    // Helper: bump both local + global once per search
+    function bumpCounters() {
+      incrementLocalApiCount();
+      incrementGlobalApiCount();
     }
 
     /* ------------------------- GOOGLE SERVICES ------------------------- */
@@ -285,9 +293,8 @@
 
       statusEl.textContent = "Geocoding address and calculating distances...";
 
-      // Count the geocode request (local + global)
-      incrementLocalApiCount();
-      incrementGlobalApiCount();
+      // ✅ Count ONE “usage” per address lookup
+      bumpCounters();
 
       geocoder.geocode({ address }, (results, status) => {
         if (status !== "OK" || !results || !results.length) {
@@ -304,10 +311,7 @@
     function calculateForGroup(units, tableId, destination) {
       const origins = units.map(u => u.address);
 
-      // Count each Distance Matrix request
-      incrementLocalApiCount();
-      incrementGlobalApiCount();
-
+      // We are NOT counting here anymore, only once per search above
       distanceMatrix.getDistanceMatrix(
         {
           origins,
@@ -362,6 +366,10 @@
     }
   </script>
 
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD6nSsnOuLe5-BBep0DnfkxaXkPrTtYCM&callback=initMapsServices"></script>
+  <script
+    async
+    defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD6nSsnOuLe5-BBep0DnfkxaXkPrTtYCM&callback=initMapsServices">
+  </script>
 </body>
 </html>
