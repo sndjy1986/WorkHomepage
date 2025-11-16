@@ -9,220 +9,229 @@
   <link rel="stylesheet" href="css/main.css">
   <title>Work Homepage</title>
 
-<style>
-  :root {
-    --text-color: #f5f0f0;
-    --link-color: #0066cc;
-    --bg-url: url('background.jpg');
-  }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: auto; /* restored page scroll */
-  }
-
-  body {
-    position: relative;
-    min-height: 100svh;
-    min-height: 100dvh;
-    padding-top: 50px; /* space for ticker */
-    transition: padding-top 0.3s ease;
-    background: none; /* disable static background */
-  }
-
-  /* Full-viewport blurred background */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: var(--bg-url) center / cover no-repeat;
-    filter: blur(20px);
-    transform: translateZ(0) scale(1.06);
-    transform-origin: center;
-    will-change: transform;
-    z-index: -1;
-  }
-
-  body.alert-active {
-    padding-top: 100px;
-  }
-
-  /* Main fits within the viewport below the ticker */
-  main {
-    position: relative !important;
-    background-color: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(20px);
-    border-radius: 0px;
-    height: calc(100vh - 50px - 0px); /* viewport minus ticker minus margins */
-    margin: 0px; /* breathing room */
-    overflow: hidden; /* prevent inner scrollbars */
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    box-sizing: border-box;
-  }
-
-  /* Content that will be scaled to fit */
-  #traichu {
-    transform-origin: top center; /* scale from top */
-    will-change: transform;
-  }
-
-  #greeting {
-    text-align: center;
-    font-size: 2.5em;
-    font-weight: bold;
-    color: white;
-    text-shadow: 2px 2px 4px #000000;
-    margin-bottom: -10px;
-  }
-
-  #dock ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    height: 10px;
-  }
-
-  #dock li {
-    margin: 0 10px;
-  }
-
-  #dock li a {
-    display: inline-block;
-    transition: transform 0.2s ease-out;
-  }
-
-  #dock li img {
-    width: 50px;
-    height: 50px;
-    vertical-align: middle;
-  }
-
-  #dock li a:hover {
-    transform: scale(1.3) translateY(-10px);
-  }
-
-  @media (prefers-color-scheme: dark) {
+  <style>
     :root {
-      --text-color: #ffffff;
-      --link-color: #66b3ff;
+      --text-color: #f5f0f0;
+      --link-color: #0066cc;
+      --bg-url: url('background.jpg');
     }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: auto; /* restored page scroll */
+    }
+
+    body {
+      position: relative;
+      min-height: 100svh;
+      min-height: 100dvh;
+      padding-top: 50px; /* space for ticker */
+      transition: padding-top 0.3s ease;
+      background: none; /* disable static background */
+    }
+
+    /* Full-viewport blurred background */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: var(--bg-url) center / cover no-repeat;
+      filter: blur(20px);
+      transform: translateZ(0) scale(1.06);
+      transform-origin: center;
+      will-change: transform;
+      z-index: -1;
+    }
+
+    body.alert-active {
+      padding-top: 100px;
+    }
+
+    /* Main fits within the viewport below the ticker */
     main {
+      position: relative !important;
       background-color: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px);
+      border-radius: 0px;
+      height: calc(100vh - 50px - 0px); /* viewport minus ticker minus margins */
+      margin: 0px; /* breathing room */
+      overflow: hidden; /* prevent inner scrollbars */
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      box-sizing: border-box;
     }
-  }
 
-  /* News Ticker (blur fixed & translucent) */
-  #news-ticker {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 50px;
-    background: rgba(0, 0, 0, 0.4); /* translucent so backdrop blur shows */
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    color: #fff;
-    overflow: hidden;
-    z-index: 9999;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    transition: top 0.3s ease;
-  }
+    /* Content that will be scaled to fit */
+    #traichu {
+      transform-origin: top center; /* scale from top */
+      will-change: transform;
+    }
 
-  body.alert-active #news-ticker {
-    top: 55px;
-  }
+    #greeting {
+      text-align: center;
+      font-size: 2.5em;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px #000000;
+      margin-bottom: -10px;
+    }
 
-  #news-content {
-    position: absolute;
-    white-space: nowrap;
-    line-height: 50px;
-    font-size: 16px;
-    font-weight: lighter;
-    -webkit-transform: translateZ(0);
-    backface-visibility: hidden;
-    animation-name: scroll-left;
-    animation-duration: 150s;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    will-change: transform;
-  }
+    /* API usage line under greeting */
+    #api-usage {
+      font-size: 0.8rem;
+      color: var(--text-color);
+      text-align: center;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
 
-  @keyframes scroll-left {
-    0% { transform: translateX(100vw); }
-    100% { transform: translateX(-100%); }
-  }
+    #dock ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 10px;
+    }
 
-  #news-content a {
-    color: #fff;
-    text-decoration: none;
-    margin-right: 80px;
-  }
+    #dock li {
+      margin: 0 10px;
+    }
 
-  #news-content a:hover {
-    text-decoration: underline;
-  }
+    #dock li a {
+      display: inline-block;
+      transition: transform 0.2s ease-out;
+    }
 
-  /* Search bar */
-  #search {
-    display: flex;
-    justify-content: center;
-    margin: 20px auto;
-  }
+    #dock li img {
+      width: 50px;
+      height: 50px;
+      vertical-align: middle;
+    }
 
-  #search .search-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* width is set dynamically in JS to match #dock ul width */
-    max-width: 95vw;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    overflow: hidden;
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
-  }
+    #dock li a:hover {
+      transform: scale(1.3) translateY(-10px);
+    }
 
-  #search .search-container input#q {
-    flex: 1;
-    background: transparent;
-    color: white;
-    font-size: 18px;
-    padding: 10px 15px;
-    border: none;
-    outline: none;
-  }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-color: #ffffff;
+        --link-color: #66b3ff;
+      }
+      main {
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+    }
 
-  #search .search-container input#q::placeholder {
-    color: #bbb;
-  }
+    /* News Ticker (blur fixed & translucent) */
+    #news-ticker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background: rgba(0, 0, 0, 0.4); /* translucent so backdrop blur shows */
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      color: #fff;
+      overflow: hidden;
+      z-index: 9999;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      transition: top 0.3s ease;
+    }
 
-  #search .search-container button {
-    background: none;
-    border: none;
-    color: #66b3ff;
-    font-size: 22px;
-    cursor: pointer;
-    padding: 0 15px;
-    transition: color 0.2s ease;
-  }
+    body.alert-active #news-ticker {
+      top: 55px;
+    }
 
-  #search .search-container button:hover {
-    color: #99ccff;
-  }
+    #news-content {
+      position: absolute;
+      white-space: nowrap;
+      line-height: 50px;
+      font-size: 16px;
+      font-weight: lighter;
+      -webkit-transform: translateZ(0);
+      backface-visibility: hidden;
+      animation-name: scroll-left;
+      animation-duration: 150s;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      will-change: transform;
+    }
 
-  #search .search-container:focus-within {
-    box-shadow: 0 0 12px rgba(102,179,255,0.7);
-    border-color: #66b3ff;
-  }
-</style>
+    @keyframes scroll-left {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    #news-content a {
+      color: #fff;
+      text-decoration: none;
+      margin-right: 80px;
+    }
+
+    #news-content a:hover {
+      text-decoration: underline;
+    }
+
+    /* Search bar */
+    #search {
+      display: flex;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    #search .search-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* width is set dynamically in JS to match #dock ul width */
+      max-width: 95vw;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    #search .search-container input#q {
+      flex: 1;
+      background: transparent;
+      color: white;
+      font-size: 18px;
+      padding: 10px 15px;
+      border: none;
+      outline: none;
+    }
+
+    #search .search-container input#q::placeholder {
+      color: #bbb;
+    }
+
+    #search .search-container button {
+      background: none;
+      border: none;
+      color: #66b3ff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 0 15px;
+      transition: color 0.2s ease;
+    }
+
+    #search .search-container button:hover {
+      color: #99ccff;
+    }
+
+    #search .search-container:focus-within {
+      box-shadow: 0 0 12px rgba(102,179,255,0.7);
+      border-color: #66b3ff;
+    }
+  </style>
 </head>
 
 <body>
@@ -242,6 +251,7 @@
       <h1 class="sr-only">Joey's Homepage</h1>
 
       <div id="greeting"></div>
+      <div id="api-usage"></div>
 
       <nav id="dock">
         <ul>
@@ -254,7 +264,6 @@
           <li><a href="https://work.sndjy.us/camera" title="2X2 DOT Camera" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/Camera.png" alt="Camera's"></a></li>
           <li><a href="https://chatgpt.com/" title="Chat GPT" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/netshow_notransm.ico" alt="Chat GPT"></a></li>
           <li><a href="https://work.sndjy.us/map.html" title="Map Distance" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/keys.ico" alt="Map Distance"></a></li>
-          
         </ul>
       </nav>
 
@@ -284,16 +293,17 @@
           <li><a href="https://forms.microsoft.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9Zi2FaRW6gaHhKjeF02t2Aq8tURFAwVDVVUEVVRzZRODNTNkgyUFJNMDBHSS4u"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/2be043653580663a0484a8ae2bdaf5bd276538d7/FILE.svg" class="favicon" alt="Daily Truck Form">Daily Truck Form</a></li>
           <li><a href="https://support.priorityambulance.com/login" target="_blank"><img src="https://icons.duckduckgo.com/ip3/sndjy.us.com.ico" class="favicon" alt="Priority Support">Work Support</a></li>
           <li><a href="https://www.511sc.org/#zoom=11.5&lon=-82.5555&lat=34.5872" target="_blank"><img src="https://icons.duckduckgo.com/ip3/511sc.org.ico" class="favicon" alt="DOT Cameras">DOT Cams</a></li>
-           <li><a href="https://make.powerautomate.com/environments/Default-c59e1f66-55e2-449f-807d-eff5145f598b/home" target="_blank"><img src="https://icons.duckduckgo.com/ip3/make.powerautomate.com.ico" alt="Microsoft Flow">Microsoft Flow</a></li>
+          <li><a href="https://make.powerautomate.com/environments/Default-c59e1f66-55e2-449f-807d-eff5145f598b/home" target="_blank"><img src="https://icons.duckduckgo.com/ip3/make.powerautomate.com.ico" alt="Microsoft Flow">Microsoft Flow</a></li>
         </ul>
-    </section>
+      </section>
 
-    <section id="word-of-the-day">
-      <h2 class="sr-only">Word of the Day</h2>
-      <div id="word-container">
-        <h3 id="word-title"></h3>
-        <p id="word-definition"></p>
-      </div>
+      <section id="word-of-the-day">
+        <h2 class="sr-only">Word of the Day</h2>
+        <div id="word-container">
+          <h3 id="word-title"></h3>
+          <p id="word-definition"></p>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -305,9 +315,21 @@
       const greetingElement = document.getElementById('greeting');
       const currentHour = new Date().getHours();
 
-      const morning = ['Good Morning!', 'Rise and Shine!', "You've been summoned.", "Let's get this bread.", 'Time to make the donuts.', 'Greetings fellow morning hater.','Another day, Another Dollar.'];
-      const afternoon = ['Good Afternoon.', "Is it 5 o'clock yet?", 'Surviving another day!', 'Keep up the great work!', 'Remember that to-do list? It misses you.'];
-      const evening = ['Good Evening.', 'Time to unwind.', 'The day is over. You can stop pretending to work now.', 'Time to start your real life.', 'May your Wi-Fi be strong and your snacks plentiful.'];
+      const morning = [
+        'Good Morning!', 'Rise and Shine!', "You've been summoned.",
+        "Let's get this bread.", 'Time to make the donuts.',
+        'Greetings fellow morning hater.', 'Another day, Another Dollar.'
+      ];
+      const afternoon = [
+        'Good Afternoon.', "Is it 5 o'clock yet?", 'Surviving another day!',
+        'Keep up the great work!', 'Remember that to-do list? It misses you.'
+      ];
+      const evening = [
+        'Good Evening.', 'Time to unwind.',
+        'The day is over. You can stop pretending to work now.',
+        'Time to start your real life.',
+        'May your Wi-Fi be strong and your snacks plentiful.'
+      ];
 
       let greeting = '';
       if (currentHour < 12) greeting = morning[Math.floor(Math.random() * morning.length)];
@@ -318,10 +340,30 @@
     }
 
     /**
+     * Shows Google API usage (from map.html) based on localStorage counter.
+     */
+    function showApiUsage() {
+      const el = document.getElementById('api-usage');
+      if (!el) return;
+
+      let count = 0;
+      try {
+        count = Number(localStorage.getItem('googleApiCallCount') || '0');
+      } catch (e) {
+        console.warn('Cannot read API counter:', e);
+      }
+
+      el.textContent = `Google map requests (this browser): ${count}`;
+    }
+
+    /**
      * Sets a random background image.
      */
     function setRandomBackground() {
-      const backgrounds = ['background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png', 'background4.jpg', 'background5.jpg', 'xmas.jpg', 'PICTURE.jpg'];
+      const backgrounds = [
+        'background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png',
+        'background4.jpg', 'background5.jpg', 'xmas.jpg', 'PICTURE.jpg'
+      ];
       const chosen = `url('${backgrounds[Math.floor(Math.random() * backgrounds.length)]}')`;
       document.documentElement.style.setProperty('--bg-url', chosen);
     }
@@ -370,20 +412,22 @@
 
       fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
         .then(r => r.text())
-        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(str => new DOMParser().parseFromString(str, 'application/xml'))
         .then(data => {
-          const items = data.querySelectorAll("item");
+          const items = data.querySelectorAll('item');
           let html = '';
           items.forEach(i => {
-            const t = i.querySelector("title").textContent;
-            const l = i.querySelector("link").textContent;
+            const t = i.querySelector('title').textContent;
+            const l = i.querySelector('link').textContent;
             html += `<a href="${l}" target="_blank">🦊 ${t}</a>`;
           });
           if (!html) throw new Error('No items found');
           newsContent.innerHTML = html;
           localStorage.setItem(cacheKey, JSON.stringify({ html, timestamp: Date.now() }));
         })
-        .catch(() => newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊');
+        .catch(() => {
+          newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊';
+        });
     }
 
     /**
@@ -407,11 +451,11 @@
 
       fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://wordsmith.org/awad/rss1.xml')}`)
         .then(r => r.text())
-        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(str => new DOMParser().parseFromString(str, 'application/xml'))
         .then(data => {
-          const item = data.querySelector("item");
-          const w = item.querySelector("title").textContent;
-          const desc = item.querySelector("description").textContent;
+          const item = data.querySelector('item');
+          const w = item.querySelector('title').textContent;
+          const desc = item.querySelector('description').textContent;
           const definition = desc.split('<br>')[0].trim();
 
           title.textContent = w;
@@ -441,7 +485,10 @@
     let __resizeTimer;
     window.addEventListener('resize', () => {
       clearTimeout(__resizeTimer);
-      __resizeTimer = setTimeout(() => { sizeSearchToNav(); fitToViewport(); }, 120);
+      __resizeTimer = setTimeout(() => {
+        sizeSearchToNav();
+        fitToViewport();
+      }, 120);
     });
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -451,6 +498,7 @@
       loadWordOfTheDay();
       sizeSearchToNav();
       fitToViewport(); // ensure all content fits without scrolling
+      showApiUsage();  // show Google API count from map.html
       setInterval(loadNewsFeed, 900000); // 15 minutes
     });
   </script>
