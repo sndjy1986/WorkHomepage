@@ -359,10 +359,10 @@
         const res = await fetch(`${WORKER_BASE_URL}/api/get`);
         if (!res.ok) throw new Error("Bad response");
         const data = await res.json();
-        el.textContent = `Google map requests (global): ${data.count}`;
+        el.textContent = `Google API requests (Total): ${data.count}`;
       } catch (e) {
         console.warn("Unable to load global counter:", e);
-        el.textContent = "Google map requests (global): unavailable";
+        el.textContent = "Google API Requests (Total): unavailable";
       }
     }
 
