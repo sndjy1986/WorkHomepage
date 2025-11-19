@@ -121,8 +121,50 @@
       color: #a0a0a0;
     }
 
-    #hidden-map {
-      display: none;
+    /* NEW: View toggle buttons */
+    .view-toggle {
+      display: inline-flex;
+      border-radius: 999px;
+      background: #11131b;
+      padding: 0.18rem;
+      margin: 1rem 0 1.25rem;
+    }
+
+    .view-toggle button {
+      background: transparent;
+      border-radius: 999px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .view-toggle button.active {
+      background: #2c82ff;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .view-toggle button:not(.active):hover {
+      background: #181b25;
+    }
+
+    /* NEW: Map container */
+    #map-view {
+      display: none; /* hidden by default, list view is default */
+    }
+
+    #map-container {
+      width: 100%;
+      min-height: 420px;
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
@@ -145,10 +187,16 @@
       <button type="submit">Check Distances</button>
     </form>
     <div class="status" id="status"></div>
+
+    <!-- NEW: List / Map toggle -->
+    <div class="view-toggle">
+      <button type="button" id="btn-list" class="active">List View</button>
+      <button type="button" id="btn-map">Map View</button>
+    </div>
   </div>
 
-  <div class="layout">
-
+  <!-- LIST VIEW (DEFAULT) -->
+  <div class="layout" id="list-view">
     <!-- TRANSPORT TRUCKS -->
     <div class="card">
       <h2>Transport Trucks</h2>
@@ -180,10 +228,21 @@
         <tbody></tbody>
       </table>
     </div>
-
   </div>
 
-  <div id="hidden-map"></div>
+  <!-- NEW: MAP VIEW -->
+  <div class="card" id="map-view">
+    <h2>Map View</h2>
+    <p class="small">
+      Call location and unit posts displayed on the map. Run a search, then switch to Map View.
+    </p>
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- (no longer "hidden"; we now use #map instead) -->
+  <div id="hidden-map" style="display:none;"></div>
 
   <script>
     /* ------------------------- SETTINGS ------------------------- */
@@ -271,14 +330,50 @@
     let geocoder;
     let distanceMatrix;
 
+    // NEW: map + markers state
+    let map;                  // google.maps.Map
+    let mapMarkers = [];      // array of google.maps.Marker
+    let lastDestinationLatLng = null;
+    let lastTransportResults = [];
+    let lastQrvResults = [];
+
     function initMapsServices() {
       geocoder = new google.maps.Geocoder();
       distanceMatrix = new google.maps.DistanceMatrixService();
+      // Map will be lazily created on first "Map View" use after a search
     }
 
     const form = document.getElementById("address-form");
     const addressInput = document.getElementById("address-input");
     const statusEl = document.getElementById("status");
+
+    const listViewEl = document.getElementById("list-view");
+    const mapViewEl = document.getElementById("map-view");
+    const btnList = document.getElementById("btn-list");
+    const btnMap = document.getElementById("btn-map");
+
+    /* ------------------------- VIEW TOGGLE (NEW) ------------------------- */
+
+    btnList.addEventListener("click", () => {
+      btnList.classList.add("active");
+      btnMap.classList.remove("active");
+      listViewEl.style.display = "flex";
+      mapViewEl.style.display = "none";
+    });
+
+    btnMap.addEventListener("click", () => {
+      btnMap.classList.add("active");
+      btnList.classList.remove("active");
+      listViewEl.style.display = "none";
+      mapViewEl.style.display = "block";
+
+      // Only try to draw if we have a destination (i.e., a search was done)
+      if (lastDestinationLatLng) {
+        initOrUpdateMap();
+      } else {
+        statusEl.textContent = "Run a distance check first, then view the map.";
+      }
+    });
 
     /* ------------------------- EVENT HANDLER ------------------------- */
 
@@ -302,16 +397,20 @@
           return;
         }
         const destination = results[0].geometry.location;
+        lastDestinationLatLng = destination;
 
-        calculateForGroup(TRANSPORT_UNITS, "results-transport", destination);
-        calculateForGroup(QRV_UNITS, "results-qrv", destination);
+        // Reset stored results
+        lastTransportResults = [];
+        lastQrvResults = [];
+
+        calculateForGroup(TRANSPORT_UNITS, "results-transport", destination, "transport");
+        calculateForGroup(QRV_UNITS, "results-qrv", destination, "qrv");
       });
     });
 
-    function calculateForGroup(units, tableId, destination) {
+    function calculateForGroup(units, tableId, destination, groupKey) {
       const origins = units.map(u => u.address);
 
-      // We are NOT counting here anymore, only once per search above
       distanceMatrix.getDistanceMatrix(
         {
           origins,
@@ -337,11 +436,23 @@
 
           results.sort((a, b) => a.distanceValue - b.distanceValue);
           renderResults(results, tableId);
+
+          // Store for map rendering
+          if (groupKey === "transport") {
+            lastTransportResults = results;
+          } else if (groupKey === "qrv") {
+            lastQrvResults = results;
+          }
+
+          // If user is already on map view, refresh the map with new data
+          if (mapViewEl.style.display === "block" && lastDestinationLatLng) {
+            initOrUpdateMap();
+          }
         }
       );
     }
 
-    /* ------------------------- RENDERING ------------------------- */
+    /* ------------------------- RENDERING: LIST ------------------------- */
 
     function renderResults(results, tableId) {
       const table = document.getElementById(tableId);
@@ -363,6 +474,81 @@
 
       table.style.display = "table";
       statusEl.textContent = "Closest units highlighted.";
+    }
+
+    /* ------------------------- RENDERING: MAP (NEW) ------------------------- */
+
+    function clearMapMarkers() {
+      mapMarkers.forEach(m => m.setMap(null));
+      mapMarkers = [];
+    }
+
+    function initOrUpdateMap() {
+      const mapDiv = document.getElementById("map");
+      if (!map) {
+        map = new google.maps.Map(mapDiv, {
+          center: lastDestinationLatLng,
+          zoom: 10,
+          mapTypeControl: false,
+          streetViewControl: false,
+        });
+      }
+
+      // Ensure map resizes properly when switching views
+      google.maps.event.trigger(map, "resize");
+      map.setCenter(lastDestinationLatLng);
+
+      clearMapMarkers();
+
+      const bounds = new google.maps.LatLngBounds();
+
+      // Destination marker
+      const destMarker = new google.maps.Marker({
+        position: lastDestinationLatLng,
+        map,
+        title: "Call Location",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "#ff5252",
+          fillOpacity: 1,
+          strokeWeight: 1,
+          strokeColor: "#ffffff"
+        }
+      });
+      mapMarkers.push(destMarker);
+      bounds.extend(lastDestinationLatLng);
+
+      const geocodeUnitAddresses = (results, color) => {
+        if (!results || !results.length) return;
+        results.forEach(r => {
+          geocoder.geocode({ address: r.unit.address }, (res, status) => {
+            if (status === "OK" && res[0]) {
+              const loc = res[0].geometry.location;
+              const marker = new google.maps.Marker({
+                position: loc,
+                map,
+                title: `${r.unit.name} - ${r.distanceText} (${r.durationText})`,
+                icon: {
+                  path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+                  scale: 5,
+                  fillColor: color,
+                  fillOpacity: 1,
+                  strokeWeight: 1,
+                  strokeColor: "#000000"
+                }
+              });
+              mapMarkers.push(marker);
+              bounds.extend(loc);
+              map.fitBounds(bounds);
+            }
+          });
+        });
+      };
+
+      // Transport = one color, QRV = another
+      geocodeUnitAddresses(lastTransportResults, "#2c82ff"); // blue-ish
+      geocodeUnitAddresses(lastQrvResults, "#00d68f");       // green-ish
     }
   </script>
 
