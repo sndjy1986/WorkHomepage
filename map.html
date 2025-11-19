@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Dispatch Distance Checker</title>
+  <title>Unit Distance Checker + Map Routes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -16,17 +16,10 @@
     h1 {
       margin-bottom: 0.5rem;
     }
-
     .subtitle {
       margin-bottom: 1.5rem;
       color: #c7c7c7;
       font-size: 0.95rem;
-    }
-
-    .layout {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
     }
 
     .card {
@@ -34,116 +27,92 @@
       border-radius: 0.75rem;
       padding: 1rem 1.25rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      flex: 1 1 380px;
-      min-width: 360px;
+      margin-bottom: 1.25rem;
     }
 
     form {
       display: flex;
-      flex-wrap: wrap;
       gap: 0.75rem;
-      margin-bottom: 1rem;
+      flex-wrap: wrap;
     }
 
     input[type="text"] {
-      flex: 1 1 260px;
+      flex: 1;
       padding: 0.6rem 0.8rem;
       border-radius: 0.5rem;
       border: 1px solid #333;
       background: #0e1017;
       color: #f5f5f5;
     }
-
-    input[type="text"]::placeholder {
-      color: #777;
-    }
+    input::placeholder { color: #777; }
 
     button {
       padding: 0.6rem 1.1rem;
       border-radius: 0.5rem;
+      background: #2c82ff;
+      color: #fff;
+      font-weight: bold;
       border: none;
       cursor: pointer;
-      font-weight: 600;
-      background: #2c82ff;
-      color: white;
-      transition: 0.1s;
-      white-space: nowrap;
+      transition: 0.15s;
     }
+
+    button:hover { background: #1f6ad4; }
 
     .status {
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-      min-height: 1.2em;
+      margin-top: 0.75rem;
+      min-height: 1.2rem;
     }
 
-    /* View Toggle Buttons */
     .view-toggle {
-      display: inline-flex;
-      border-radius: 999px;
+      margin: 1rem 0;
       background: #11131b;
-      padding: 0.18rem;
-      margin: 1rem 0 1.25rem;
+      border-radius: 999px;
+      display: inline-flex;
+      padding: 0.2rem;
     }
 
     .view-toggle button {
       background: transparent;
       border-radius: 999px;
-      padding: 0.45rem 0.9rem;
+      padding: 0.4rem 1rem;
       font-size: 0.85rem;
-      font-weight: 600;
       border: none;
+      color: #fff;
     }
 
     .view-toggle button.active {
       background: #2c82ff;
     }
 
-    #map-view {
-      display: none;
+    #list-view { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    #map-view { display: none; }
+
+    table {
+      width: 100%; margin-top: 0.75rem; border-collapse: collapse; font-size: 0.9rem;
     }
+    th {
+      text-align: left;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #333;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #c7c7c7;
+    }
+    td { padding: 0.45rem 0.25rem; }
+    tr.highlight td { background: rgba(44,130,255,0.15); }
 
     #map {
       width: 100%;
-      height: 420px;
+      height: 450px;
       border-radius: 0.75rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    th, td {
-      padding: 0.55rem 0.4rem;
-      text-align: left;
-    }
-
-    th {
-      border-bottom: 1px solid #333;
-      color: #d7d7d7;
-      font-weight: 600;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-    }
-
-    tr.highlight td {
-      background: rgba(44,130,255,0.12);
-    }
-
-    .small {
-      font-size: 0.8rem;
-      color: #aaa;
     }
   </style>
 </head>
 
 <body>
   <h1>Unit Distance Checker</h1>
-  <div class="subtitle">
-    Enter a call address to see driving distance & ETA from both Transport Trucks and QRV Paramedics.
-  </div>
+  <div class="subtitle">Driving distance, ETA, and map routes from all EMS units.</div>
 
   <!-- INPUT CARD -->
   <div class="card">
@@ -151,10 +120,9 @@
       <input id="address-input" type="text" placeholder="5531 Airport Rd. Anderson, SC 29625" />
       <button type="submit">Check Distances</button>
     </form>
-
     <div id="status" class="status"></div>
 
-    <!-- VIEW SWITCH -->
+    <!-- TOGGLE -->
     <div class="view-toggle">
       <button id="btn-list" class="active">List View</button>
       <button id="btn-map">Map View</button>
@@ -162,9 +130,8 @@
   </div>
 
   <!-- LIST VIEW -->
-  <div class="layout" id="list-view">
-
-    <div class="card">
+  <div id="list-view">
+    <div class="card" style="flex:1;">
       <h2>Transport Trucks</h2>
       <table id="results-transport" style="display:none;">
         <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
@@ -172,26 +139,27 @@
       </table>
     </div>
 
-    <div class="card">
-      <h2>QRV - Paramedics</h2>
+    <div class="card" style="flex:1;">
+      <h2>QRV Paramedics</h2>
       <table id="results-qrv" style="display:none;">
         <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
-
   </div>
 
   <!-- MAP VIEW -->
-  <div class="card" id="map-view">
+  <div id="map-view" class="card">
     <h2>Map View</h2>
-    <p class="small">Call location + all units with clickable markers.</p>
+    <p style="color:#aaa;font-size:0.85rem;">Call location + units + routes</p>
     <div id="map"></div>
   </div>
 
 
 <script>
-/* --------------------- UNIT LISTS --------------------- */
+/* ======================================================
+   UNIT LISTS
+====================================================== */
 
 const TRANSPORT_UNITS = [
   { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
@@ -199,62 +167,64 @@ const TRANSPORT_UNITS = [
   { name: "Med-2", address: "135 HWY 413, Belton SC 29627" },
   { name: "Med-3", address: "3228 S Main St, Anderson, SC 29624" },
   { name: "Med-4", address: "902 Anderson Dr. Williamston SC 29697" },
-  { name: "Med-5", address: "2850 Concord Rd Anderson SC, 29621" },
-  { name: "Med-6", address: "9711 SC-81, Iva, SC 29655" },
-  { name: "Med-7", address: "108 N Depot St, Pendleton, SC 29670" },
-  { name: "Med-8", address: "8508 SC-24, Townville, SC 29689" },
-  { name: "Med-9", address: "103 Construction Way. Anderson, SC 29625" },
-  { name: "Med-10", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-11", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-12", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-13", address: "6 Gaines Rd, Honea Path, SC 29654" },
-  { name: "Med-14", address: "10600 Anderson Rd, Easley, SC 29642" },
-  { name: "Med-15", address: "2209 SC-86, Piedmont, SC 29673" },
-  { name: "Med-16", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-17", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-18", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-19", address: "1009 N Fant St. Anderson, SC 29625" },
+  { name: "Med-5", address: "2850 Concord Rd Anderson SC 29621" },
+  { name: "Med-6", address: "9711 SC-81, Iva SC 29655" },
+  { name: "Med-7", address: "108 N Depot St Pendleton SC 29670" },
+  { name: "Med-8", address: "8508 SC-24 Townville SC 29689" },
+  { name: "Med-9", address: "103 Construction Way Anderson SC 29625" },
+  { name: "Med-10", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-11", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-12", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-13", address: "6 Gaines Rd Honea Path SC 29654" },
+  { name: "Med-14", address: "10600 Anderson Rd Easley SC 29642" },
+  { name: "Med-15", address: "2209 SC-86 Piedmont SC 29673" },
+  { name: "Med-16", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-17", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-18", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-19", address: "1009 N Fant St Anderson SC 29625" },
 ];
 
 const QRV_UNITS = [
-  { name: "A-5",  address: "103 Construction Way. Anderson, SC 29625" },
-  { name: "A-8",  address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "ALS-2", address: "5321 US-76, Pendleton, SC 29670" },
-  { name: "ALS-3", address: "3228 S Main St, Anderson, SC 29624" },
-  { name: "ALS-4", address: "7715 SC-81, Starr, SC 29684" },
-  { name: "ALS-6", address: "101 Main St, Pelzer, SC 29669" },
-  { name: "ALS-7", address: "10600 Anderson Rd, Easley, SC 29642" },
-  { name: "ALS-11", address: "5125 Dobbins Bridge Rd, Anderson, SC 29626" },
-  { name: "ALS-12", address: "1 Holmes St, Belton SC, 29627" },
-  { name: "ALS-17", address: "316 Hattons Ford Rd, Townville, SC 29689" },
-  { name: "ALS-19", address: "1058 Martin Rd, Anderson, SC 29621" },
-  { name: "ALS-21", address: "1118 Trail Rd, Honea Path, SC 29654" },
-  { name: "ALS-23", address: "1416 Due West Hwy, Anderson, SC 29621" },
-  { name: "ALS-24", address: "2209 SC-86, Piedmont, SC 29673" },
-  { name: "ALS-27", address: "3738 SC-187, Anderson, SC 29626" },
+  { name: "A-5",  address: "103 Construction Way Anderson SC 29625" },
+  { name: "A-8",  address: "1009 N Fant St Anderson SC 29625" },
+  { name: "ALS-2", address: "5321 US-76 Pendleton SC 29670" },
+  { name: "ALS-3", address: "3228 S Main St Anderson SC 29624" },
+  { name: "ALS-4", address: "7715 SC-81 Starr SC 29684" },
+  { name: "ALS-6", address: "101 Main St Pelzer SC 29669" },
+  { name: "ALS-7", address: "10600 Anderson Rd Easley SC 29642" },
+  { name: "ALS-11", address: "5125 Dobbins Bridge Rd Anderson SC 29626" },
+  { name: "ALS-12", address: "1 Holmes St Belton SC 29627" },
+  { name: "ALS-17", address: "316 Hattons Ford Rd Townville SC 29689" },
+  { name: "ALS-19", address: "1058 Martin Rd Anderson SC 29621" },
+  { name: "ALS-21", address: "1118 Trail Rd Honea Path SC 29654" },
+  { name: "ALS-23", address: "1416 Due West Hwy Anderson SC 29621" },
+  { name: "ALS-24", address: "2209 SC-86 Piedmont SC 29673" },
+  { name: "ALS-27", address: "3738 SC-187 Anderson SC 29626" }
 ];
 
-
-/* --------------------- GOOGLE SERVICES --------------------- */
+/* ======================================================
+   GOOGLE SERVICES
+====================================================== */
 
 let geocoder;
 let distanceMatrix;
 
 let map;
 let markers = [];
+let directionsRenderers = [];
 let lastDestination = null;
+
 let transportResults = [];
 let qrvResults = [];
 
-
-/* Init Google Services */
 function initMapsServices() {
   geocoder = new google.maps.Geocoder();
   distanceMatrix = new google.maps.DistanceMatrixService();
 }
 
-
-/* --------------------- VIEW TOGGLE --------------------- */
+/* ======================================================
+   VIEW TOGGLE
+====================================================== */
 
 const btnList = document.getElementById("btn-list");
 const btnMap = document.getElementById("btn-map");
@@ -262,23 +232,23 @@ const listView = document.getElementById("list-view");
 const mapView = document.getElementById("map-view");
 
 btnList.onclick = () => {
-  btnList.classList.add("active");
-  btnMap.classList.remove("active");
   listView.style.display = "flex";
   mapView.style.display = "none";
+  btnList.classList.add("active");
+  btnMap.classList.remove("active");
 };
 
 btnMap.onclick = () => {
-  btnMap.classList.add("active");
-  btnList.classList.remove("active");
   listView.style.display = "none";
   mapView.style.display = "block";
-
+  btnMap.classList.add("active");
+  btnList.classList.remove("active");
   setTimeout(() => initOrUpdateMap(), 50);
 };
 
-
-/* --------------------- ADDRESS SEARCH --------------------- */
+/* ======================================================
+   ADDRESS SEARCH + CALCULATIONS
+====================================================== */
 
 document.getElementById("address-form").addEventListener("submit", e => {
   e.preventDefault();
@@ -286,14 +256,14 @@ document.getElementById("address-form").addEventListener("submit", e => {
   const status = document.getElementById("status");
 
   if (!address) {
-    status.textContent = "Please enter a valid address.";
+    status.textContent = "Enter an address.";
     return;
   }
 
-  status.textContent = "Finding address...";
+  status.textContent = "Locating address...";
 
-  geocoder.geocode({ address }, (results, statusCode) => {
-    if (statusCode !== "OK") {
+  geocoder.geocode({ address }, (results, code) => {
+    if (code !== "OK") {
       status.textContent = "Address not found.";
       return;
     }
@@ -305,28 +275,29 @@ document.getElementById("address-form").addEventListener("submit", e => {
 
     calculateGroup(TRANSPORT_UNITS, "results-transport", transportResults);
     calculateGroup(QRV_UNITS, "results-qrv", qrvResults);
+
+    status.textContent = "Closest units highlighted.";
   });
 });
 
+/* ======================================================
+   DISTANCE MATRIX
+====================================================== */
 
-/* --------------------- DISTANCE CALCULATIONS --------------------- */
-
-function calculateGroup(units, tableId, storeArray) {
+function calculateGroup(units, tableId, store) {
   distanceMatrix.getDistanceMatrix({
     origins: units.map(u => u.address),
     destinations: [lastDestination],
     travelMode: google.maps.TravelMode.DRIVING,
     unitSystem: google.maps.UnitSystem.IMPERIAL
-  }, (res, stat) => {
-
-    if (stat !== "OK") return;
+  }, (res, status) => {
+    if (status !== "OK") return;
 
     const rows = res.rows;
     const results = [];
 
     for (let i = 0; i < rows.length; i++) {
       const el = rows[i].elements[0];
-
       results.push({
         unit: units[i],
         distanceText: el.status === "OK" ? el.distance.text : "N/A",
@@ -336,16 +307,14 @@ function calculateGroup(units, tableId, storeArray) {
     }
 
     results.sort((a, b) => a.distanceValue - b.distanceValue);
-
-    storeArray.length = 0;
-    storeArray.push(...results);
-
+    store.push(...results);
     renderTable(results, tableId);
   });
 }
 
-
-/* --------------------- RENDER LIST TABLE --------------------- */
+/* ======================================================
+   RENDER TABLE
+====================================================== */
 
 function renderTable(results, tableId) {
   const table = document.getElementById(tableId);
@@ -355,26 +324,29 @@ function renderTable(results, tableId) {
   results.forEach((r, i) => {
     const row = document.createElement("tr");
     if (i === 0) row.classList.add("highlight");
-
     row.innerHTML = `
       <td>${r.unit.name}</td>
       <td>${r.unit.address}</td>
       <td>${r.distanceText}</td>
-      <td>${r.durationText}</td>
-    `;
-
+      <td>${r.durationText}</td>`;
     tbody.appendChild(row);
   });
 
   table.style.display = "table";
 }
 
-
-/* --------------------- MAP + MARKERS --------------------- */
+/* ======================================================
+   MAP + ROUTES
+====================================================== */
 
 function clearMarkers() {
   markers.forEach(m => m.setMap(null));
   markers = [];
+}
+
+function clearRoutes() {
+  directionsRenderers.forEach(r => r.setMap(null));
+  directionsRenderers = [];
 }
 
 function initOrUpdateMap() {
@@ -385,47 +357,52 @@ function initOrUpdateMap() {
   map = new google.maps.Map(mapDiv, {
     center: lastDestination,
     zoom: 11,
-    mapTypeControl: false,
-    streetViewControl: false
+    streetViewControl: false,
+    mapTypeControl: false
   });
 
   clearMarkers();
+  clearRoutes();
+
   const bounds = new google.maps.LatLngBounds();
 
-  /* Add Call Location Marker */
+  /* CALL LOCATION MARKER */
   const callMarker = new google.maps.Marker({
     position: lastDestination,
     map,
     title: "Call Location",
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
-      scale: 8,
+      scale: 9,
       fillColor: "#ff4444",
       fillOpacity: 1,
       strokeColor: "#fff",
-      strokeWeight: 1,
+      strokeWeight: 2
     }
   });
-
   markers.push(callMarker);
   bounds.extend(lastDestination);
 
-  /* Add all unit markers */
-  addUnitMarkers(transportResults, "#2c82ff");  // blue
-  addUnitMarkers(qrvResults, "#00d68f");       // green
+  plotUnitsWithRoutes(transportResults, "#2c82ff");  // blue
+  plotUnitsWithRoutes(qrvResults, "#00d68f");       // green
 
-  map.fitBounds(bounds);
+  setTimeout(() => map.fitBounds(bounds), 400);
 
-  function addUnitMarkers(results, color) {
+  /* INTERNAL: PLOT ROUTES + MARKERS */
+  function plotUnitsWithRoutes(results, color) {
+    const directions = new google.maps.DirectionsService();
+
     results.forEach(r => {
-      geocoder.geocode({ address: r.unit.address }, (res, status) => {
-        if (status !== "OK") return;
-        const loc = res[0].geometry.location;
+      geocoder.geocode({ address: r.unit.address }, (res, code) => {
+        if (code !== "OK") return;
 
+        const unitLoc = res[0].geometry.location;
+
+        /* Unit marker */
         const marker = new google.maps.Marker({
-          position: loc,
+          position: unitLoc,
           map,
-          title: `${r.unit.name}`,
+          title: r.unit.name,
           icon: {
             path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
             scale: 5,
@@ -440,27 +417,46 @@ function initOrUpdateMap() {
           content: `
             <div style="font-size:14px;">
               <strong>${r.unit.name}</strong><br>
-              ${r.unit.address}<br>
-              <hr>
+              ${r.unit.address}<br><br>
               Distance: ${r.distanceText}<br>
               ETA: ${r.durationText}
-            </div>
-          `
+            </div>`
         });
 
         marker.addListener("click", () => info.open(map, marker));
-
         markers.push(marker);
-        bounds.extend(loc);
-        map.fitBounds(bounds);
+        bounds.extend(unitLoc);
+
+        /* ROUTE */
+        directions.route({
+          origin: unitLoc,
+          destination: lastDestination,
+          travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+          if (status === "OK") {
+            const renderer = new google.maps.DirectionsRenderer({
+              map,
+              directions: result,
+              suppressMarkers: true,
+              polylineOptions: {
+                strokeColor: color,
+                strokeWeight: 4,
+                strokeOpacity: 0.85
+              }
+            });
+
+            directionsRenderers.push(renderer);
+            bounds.union(result.routes[0].bounds);
+            map.fitBounds(bounds);
+          }
+        });
       });
     });
   }
 }
 </script>
 
-<script
-  async defer
+<script async defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD6nSsnOuLe5-BBep0DnfkxaXkPrTtYCM&callback=initMapsServices">
 </script>
 
