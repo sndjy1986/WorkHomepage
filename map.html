@@ -13,9 +13,7 @@
       color: #f5f5f5;
     }
 
-    h1 {
-      margin-bottom: 0.5rem;
-    }
+    h1 { margin-bottom: 0.5rem; }
     .subtitle {
       margin-bottom: 1.5rem;
       color: #c7c7c7;
@@ -56,7 +54,6 @@
       cursor: pointer;
       transition: 0.15s;
     }
-
     button:hover { background: #1f6ad4; }
 
     .status {
@@ -71,7 +68,6 @@
       display: inline-flex;
       padding: 0.2rem;
     }
-
     .view-toggle button {
       background: transparent;
       border-radius: 999px;
@@ -80,16 +76,16 @@
       border: none;
       color: #fff;
     }
-
-    .view-toggle button.active {
-      background: #2c82ff;
-    }
+    .view-toggle button.active { background: #2c82ff; }
 
     #list-view { display: flex; gap: 1.25rem; flex-wrap: wrap; }
     #map-view { display: none; }
 
     table {
-      width: 100%; margin-top: 0.75rem; border-collapse: collapse; font-size: 0.9rem;
+      width: 100%;
+      margin-top: 0.75rem;
+      border-collapse: collapse;
+      font-size: 0.9rem;
     }
     th {
       text-align: left;
@@ -150,9 +146,7 @@
     <div class="card" style="flex:1;">
       <h2>Transport Trucks</h2>
       <table id="results-transport" style="display:none;">
-        <thead>
-          <tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr>
-        </thead>
+        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -160,9 +154,7 @@
     <div class="card" style="flex:1;">
       <h2>QRV Paramedics</h2>
       <table id="results-qrv" style="display:none;">
-        <thead>
-          <tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr>
-        </thead>
+        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -173,19 +165,19 @@
     <h2>Map View</h2>
     <p style="color:#aaa;font-size:0.85rem;">Call location + units + routes + EMS layers</p>
 
-    <!-- LAYER TOGGLES -->
+    <!-- LAYER TOGGLES (based on your folder titles) -->
     <div class="layer-toggle">
-      <label><input type="checkbox" id="toggle-hospitals" checked /> Hospitals</label>
-      <label><input type="checkbox" id="toggle-ems-posts" checked /> EMS Posts</label>
-      <label><input type="checkbox" id="toggle-qrv-posts" checked /> QRV Posts</label>
-      <label><input type="checkbox" id="toggle-transport-posts" checked /> Transport Posts</label>
-      <label><input type="checkbox" id="toggle-other" /> Other</label>
-      <label><input type="checkbox" id="toggle-station-names" /> Station Names</label>
+      <label><input type="checkbox" id="toggle-paramedic-areas" checked /> Paramedic Areas</label>
+      <label><input type="checkbox" id="toggle-posting-locations" checked /> Posting Locations</label>
+      <label><input type="checkbox" id="toggle-transport-trucks" checked /> Transport Trucks</label>
+      <label><input type="checkbox" id="toggle-transport-areas" checked /> Transport Areas</label>
+      <label><input type="checkbox" id="toggle-medshore-qrv" checked /> Medshore QRV</label>
+      <label><input type="checkbox" id="toggle-als-trucks" checked /> ALS Trucks</label>
+      <label><input type="checkbox" id="toggle-fire-departments" /> Fire Departments</label>
     </div>
 
     <div id="map"></div>
   </div>
-
 
 <script>
 /* ======================================================
@@ -196,17 +188,13 @@ async function incrementApiCounter() {
   try {
     const res = await fetch("https://api.sndjy.us/api/increment", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
-
     if (!res.ok) {
       console.error("API counter increment failed with status", res.status);
       return;
     }
-
     const data = await res.json();
     console.log("API count is now:", data.count);
   } catch (err) {
@@ -219,16 +207,17 @@ async function incrementApiCounter() {
 ====================================================== */
 
 const MAPDATA_URL =
-  "https://raw.githubusercontent.com/sndjy1986/WorkHomepage/main/mapdata.json";
+  "https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/mapdata.json";
 
-// Keys in your JSON
-const LAYER_GROUP_NAMES = {
-  hospitals: "Hospitals",
-  emsPosts: "EMS Posts",
-  qrvPosts: "QRV Posts",
-  transportPosts: "Transport Posts",
-  other: "Other",
-  stationNames: "Station Names",
+// folder title -> internal layer key
+const FOLDER_TITLE_TO_LAYER = {
+  "Paramedic Area's": "paramedicAreas",
+  "Posting Locations": "postingLocations",
+  "Transport Trucks": "transportTrucks",
+  "Transport Area's": "transportAreas",
+  "Medshore QRV": "medshoreQRV",
+  "ALS Trucks": "alsTrucks",
+  "Fire Departments": "fireDepartments",
 };
 
 const TRANSPORT_UNITS = [
@@ -287,25 +276,38 @@ let lastDestination = null;
 let transportResults = [];
 let qrvResults = [];
 
-// Mapdata + overlay management
-let mapData = null;
-
-const layerObjects = {
-  hospitals: [],
-  emsPosts: [],
-  qrvPosts: [],
-  transportPosts: [],
-  other: [],
-  stationNames: [],
+// Raw mapdata + folder index + grouped features
+let rawFeatures = [];
+let folderById = {};           // { folderId -> folderTitle }
+let layerSourceFeatures = {    // { layerKey -> [features...] }
+  paramedicAreas: [],
+  postingLocations: [],
+  transportTrucks: [],
+  transportAreas: [],
+  medshoreQRV: [],
+  alsTrucks: [],
+  fireDepartments: []
 };
 
-const layerEnabled = {
-  hospitals: true,
-  emsPosts: true,
-  qrvPosts: true,
-  transportPosts: true,
-  other: false,
-  stationNames: false,
+// Live map objects (markers/polys) per layer
+let layerObjects = {
+  paramedicAreas: [],
+  postingLocations: [],
+  transportTrucks: [],
+  transportAreas: [],
+  medshoreQRV: [],
+  alsTrucks: [],
+  fireDepartments: []
+};
+
+let layerEnabled = {
+  paramedicAreas: true,
+  postingLocations: true,
+  transportTrucks: true,
+  transportAreas: true,
+  medshoreQRV: true,
+  alsTrucks: true,
+  fireDepartments: false
 };
 
 function initMapsServices() {
@@ -313,12 +315,41 @@ function initMapsServices() {
   distanceMatrix = new google.maps.DistanceMatrixService();
 }
 
-// Fetch JSON layer data
+/* ======================================================
+   LOAD MAPDATA.JSON & BUILD FOLDER GROUPS
+====================================================== */
+
 fetch(MAPDATA_URL)
   .then(r => r.json())
   .then(data => {
-    mapData = data;
-    console.log("Map data loaded", data);
+    if (!data || !Array.isArray(data.features)) {
+      console.error("mapdata.json has unexpected structure:", data);
+      return;
+    }
+    rawFeatures = data.features;
+
+    // 1) index all folders
+    rawFeatures.forEach(f => {
+      if (f.properties && f.properties.class === "Folder") {
+        folderById[f.id] = f.properties.title;
+      }
+    });
+
+    // 2) group real features by folder title
+    rawFeatures.forEach(f => {
+      if (!f.geometry) return;
+      const props = f.properties || {};
+      const folderId = props.folderId;
+      const folderTitle = folderById[folderId];
+      if (!folderTitle) return;
+
+      const key = FOLDER_TITLE_TO_LAYER[folderTitle];
+      if (!key || !(key in layerSourceFeatures)) return;
+
+      layerSourceFeatures[key].push(f);
+    });
+
+    console.log("Layer grouping complete:", layerSourceFeatures);
     initializeLayersIfReady();
   })
   .catch(err => {
@@ -334,12 +365,13 @@ const btnMap = document.getElementById("btn-map");
 const listView = document.getElementById("list-view");
 const mapView = document.getElementById("map-view");
 
-const toggleHospitals = document.getElementById("toggle-hospitals");
-const toggleEMSPosts = document.getElementById("toggle-ems-posts");
-const toggleQRVPosts = document.getElementById("toggle-qrv-posts");
-const toggleTransportPosts = document.getElementById("toggle-transport-posts");
-const toggleOther = document.getElementById("toggle-other");
-const toggleStationNames = document.getElementById("toggle-station-names");
+const toggleParamedicAreas    = document.getElementById("toggle-paramedic-areas");
+const togglePostingLocations  = document.getElementById("toggle-posting-locations");
+const toggleTransportTrucks   = document.getElementById("toggle-transport-trucks");
+const toggleTransportAreas    = document.getElementById("toggle-transport-areas");
+const toggleMedshoreQRV       = document.getElementById("toggle-medshore-qrv");
+const toggleALSTrucks         = document.getElementById("toggle-als-trucks");
+const toggleFireDepartments   = document.getElementById("toggle-fire-departments");
 
 btnList.onclick = () => {
   listView.style.display = "flex";
@@ -356,13 +388,27 @@ btnMap.onclick = () => {
   setTimeout(() => initOrUpdateMap(), 50);
 };
 
-// Layer toggle handlers
-toggleHospitals.addEventListener("change", e => setLayerVisibility("hospitals", e.target.checked));
-toggleEMSPosts.addEventListener("change", e => setLayerVisibility("emsPosts", e.target.checked));
-toggleQRVPosts.addEventListener("change", e => setLayerVisibility("qrvPosts", e.target.checked));
-toggleTransportPosts.addEventListener("change", e => setLayerVisibility("transportPosts", e.target.checked));
-toggleOther.addEventListener("change", e => setLayerVisibility("other", e.target.checked));
-toggleStationNames.addEventListener("change", e => setLayerVisibility("stationNames", e.target.checked));
+toggleParamedicAreas.addEventListener("change", (e) =>
+  setLayerVisibility("paramedicAreas", e.target.checked)
+);
+togglePostingLocations.addEventListener("change", (e) =>
+  setLayerVisibility("postingLocations", e.target.checked)
+);
+toggleTransportTrucks.addEventListener("change", (e) =>
+  setLayerVisibility("transportTrucks", e.target.checked)
+);
+toggleTransportAreas.addEventListener("change", (e) =>
+  setLayerVisibility("transportAreas", e.target.checked)
+);
+toggleMedshoreQRV.addEventListener("change", (e) =>
+  setLayerVisibility("medshoreQRV", e.target.checked)
+);
+toggleALSTrucks.addEventListener("change", (e) =>
+  setLayerVisibility("alsTrucks", e.target.checked)
+);
+toggleFireDepartments.addEventListener("change", (e) =>
+  setLayerVisibility("fireDepartments", e.target.checked)
+);
 
 /* ======================================================
    ADDRESS SEARCH + CALCULATIONS
@@ -388,7 +434,7 @@ document.getElementById("address-form").addEventListener("submit", e => {
 
     lastDestination = results[0].geometry.location;
 
-    // Increment Cloudflare KV API counter after successful geocode
+    // bump KV counter
     incrementApiCounter();
 
     transportResults = [];
@@ -505,7 +551,7 @@ function initOrUpdateMap() {
   markers.push(callMarker);
   bounds.extend(lastDestination);
 
-  // Initialize EMS layers on this new map instance
+  // Draw EMS layers on current map
   initializeLayersIfReady();
 
   plotUnitsWithRoutes(transportResults, "#2c82ff");  // blue
@@ -579,18 +625,16 @@ function initOrUpdateMap() {
 }
 
 /* ======================================================
-   EMS LAYERS FROM JSON
+   EMS LAYERS FROM FOLDER-BASED JSON
 ====================================================== */
 
 function initializeLayersIfReady() {
-  if (!map || !mapData) return;
+  if (!map || !rawFeatures.length) return;
   refreshAllLayers();
 }
 
 function refreshAllLayers() {
-  // Clear all
-  Object.keys(layerObjects).forEach(key => clearLayer(key));
-  // Re-add enabled
+  Object.keys(layerObjects).forEach(clearLayer);
   Object.keys(layerEnabled).forEach(key => {
     if (layerEnabled[key]) addLayer(key);
   });
@@ -598,139 +642,132 @@ function refreshAllLayers() {
 
 function setLayerVisibility(key, enabled) {
   layerEnabled[key] = enabled;
-  if (!map || !mapData) return;
-  if (enabled) {
-    addLayer(key);
-  } else {
-    clearLayer(key);
-  }
+  if (!map) return;
+  if (enabled) addLayer(key); else clearLayer(key);
 }
 
 function clearLayer(key) {
-  const objs = layerObjects[key];
-  objs.forEach(obj => {
-    if (obj && typeof obj.setMap === "function") {
-      obj.setMap(null);
-    }
-  });
+  const objs = layerObjects[key] || [];
+  objs.forEach(obj => obj.setMap && obj.setMap(null));
   layerObjects[key] = [];
 }
 
 function addLayer(key) {
-  const groupName = LAYER_GROUP_NAMES[key];
-  if (!groupName || !mapData || !mapData[groupName] || !mapData[groupName].features) return;
+  const source = layerSourceFeatures[key];
+  if (!source || !source.length) return;
 
-  // Clear old objects for this layer
   clearLayer(key);
-
-  const features = mapData[groupName].features;
   const store = layerObjects[key];
 
-  // Layer-specific styling
+  // Styling per layer
   let options = {};
   switch (key) {
-    case "hospitals":
+    case "paramedicAreas":
       options = {
-        defaultTitle: "Hospital",
+        defaultTitle: "Paramedic Area",
+        polygonStroke: "#00d68f",
+        polygonFill: "#00d68f",
         pointIcon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: 7,
-          fillColor: "#ff4d4f",
+          scale: 5,
+          fillColor: "#00d68f",
           fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 2
-        },
-        polygonStroke: "#ff4d4f",
-        polygonFill: "#ff4d4f"
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
       };
       break;
-    case "emsPosts":
+    case "postingLocations":
       options = {
-        defaultTitle: "EMS Post",
+        defaultTitle: "Posting Location",
         pointIcon: {
           path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
           scale: 6,
           fillColor: "#2c82ff",
           fillOpacity: 1,
-          strokeColor: "#000000",
+          strokeColor: "#000",
           strokeWeight: 1
-        },
-        polygonStroke: "#2c82ff",
-        polygonFill: "#2c82ff"
+        }
       };
       break;
-    case "qrvPosts":
+    case "transportTrucks":
       options = {
-        defaultTitle: "QRV Post",
+        defaultTitle: "Transport Truck",
         pointIcon: {
           path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 6,
-          fillColor: "#00d68f",
-          fillOpacity: 1,
-          strokeColor: "#000000",
-          strokeWeight: 1
-        },
-        polygonStroke: "#00d68f",
-        polygonFill: "#00d68f"
-      };
-      break;
-    case "transportPosts":
-      options = {
-        defaultTitle: "Transport Post",
-        pointIcon: {
-          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-          scale: 6,
+          scale: 7,
           fillColor: "#ffc107",
           fillOpacity: 1,
-          strokeColor: "#000000",
+          strokeColor: "#000",
           strokeWeight: 1
-        },
+        }
+      };
+      break;
+    case "transportAreas":
+      options = {
+        defaultTitle: "Transport Area",
         polygonStroke: "#ffc107",
-        polygonFill: "#ffc107"
-      };
-      break;
-    case "other":
-      options = {
-        defaultTitle: "Other",
-        pointIcon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 5,
-          fillColor: "#9c27b0",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 1
-        },
-        polygonStroke: "#9c27b0",
-        polygonFill: "#9c27b0"
-      };
-      break;
-    case "stationNames":
-      options = {
-        defaultTitle: "Station",
+        polygonFill: "#ffc107",
         pointIcon: {
           path: google.maps.SymbolPath.CIRCLE,
           scale: 4,
-          fillColor: "#ffffff",
+          fillColor: "#ffc107",
           fillOpacity: 1,
-          strokeColor: "#2c82ff",
+          strokeColor: "#000",
           strokeWeight: 1
-        },
-        polygonStroke: "#ffffff",
-        polygonFill: "#ffffff"
+        }
+      };
+      break;
+    case "medshoreQRV":
+      options = {
+        defaultTitle: "Medshore QRV",
+        pointIcon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#00bcd4",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "alsTrucks":
+      options = {
+        defaultTitle: "ALS Truck",
+        pointIcon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#9c27b0",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "fireDepartments":
+      options = {
+        defaultTitle: "Fire Department",
+        pointIcon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 6,
+          fillColor: "#ff0000",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 1
+        }
       };
       break;
   }
 
-  features.forEach(feature => {
-    if (!feature.geometry) return;
-
+  source.forEach(feature => {
     const geom = feature.geometry;
+    if (!geom) return;
     const props = feature.properties || {};
-    const name = props.name || options.defaultTitle || groupName;
+    const name = props.title || options.defaultTitle || key;
 
     if (geom.type === "Point") {
-      const coords = geom.coordinates;
-      if (!coords || coords.length < 2) return;
+      const coords = geom.coordinates || [];
+      if (coords.length < 2) return;
       const lng = coords[0];
       const lat = coords[1];
       const position = { lat, lng };
@@ -739,27 +776,26 @@ function addLayer(key) {
         position,
         map,
         title: name,
-        icon: options.pointIcon
+        icon: options.pointIcon || null
       });
 
       const info = new google.maps.InfoWindow({
         content: `
           <div style="font-size:13px;">
             <strong>${name}</strong><br>
-            <span style="opacity:0.8;">${groupName}</span>
+            <span style="opacity:0.75;">${key}</span>
           </div>`
       });
 
       marker.addListener("click", () => info.open(map, marker));
-
       store.push(marker);
     } else if (geom.type === "Polygon") {
       const rings = geom.coordinates && geom.coordinates[0];
       if (!rings || !rings.length) return;
 
-      const path = rings.map(coordPair => {
-        const lng = coordPair[0];
-        const lat = coordPair[1];
+      const path = rings.map(pair => {
+        const lng = pair[0];
+        const lat = pair[1];
         return { lat, lng };
       });
 
