@@ -107,6 +107,18 @@
       height: 450px;
       border-radius: 0.75rem;
     }
+
+    .layer-toggle {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+    .layer-toggle label {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
   </style>
 </head>
 
@@ -152,6 +164,15 @@
   <div id="map-view" class="card">
     <h2>Map View</h2>
     <p style="color:#aaa;font-size:0.85rem;">Call location + units + routes</p>
+
+    <!-- LAYER TOGGLE -->
+    <div class="layer-toggle">
+      <label>
+        <input type="checkbox" id="toggle-custom-layer" checked />
+        Show custom map layers
+      </label>
+    </div>
+
     <div id="map"></div>
   </div>
 
@@ -184,8 +205,11 @@ async function incrementApiCounter() {
 }
 
 /* ======================================================
-   UNIT LISTS
+   CONSTANTS / UNIT LISTS
 ====================================================== */
+
+const MY_MAP_KML_URL =
+  "https://www.google.com/maps/d/kml?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8&forcekml=1";
 
 const TRANSPORT_UNITS = [
   { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
@@ -229,7 +253,7 @@ const QRV_UNITS = [
 ];
 
 /* ======================================================
-   GOOGLE SERVICES
+   GOOGLE SERVICES / GLOBALS
 ====================================================== */
 
 let geocoder;
@@ -242,6 +266,10 @@ let lastDestination = null;
 
 let transportResults = [];
 let qrvResults = [];
+
+// Custom layer globals
+let myMapLayer = null;
+let myMapLayerEnabled = true; // default checked
 
 function initMapsServices() {
   geocoder = new google.maps.Geocoder();
@@ -256,6 +284,7 @@ const btnList = document.getElementById("btn-list");
 const btnMap = document.getElementById("btn-map");
 const listView = document.getElementById("list-view");
 const mapView = document.getElementById("map-view");
+const customLayerCheckbox = document.getElementById("toggle-custom-layer");
 
 btnList.onclick = () => {
   listView.style.display = "flex";
@@ -271,6 +300,18 @@ btnMap.onclick = () => {
   btnList.classList.remove("active");
   setTimeout(() => initOrUpdateMap(), 50);
 };
+
+// Toggle custom KML layer on/off
+customLayerCheckbox.addEventListener("change", (e) => {
+  myMapLayerEnabled = e.target.checked;
+  if (!map) return; // map not initialized yet
+
+  if (myMapLayerEnabled) {
+    ensureMyMapLayer();
+  } else if (myMapLayer) {
+    myMapLayer.setMap(null);
+  }
+});
 
 /* ======================================================
    ADDRESS SEARCH + CALCULATIONS
@@ -296,7 +337,7 @@ document.getElementById("address-form").addEventListener("submit", e => {
 
     lastDestination = results[0].geometry.location;
 
-    // 🔢 Bump your Cloudflare KV API counter here
+    // Increment Cloudflare KV API counter after successful geocode
     incrementApiCounter();
 
     transportResults = [];
@@ -365,7 +406,7 @@ function renderTable(results, tableId) {
 }
 
 /* ======================================================
-   MAP + ROUTES
+   MAP + ROUTES + CUSTOM LAYER
 ====================================================== */
 
 function clearMarkers() {
@@ -376,6 +417,17 @@ function clearMarkers() {
 function clearRoutes() {
   directionsRenderers.forEach(r => r.setMap(null));
   directionsRenderers = [];
+}
+
+// Create or reattach the My Maps KML layer
+function ensureMyMapLayer() {
+  if (!myMapLayer) {
+    myMapLayer = new google.maps.KmlLayer({
+      url: MY_MAP_KML_URL,
+      preserveViewport: true
+    });
+  }
+  myMapLayer.setMap(map);
 }
 
 function initOrUpdateMap() {
@@ -389,6 +441,13 @@ function initOrUpdateMap() {
     streetViewControl: false,
     mapTypeControl: false
   });
+
+  // Attach custom My Maps layer if toggle is on
+  if (myMapLayerEnabled) {
+    ensureMyMapLayer();
+  } else if (myMapLayer) {
+    myMapLayer.setMap(null);
+  }
 
   clearMarkers();
   clearRoutes();
