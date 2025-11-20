@@ -109,15 +109,19 @@
     }
 
     .layer-toggle {
-      margin-top: 0.5rem;
+      margin: 0.5rem 0 0.75rem;
       font-size: 0.85rem;
       color: #ccc;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
     }
     .layer-toggle label {
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
+      user-select: none;
     }
   </style>
 </head>
@@ -134,7 +138,7 @@
     </form>
     <div id="status" class="status"></div>
 
-    <!-- TOGGLE -->
+    <!-- VIEW TOGGLE -->
     <div class="view-toggle">
       <button id="btn-list" class="active">List View</button>
       <button id="btn-map">Map View</button>
@@ -146,7 +150,9 @@
     <div class="card" style="flex:1;">
       <h2>Transport Trucks</h2>
       <table id="results-transport" style="display:none;">
-        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
+        <thead>
+          <tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr>
+        </thead>
         <tbody></tbody>
       </table>
     </div>
@@ -154,7 +160,9 @@
     <div class="card" style="flex:1;">
       <h2>QRV Paramedics</h2>
       <table id="results-qrv" style="display:none;">
-        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
+        <thead>
+          <tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr>
+        </thead>
         <tbody></tbody>
       </table>
     </div>
@@ -163,14 +171,16 @@
   <!-- MAP VIEW -->
   <div id="map-view" class="card">
     <h2>Map View</h2>
-    <p style="color:#aaa;font-size:0.85rem;">Call location + units + routes</p>
+    <p style="color:#aaa;font-size:0.85rem;">Call location + units + routes + EMS layers</p>
 
-    <!-- LAYER TOGGLE -->
+    <!-- LAYER TOGGLES -->
     <div class="layer-toggle">
-      <label>
-        <input type="checkbox" id="toggle-custom-layer" checked />
-        Show custom map layers
-      </label>
+      <label><input type="checkbox" id="toggle-hospitals" checked /> Hospitals</label>
+      <label><input type="checkbox" id="toggle-ems-posts" checked /> EMS Posts</label>
+      <label><input type="checkbox" id="toggle-qrv-posts" checked /> QRV Posts</label>
+      <label><input type="checkbox" id="toggle-transport-posts" checked /> Transport Posts</label>
+      <label><input type="checkbox" id="toggle-other" /> Other</label>
+      <label><input type="checkbox" id="toggle-station-names" /> Station Names</label>
     </div>
 
     <div id="map"></div>
@@ -205,11 +215,21 @@ async function incrementApiCounter() {
 }
 
 /* ======================================================
-   CONSTANTS / UNIT LISTS
+   CONSTANTS / UNIT LISTS / MAPDATA
 ====================================================== */
 
-const MY_MAP_KML_URL =
-  "https://www.google.com/maps/d/kml?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8&forcekml=1";
+const MAPDATA_URL =
+  "https://raw.githubusercontent.com/sndjy1986/WorkHomepage/main/mapdata.json";
+
+// Keys in your JSON
+const LAYER_GROUP_NAMES = {
+  hospitals: "Hospitals",
+  emsPosts: "EMS Posts",
+  qrvPosts: "QRV Posts",
+  transportPosts: "Transport Posts",
+  other: "Other",
+  stationNames: "Station Names",
+};
 
 const TRANSPORT_UNITS = [
   { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
@@ -267,14 +287,43 @@ let lastDestination = null;
 let transportResults = [];
 let qrvResults = [];
 
-// Custom layer globals
-let myMapLayer = null;
-let myMapLayerEnabled = true; // default checked
+// Mapdata + overlay management
+let mapData = null;
+
+const layerObjects = {
+  hospitals: [],
+  emsPosts: [],
+  qrvPosts: [],
+  transportPosts: [],
+  other: [],
+  stationNames: [],
+};
+
+const layerEnabled = {
+  hospitals: true,
+  emsPosts: true,
+  qrvPosts: true,
+  transportPosts: true,
+  other: false,
+  stationNames: false,
+};
 
 function initMapsServices() {
   geocoder = new google.maps.Geocoder();
   distanceMatrix = new google.maps.DistanceMatrixService();
 }
+
+// Fetch JSON layer data
+fetch(MAPDATA_URL)
+  .then(r => r.json())
+  .then(data => {
+    mapData = data;
+    console.log("Map data loaded", data);
+    initializeLayersIfReady();
+  })
+  .catch(err => {
+    console.error("Failed to load mapdata.json:", err);
+  });
 
 /* ======================================================
    VIEW TOGGLE
@@ -284,7 +333,13 @@ const btnList = document.getElementById("btn-list");
 const btnMap = document.getElementById("btn-map");
 const listView = document.getElementById("list-view");
 const mapView = document.getElementById("map-view");
-const customLayerCheckbox = document.getElementById("toggle-custom-layer");
+
+const toggleHospitals = document.getElementById("toggle-hospitals");
+const toggleEMSPosts = document.getElementById("toggle-ems-posts");
+const toggleQRVPosts = document.getElementById("toggle-qrv-posts");
+const toggleTransportPosts = document.getElementById("toggle-transport-posts");
+const toggleOther = document.getElementById("toggle-other");
+const toggleStationNames = document.getElementById("toggle-station-names");
 
 btnList.onclick = () => {
   listView.style.display = "flex";
@@ -301,17 +356,13 @@ btnMap.onclick = () => {
   setTimeout(() => initOrUpdateMap(), 50);
 };
 
-// Toggle custom KML layer on/off
-customLayerCheckbox.addEventListener("change", (e) => {
-  myMapLayerEnabled = e.target.checked;
-  if (!map) return; // map not initialized yet
-
-  if (myMapLayerEnabled) {
-    ensureMyMapLayer();
-  } else if (myMapLayer) {
-    myMapLayer.setMap(null);
-  }
-});
+// Layer toggle handlers
+toggleHospitals.addEventListener("change", e => setLayerVisibility("hospitals", e.target.checked));
+toggleEMSPosts.addEventListener("change", e => setLayerVisibility("emsPosts", e.target.checked));
+toggleQRVPosts.addEventListener("change", e => setLayerVisibility("qrvPosts", e.target.checked));
+toggleTransportPosts.addEventListener("change", e => setLayerVisibility("transportPosts", e.target.checked));
+toggleOther.addEventListener("change", e => setLayerVisibility("other", e.target.checked));
+toggleStationNames.addEventListener("change", e => setLayerVisibility("stationNames", e.target.checked));
 
 /* ======================================================
    ADDRESS SEARCH + CALCULATIONS
@@ -330,7 +381,7 @@ document.getElementById("address-form").addEventListener("submit", e => {
   status.textContent = "Locating address...";
 
   geocoder.geocode({ address }, (results, code) => {
-    if (code !== "OK") {
+    if (code !== "OK" || !results || !results[0]) {
       status.textContent = "Address not found.";
       return;
     }
@@ -361,7 +412,7 @@ function calculateGroup(units, tableId, store) {
     travelMode: google.maps.TravelMode.DRIVING,
     unitSystem: google.maps.UnitSystem.IMPERIAL
   }, (res, status) => {
-    if (status !== "OK") return;
+    if (status !== "OK" || !res || !res.rows) return;
 
     const rows = res.rows;
     const results = [];
@@ -377,6 +428,7 @@ function calculateGroup(units, tableId, store) {
     }
 
     results.sort((a, b) => a.distanceValue - b.distanceValue);
+    store.length = 0;
     store.push(...results);
     renderTable(results, tableId);
   });
@@ -406,7 +458,7 @@ function renderTable(results, tableId) {
 }
 
 /* ======================================================
-   MAP + ROUTES + CUSTOM LAYER
+   MAP + ROUTES
 ====================================================== */
 
 function clearMarkers() {
@@ -417,17 +469,6 @@ function clearMarkers() {
 function clearRoutes() {
   directionsRenderers.forEach(r => r.setMap(null));
   directionsRenderers = [];
-}
-
-// Create or reattach the My Maps KML layer
-function ensureMyMapLayer() {
-  if (!myMapLayer) {
-    myMapLayer = new google.maps.KmlLayer({
-      url: MY_MAP_KML_URL,
-      preserveViewport: true
-    });
-  }
-  myMapLayer.setMap(map);
 }
 
 function initOrUpdateMap() {
@@ -442,19 +483,12 @@ function initOrUpdateMap() {
     mapTypeControl: false
   });
 
-  // Attach custom My Maps layer if toggle is on
-  if (myMapLayerEnabled) {
-    ensureMyMapLayer();
-  } else if (myMapLayer) {
-    myMapLayer.setMap(null);
-  }
-
   clearMarkers();
   clearRoutes();
 
   const bounds = new google.maps.LatLngBounds();
 
-  /* CALL LOCATION MARKER */
+  // Call location marker
   const callMarker = new google.maps.Marker({
     position: lastDestination,
     map,
@@ -464,29 +498,31 @@ function initOrUpdateMap() {
       scale: 9,
       fillColor: "#ff4444",
       fillOpacity: 1,
-      strokeColor: "#fff",
+      strokeColor: "#ffffff",
       strokeWeight: 2
     }
   });
   markers.push(callMarker);
   bounds.extend(lastDestination);
 
+  // Initialize EMS layers on this new map instance
+  initializeLayersIfReady();
+
   plotUnitsWithRoutes(transportResults, "#2c82ff");  // blue
   plotUnitsWithRoutes(qrvResults, "#00d68f");       // green
 
   setTimeout(() => map.fitBounds(bounds), 400);
 
-  /* INTERNAL: PLOT ROUTES + MARKERS */
   function plotUnitsWithRoutes(results, color) {
     const directions = new google.maps.DirectionsService();
 
     results.forEach(r => {
+      if (!r.unit || !r.unit.address) return;
       geocoder.geocode({ address: r.unit.address }, (res, code) => {
-        if (code !== "OK") return;
+        if (code !== "OK" || !res || !res[0]) return;
 
         const unitLoc = res[0].geometry.location;
 
-        /* Unit marker */
         const marker = new google.maps.Marker({
           position: unitLoc,
           map,
@@ -496,7 +532,7 @@ function initOrUpdateMap() {
             scale: 5,
             fillColor: color,
             fillOpacity: 1,
-            strokeColor: "#000",
+            strokeColor: "#000000",
             strokeWeight: 1
           }
         });
@@ -515,13 +551,12 @@ function initOrUpdateMap() {
         markers.push(marker);
         bounds.extend(unitLoc);
 
-        /* ROUTE */
         directions.route({
           origin: unitLoc,
           destination: lastDestination,
           travelMode: google.maps.TravelMode.DRIVING
         }, (result, status) => {
-          if (status === "OK") {
+          if (status === "OK" && result && result.routes && result.routes[0]) {
             const renderer = new google.maps.DirectionsRenderer({
               map,
               directions: result,
@@ -541,6 +576,206 @@ function initOrUpdateMap() {
       });
     });
   }
+}
+
+/* ======================================================
+   EMS LAYERS FROM JSON
+====================================================== */
+
+function initializeLayersIfReady() {
+  if (!map || !mapData) return;
+  refreshAllLayers();
+}
+
+function refreshAllLayers() {
+  // Clear all
+  Object.keys(layerObjects).forEach(key => clearLayer(key));
+  // Re-add enabled
+  Object.keys(layerEnabled).forEach(key => {
+    if (layerEnabled[key]) addLayer(key);
+  });
+}
+
+function setLayerVisibility(key, enabled) {
+  layerEnabled[key] = enabled;
+  if (!map || !mapData) return;
+  if (enabled) {
+    addLayer(key);
+  } else {
+    clearLayer(key);
+  }
+}
+
+function clearLayer(key) {
+  const objs = layerObjects[key];
+  objs.forEach(obj => {
+    if (obj && typeof obj.setMap === "function") {
+      obj.setMap(null);
+    }
+  });
+  layerObjects[key] = [];
+}
+
+function addLayer(key) {
+  const groupName = LAYER_GROUP_NAMES[key];
+  if (!groupName || !mapData || !mapData[groupName] || !mapData[groupName].features) return;
+
+  // Clear old objects for this layer
+  clearLayer(key);
+
+  const features = mapData[groupName].features;
+  const store = layerObjects[key];
+
+  // Layer-specific styling
+  let options = {};
+  switch (key) {
+    case "hospitals":
+      options = {
+        defaultTitle: "Hospital",
+        pointIcon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#ff4d4f",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2
+        },
+        polygonStroke: "#ff4d4f",
+        polygonFill: "#ff4d4f"
+      };
+      break;
+    case "emsPosts":
+      options = {
+        defaultTitle: "EMS Post",
+        pointIcon: {
+          path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#2c82ff",
+          fillOpacity: 1,
+          strokeColor: "#000000",
+          strokeWeight: 1
+        },
+        polygonStroke: "#2c82ff",
+        polygonFill: "#2c82ff"
+      };
+      break;
+    case "qrvPosts":
+      options = {
+        defaultTitle: "QRV Post",
+        pointIcon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#00d68f",
+          fillOpacity: 1,
+          strokeColor: "#000000",
+          strokeWeight: 1
+        },
+        polygonStroke: "#00d68f",
+        polygonFill: "#00d68f"
+      };
+      break;
+    case "transportPosts":
+      options = {
+        defaultTitle: "Transport Post",
+        pointIcon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#ffc107",
+          fillOpacity: 1,
+          strokeColor: "#000000",
+          strokeWeight: 1
+        },
+        polygonStroke: "#ffc107",
+        polygonFill: "#ffc107"
+      };
+      break;
+    case "other":
+      options = {
+        defaultTitle: "Other",
+        pointIcon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 5,
+          fillColor: "#9c27b0",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 1
+        },
+        polygonStroke: "#9c27b0",
+        polygonFill: "#9c27b0"
+      };
+      break;
+    case "stationNames":
+      options = {
+        defaultTitle: "Station",
+        pointIcon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 4,
+          fillColor: "#ffffff",
+          fillOpacity: 1,
+          strokeColor: "#2c82ff",
+          strokeWeight: 1
+        },
+        polygonStroke: "#ffffff",
+        polygonFill: "#ffffff"
+      };
+      break;
+  }
+
+  features.forEach(feature => {
+    if (!feature.geometry) return;
+
+    const geom = feature.geometry;
+    const props = feature.properties || {};
+    const name = props.name || options.defaultTitle || groupName;
+
+    if (geom.type === "Point") {
+      const coords = geom.coordinates;
+      if (!coords || coords.length < 2) return;
+      const lng = coords[0];
+      const lat = coords[1];
+      const position = { lat, lng };
+
+      const marker = new google.maps.Marker({
+        position,
+        map,
+        title: name,
+        icon: options.pointIcon
+      });
+
+      const info = new google.maps.InfoWindow({
+        content: `
+          <div style="font-size:13px;">
+            <strong>${name}</strong><br>
+            <span style="opacity:0.8;">${groupName}</span>
+          </div>`
+      });
+
+      marker.addListener("click", () => info.open(map, marker));
+
+      store.push(marker);
+    } else if (geom.type === "Polygon") {
+      const rings = geom.coordinates && geom.coordinates[0];
+      if (!rings || !rings.length) return;
+
+      const path = rings.map(coordPair => {
+        const lng = coordPair[0];
+        const lat = coordPair[1];
+        return { lat, lng };
+      });
+
+      const polygon = new google.maps.Polygon({
+        map,
+        paths: path,
+        strokeColor: options.polygonStroke || "#ffffff",
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: options.polygonFill || "#ffffff",
+        fillOpacity: 0.15
+      });
+
+      store.push(polygon);
+    }
+  });
 }
 </script>
 
