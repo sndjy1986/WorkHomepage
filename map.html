@@ -158,6 +158,32 @@
 
 <script>
 /* ======================================================
+   API COUNTER CALL
+====================================================== */
+
+async function incrementApiCounter() {
+  try {
+    const res = await fetch("https://api.sndjy.us/api/increment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      mode: "cors",
+    });
+
+    if (!res.ok) {
+      console.error("API counter increment failed with status", res.status);
+      return;
+    }
+
+    const data = await res.json();
+    console.log("API count is now:", data.count);
+  } catch (err) {
+    console.error("Error calling /api/increment:", err);
+  }
+}
+
+/* ======================================================
    UNIT LISTS
 ====================================================== */
 
@@ -269,6 +295,9 @@ document.getElementById("address-form").addEventListener("submit", e => {
     }
 
     lastDestination = results[0].geometry.location;
+
+    // 🔢 Bump your Cloudflare KV API counter here
+    incrementApiCounter();
 
     transportResults = [];
     qrvResults = [];
