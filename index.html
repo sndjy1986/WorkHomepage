@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="css/main.css">
   <title>Work Homepage</title>
 
+  <!-- designed and coded by Joey Sanders -->
+  <!-- also has a emergency warning for weather alerts in the area -->
+
   <style>
     :root {
       --text-color: #f5f0f0;
@@ -20,16 +23,16 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      overflow: auto; /* restored page scroll */
+      overflow: auto; 
     }
 
     body {
       position: relative;
       min-height: 100svh;
       min-height: 100dvh;
-      padding-top: 50px; /* space for ticker */
+      padding-top: 50px; 
       transition: padding-top 0.3s ease;
-      background: none; /* disable static background */
+      background: none; 
     }
 
     body::before {
@@ -242,7 +245,7 @@
     </header>
 
     <section id="traichu">
-      <h1 class="sr-only">Joey's Homepage</h1>
+      <h1 class="sr-only">Med-Shore Work Homepage</h1>
 
       <div id="greeting"></div>
       <div id="global-api-usage"></div>
@@ -303,7 +306,6 @@
   </main>
 
   <script>
-    // Cloudflare Worker base URL — SAME as in map.html
     const WORKER_BASE_URL = "https://api.sndjy.us";
 
     function setGreeting() {

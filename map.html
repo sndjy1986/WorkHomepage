@@ -180,9 +180,7 @@
   </div>
 
 <script>
-/* ======================================================
-   API COUNTER CALL
-====================================================== */
+<!-- API Counter Code -->
 
 async function incrementApiCounter() {
   try {
@@ -202,14 +200,12 @@ async function incrementApiCounter() {
   }
 }
 
-/* ======================================================
-   CONSTANTS / UNIT LISTS / MAPDATA
-====================================================== */
+<!-- Map Data Code -->
 
 const MAPDATA_URL =
   "https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/mapdata.json";
 
-// folder title -> internal layer key
+<!-- Map Layers -->
 const FOLDER_TITLE_TO_LAYER = {
   "Paramedic Area's": "paramedicAreas",
   "Posting Locations": "postingLocations",
@@ -261,9 +257,7 @@ const QRV_UNITS = [
   { name: "ALS-27", address: "3738 SC-187 Anderson SC 29626" }
 ];
 
-/* ======================================================
-   GOOGLE SERVICES / GLOBALS
-====================================================== */
+<!--Google Services-->
 
 let geocoder;
 let distanceMatrix;
@@ -276,7 +270,7 @@ let lastDestination = null;
 let transportResults = [];
 let qrvResults = [];
 
-// Raw mapdata + folder index + grouped features
+<!-- Raw mapdata + folder index + grouped features -->
 let rawFeatures = [];
 let folderById = {};           // { folderId -> folderTitle }
 let layerSourceFeatures = {    // { layerKey -> [features...] }
@@ -289,7 +283,7 @@ let layerSourceFeatures = {    // { layerKey -> [features...] }
   fireDepartments: []
 };
 
-// Live map objects (markers/polys) per layer
+<!-- Live map objects (markers/polys) per layer -->
 let layerObjects = {
   paramedicAreas: [],
   postingLocations: [],
@@ -315,9 +309,9 @@ function initMapsServices() {
   distanceMatrix = new google.maps.DistanceMatrixService();
 }
 
-/* ======================================================
-   LOAD MAPDATA.JSON & BUILD FOLDER GROUPS
-====================================================== */
+
+   <!-- LOAD MAPDATA.JSON & BUILD FOLDER GROUPS -->
+
 
 fetch(MAPDATA_URL)
   .then(r => r.json())
@@ -434,7 +428,7 @@ document.getElementById("address-form").addEventListener("submit", e => {
 
     lastDestination = results[0].geometry.location;
 
-    // bump KV counter
+    <!-- API calls x 3 every time address is checked - only charged for one -->
     incrementApiCounter();
 
     transportResults = [];
@@ -624,9 +618,7 @@ function initOrUpdateMap() {
   }
 }
 
-/* ======================================================
-   EMS LAYERS FROM FOLDER-BASED JSON
-====================================================== */
+   <!-- EMS LAYERS FROM FOLDER-BASED JSON -->
 
 function initializeLayersIfReady() {
   if (!map || !rawFeatures.length) return;
