@@ -1,0 +1,68 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="CSPAN2.us@SD",C-SPAN 2  
+https://tvpass.org/live/CSPAN2/hd
+#EXTINF:-1 tvg-id="CNBC.us@SD",CNBC  
+https://tvpass.org/live/CNBC/hd
+#EXTINF:-1 tvg-id="CrimePlusInvestigation.us@SD",Crime + Investigation  
+https://tvpass.org/live/CrimePlusInvestigation/hd
+#EXTINF:-1 tvg-id="DisneyChannel.us@East",Disney Channel East  
+https://tvpass.org/live/DisneyChannelEast/hd
+#EXTINF:-1 tvg-id="DisneyJunior.us@East",Disney Junior East  
+https://tvpass.org/live/DisneyJuniorEast/hd
+#EXTINF:-1 tvg-id="DisneyXD.us@East",Disney XD East  
+https://tvpass.org/live/DisneyXDEast/hd
+#EXTINF:-1 tvg-id="E.us@East",E! East  
+https://tvpass.org/live/EEast/hd
+#EXTINF:-1 tvg-id="FoxBusinessNetwork.us@SD",Fox Business Network  
+https://tvpass.org/live/FoxBusiness/hd
+#EXTINF:-1 tvg-id="FoxNewsChannel.us@SD",Fox News Channel  
+https://tvpass.org/live/FoxNewsChannel/hd
+#EXTINF:-1 tvg-id="",Fox Sports 2  
+https://tvpass.org/live/FoxSports2/hd
+#EXTINF:-1 tvg-id="Fuse.us@East",Fuse East  
+https://tvpass.org/live/FuseEast/hd
+#EXTINF:-1 tvg-id="FX.us@East",FX East  
+https://tvpass.org/live/FXEast/hd
+#EXTINF:-1 tvg-id="FXMovieChannel.us@SD",FX Movie Channel  
+https://tvpass.org/live/FXMovieChannel/hd
+#EXTINF:-1 tvg-id="FXX.us@East",FXX East  
+https://tvpass.org/live/FXXEast/hd
+#EXTINF:-1 tvg-id="FYI.us@East",FYI East  
+https://tvpass.org/live/FYIEast/hd
+#EXTINF:-1 tvg-id="HallmarkDrama.us@SD",Hallmark Drama  
+https://tvpass.org/live/HallmarkDrama/hd
+#EXTINF:-1 tvg-id="HallmarkMoviesMysteries.us@East",Hallmark Movies & Mysteries East  
+https://tvpass.org/live/HallmarkMoviesMysteriesEast/hd
+#EXTINF:-1 tvg-id="LifetimeMovies.us@East",Lifetime Movies East  
+https://tvpass.org/live/LifetimeMoviesEast/hd
+#EXTINF:-1 tvg-id="Logo.us@East",Logo East  
+https://tvpass.org/live/LogoEast/hd
+#EXTINF:-1 tvg-id="MSG.us@SD",MSG  
+https://tvpass.org/live/msg-madison-square-gardens/hd
+#EXTINF:-1 tvg-id="MSGPlus.us@SD",MSG Plus  
+https://tvpass.org/live/msg-plus/hd
+#EXTINF:-1 tvg-id="MSNBC.us@SD",MSNBC  
+https://tvpass.org/live/MSNBC/hd
+#EXTINF:-1 tvg-id="NationalGeographic.us@HDEast",National Geographic HD East  
+https://tvpass.org/live/NationalGeographicEast/hd
+#EXTINF:-1 tvg-id="NationalGeographicWild.us@HDEast",National Geographic Wild HD East  
+https://tvpass.org/live/NationalGeographicWildEast/hd
+#EXTINF:-1 tvg-id="NewsmaxTV.us@SD",Newsmax TV  
+https://tvpass.org/live/NewsmaxTV/hd
+#EXTINF:-1 tvg-id="NFLRedZone.us@SD",NFL RedZone  
+https://tvpass.org/live/NFLRedZone/hd
+#EXTINF:-1 tvg-id="Starz.us@East",Starz East  
+https://tvpass.org/live/StarzEast/hd
+#EXTINF:-1 tvg-id="TSN1.ca@SD",TSN1 
+https://tvpass.org/live/tsn1/hd
+#EXTINF:-1 tvg-id="TSN2.ca@SD",TSN2
+https://tvpass.org/live/tsn2/hd
+#EXTINF:-1 tvg-id="TSN3.ca@SD",TSN3
+https://tvpass.org/live/tsn3/hd
+#EXTINF:-1 tvg-id="TSN4.ca@SD",TSN4
+https://tvpass.org/live/tsn4/hd
+#EXTINF:-1 tvg-id="TSN5.ca@SD",TSN5
+https://tvpass.org/live/tsn5/hd
+#EXTINF:-1 tvg-id="USANetwork.us@East",USA Network East
+https://tvpass.org/live/USANetworkEast/hd
+
