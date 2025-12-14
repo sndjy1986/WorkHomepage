@@ -9,6 +9,88 @@
   <link rel="stylesheet" href="css/main.css">
   <title>Work Homepage</title>
 
+<style>
+ 
+  :root {
+    --icon-size: 24px;                  
+    --icon-gap: 8px;                    
+    --jump-duration: 600ms;
+    --jump-ease: cubic-bezier(0.25, 1.35, 0.5, 1);
+    --icon-bg: #e9eef7;                 
+    --icon-border: rgba(37,99,235,0.25);
+  }
+
+
+  a {
+    position: relative;
+  }
+  a::before {
+    content: "";
+    display: inline-block;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    margin-right: var(--icon-gap);
+    border-radius: 6px;
+    background:
+      linear-gradient(135deg, rgba(96,165,250,0.25), rgba(37,99,235,0.08));
+    border: 1px solid var(--icon-border);
+
+   
+    transform-origin: center center;
+    backface-visibility: hidden;
+    vertical-align: middle;             /* prevents baseline jump with text */
+  }
+
+  /* ===== Hover: run the jump only on the icon box ===== */
+  a:hover::before {
+    animation: slime var(--jump-duration) var(--jump-ease) both;
+  }
+
+  /* ===== If you already use real icons inside links ===== */
+  /* Example: ...... Vanguard</a> */
+  a .icon {
+    display: inline-block;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    margin-right: var(--icon-gap);
+    transform-origin: center center;
+    backface-visibility: hidden;
+    vertical-align: middle;
+  }
+  a:hover .icon {
+    animation: slime var(--jump-duration) var(--jump-ease) both;
+  }
+
+  /* ===== Keyframes (your original slime) ===== */
+  @-webkit-keyframes slime {
+    0%   { -webkit-transform: scale3d(1, 1, 1); transform: scale3d(1, 1, 1); }
+    30%  { -webkit-transform: scale3d(1.25, 0.75, 1); transform: scale3d(1.25, 0.75, 1); }
+    40%  { -webkit-transform: scale3d(0.75, 1.25, 1); transform: scale3d(0.75, 1.25, 1); }
+    50%  { -webkit-transform: scale3d(1.15, 0.85, 1); transform: scale3d(1.15, 0.85, 1); }
+    65%  { -webkit-transform: scale3d(0.95, 1.05, 1); transform: scale3d(0.95, 1.05, 1); }
+    75%  { -webkit-transform: scale3d(1.05, 0.95, 1); transform: scale3d(1.05, 0.95, 1); }
+    100% { -webkit-transform: scale3d(1, 1, 1); transform: scale3d(1, 1, 1); }
+  }
+  @keyframes slime {
+    0%   { transform: scale3d(1, 1, 1); }
+    30%  { transform: scale3d(1.25, 0.75, 1); }
+    40%  { transform: scale3d(0.75, 1.25, 1); }
+    50%  { transform: scale3d(1.15, 0.85, 1); }
+    65%  { transform: scale3d(0.95, 1.05, 1); }
+    75%  { transform: scale3d(1.05, 0.95, 1); }
+    100% { transform: scale3d(1, 1, 1); }
+  }
+
+  /* ===== Accessibility: respect reduced motion ===== */
+  @media (prefers-reduced-motion: reduce) {
+       a::before,
+    a .icon {
+      animation: none !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
   <!-- designed and coded by Joey Sanders -->
   <!-- also has a emergency warning for weather alerts in the area -->
 
