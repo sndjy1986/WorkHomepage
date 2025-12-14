@@ -1,266 +1,495 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect x=%2230%22 y=%2210%22 width=%2240%22 height=%2280%22 fill=%22%23FF0000%22/><rect x=%2210%22 y=%2230%22 width=%2280%22 height=%2240%22 fill=%22%23FF0000%22/></svg>">
+  <script src="js/main.js"></script>
+  <link rel="stylesheet" href="css/main.css">
   <title>Work Homepage</title>
+
+  <!-- designed and coded by Joey Sanders -->
+  <!-- also has a emergency warning for weather alerts in the area -->
+
   <style>
-    /* ===== Theme ===== */
     :root {
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --accent: #2563eb; /* blue */
-      --icon-size: 40px;
-      --jump-duration: 600ms;
-      --jump-ease: cubic-bezier(0.25, 1.35, 0.5, 1);
+      --text-color: #f5f0f0;
+      --link-color: #0066cc;
+      --bg-url: url('background.jpg');
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: auto; 
+    }
+
+    body {
+      position: relative;
+      min-height: 100svh;
+      min-height: 100dvh;
+      padding-top: 50px; 
+      transition: padding-top 0.3s ease;
+      background: none; 
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: var(--bg-url) center / cover no-repeat;
+      filter: blur(20px);
+      transform: translateZ(0) scale(1.06);
+      transform-origin: center;
+      will-change: transform;
+      z-index: -1;
+    }
+
+    body.alert-active {
+      padding-top: 100px;
+    }
+
+    main {
+      position: relative !important;
+      background-color: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px);
+      border-radius: 0px;
+      height: calc(100vh - 50px - 0px);
+      margin: 0px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    #traichu {
+      transform-origin: top center;
+      will-change: transform;
+    }
+
+    #greeting {
+      text-align: center;
+      font-size: 2.5em;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px #000000;
+      margin-bottom: -10px;
+    }
+
+    #api-usage,
+    #global-api-usage {
+      font-size: 0.8rem;
+      color: var(--text-color);
+      text-align: center;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    #dock ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 10px;
+    }
+
+    #dock li {
+      margin: 0 10px;
+    }
+
+    #dock li a {
+      display: inline-block;
+      transition: transform 0.2s ease-out;
+    }
+
+    #dock li img {
+      width: 50px;
+      height: 50px;
+      vertical-align: middle;
+    }
+
+    #dock li a:hover {
+      transform: scale(1.3) translateY(-10px);
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0b1020;
-        --card: #121a2e;
-        --text: #e5e7eb;
-        --muted: #93a3b8;
-        --accent: #60a5fa;
+        --text-color: #ffffff;
+        --link-color: #66b3ff;
+      }
+      main {
+        background-color: rgba(0, 0, 0, 0.2);
       }
     }
 
-    /* ===== Page layout ===== */
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: var(--bg);
-      color: var(--text);
-    }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    h1 { font-size: 1.75rem; margin: 0; }
-    .sub { color: var(--muted); font-size: .95rem; }
-
-    /* ===== Section ===== */
-    section { margin: 24px 0; }
-    section > h2, section > h3 { margin: 10px 0 8px; }
-
-    /* ===== Links grid ===== */
-    .links-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 12px;
+    #news-ticker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      color: #fff;
+      overflow: hidden;
+      z-index: 9999;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      transition: top 0.3s ease;
     }
 
-    /* ===== Link tile with jump effect ===== */
-    .link-tile {
-      display: inline-flex;               /* stable inline box */
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 12px;
+    body.alert-active #news-ticker {
+      top: 55px;
+    }
+
+    #news-content {
+      position: absolute;
+      white-space: nowrap;
+      line-height: 50px;
+      font-size: 16px;
+      font-weight: lighter;
+      -webkit-transform: translateZ(0);
+      backface-visibility: hidden;
+      animation-name: scroll-left;
+      animation-duration: 150s;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      will-change: transform;
+    }
+
+    @keyframes scroll-left {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    #news-content a {
+      color: #fff;
       text-decoration: none;
-      color: inherit;
-      background: var(--card);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
-      transition: box-shadow 180ms ease, transform 180ms ease;
+      margin-right: 80px;
     }
-    .link-tile:hover, .link-tile:focus-visible {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.16), 0 4px 12px rgba(0,0,0,0.12);
+
+    #news-content a:hover {
+      text-decoration: underline;
+    }
+
+    #search {
+      display: flex;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    #search .search-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 95vw;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    #search .search-container input#q {
+      flex: 1;
+      background: transparent;
+      color: white;
+      font-size: 18px;
+      padding: 10px 15px;
+      border: none;
       outline: none;
     }
 
-    .icon-wrapper {
-      width: var(--icon-size);
-      height: var(--icon-size);
-      display: inline-block;
-      overflow: hidden;
-      contain: layout paint;              /* limit reflow scope (modern browsers) */
-      border-radius: 10px;
-      background: linear-gradient(135deg, rgba(96,165,250,0.25), rgba(37,99,235,0.08));
-      border: 1px solid rgba(37,99,235,0.18);
+    #search .search-container input#q::placeholder {
+      color: #bbb;
     }
 
-    .icon {
-      display: block;                      /* avoid baseline shifts */
-      width: 100%;
-      height: 100%;
-      transform-origin: center center;
-      backface-visibility: hidden;         /* prevent flicker */
-      will-change: transform;               /* perf hint */
+    #search .search-container button {
+      background: none;
+      border: none;
+      color: #66b3ff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 0 15px;
+      transition: color 0.2s ease;
     }
 
-    .label { font-weight: 600; }
-    .desc { color: var(--muted); font-size: .9rem; }
-
-    /* Apply the jump only to the icon when hovering the tile */
-    .link-tile:hover .icon {
-      animation: slime var(--jump-duration) var(--jump-ease) both;
-      /* Optional extra polish: also fade
-      animation: slime var(--jump-duration) var(--jump-ease) both, fade 300ms ease;
-      */
+    #search .search-container button:hover {
+      color: #99ccff;
     }
 
-    /* Fade (optional, retained for convenience) */
-    @-webkit-keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-
-    /* Slime (elastic jump) */
-    @-webkit-keyframes slime {
-      0%   { -webkit-transform: scale3d(1, 1, 1); transform: scale3d(1, 1, 1); }
-      30%  { -webkit-transform: scale3d(1.25, 0.75, 1); transform: scale3d(1.25, 0.75, 1); }
-      40%  { -webkit-transform: scale3d(0.75, 1.25, 1); transform: scale3d(0.75, 1.25, 1); }
-      50%  { -webkit-transform: scale3d(1.15, 0.85, 1); transform: scale3d(1.15, 0.85, 1); }
-      65%  { -webkit-transform: scale3d(0.95, 1.05, 1); transform: scale3d(0.95, 1.05, 1); }
-      75%  { -webkit-transform: scale3d(1.05, 0.95, 1); transform: scale3d(1.05, 0.95, 1); }
-      100% { -webkit-transform: scale3d(1, 1, 1); transform: scale3d(1, 1, 1); }
-    }
-    @keyframes slime {
-      0%   { transform: scale3d(1, 1, 1); }
-      30%  { transform: scale3d(1.25, 0.75, 1); }
-      40%  { transform: scale3d(0.75, 1.25, 1); }
-      50%  { transform: scale3d(1.15, 0.85, 1); }
-      65%  { transform: scale3d(0.95, 1.05, 1); }
-      75%  { transform: scale3d(1.05, 0.95, 1); }
-      100% { transform: scale3d(1, 1, 1); }
-    }
-
-    /* Accessibility: reduced motion */
-    @media (prefers-reduced-motion: reduce) {
-      .icon, .link-tile:hover .icon {
-        animation: none !important;
-        transform: none !important;
-        transition: none !important;
-      }
+    #search .search-container:focus-within {
+      box-shadow: 0 0 12px rgba(102,179,255,0.7);
+      border-color: #66b3ff;
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <h1>Med‑Shore Work Homepage</h1>
-      <div class="sub" id="datetime">Loading date & time…</div>
-    </header>
-
-    <section>
-      <h2>Quick Access</h2>
-      <div class="links-grid">
-        <a class="link-tile" href="https://vanguard.emsanyware.com/" target="_blank" rel="noopenerria-hidden="true"></span></span>
-          <span class="label">Vanguard</span>
-        </a>
-
-        https://scheduling.esosuite.net/Default.aspx?DB=priorityambulance
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">ESO Suite</span>
-        </a>
-
-        <a class="link-tile" href="https://anderson#/login
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Med‑Trans Helo</span>
-        </a>
-
-        <a class="link-tile" href="https://www.paycomonline.net/v4     <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">PayCom Online</span>
-        </a>
-
-        /camera
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Camera's</span>
-        </a>
-
-        /map.html
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Map Distance</span>
-        </a>
-
-        <a class="link-tile" href="httpse.com/login
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Priority Support</span>
-        </a>
-      </div>
-    </section>
-
-    <section>
-      <h3>Bookmarks</h3>
-      <div class="links-grid">
-        <a class="link-tile" href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank class="icon" aria-hidden="true"></span></span>
-          <span class="label">Daily WorkSheet</span>
-        </a>
-
-        <a class="link-tile" href="https://drive.google.com/file/d/1qFbZPllJSrvdq5ZZjOMtCTm19hwlPkIU/view?usp=class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Coroner Schedule</span>
-        </a>
-
-        /Respwithfire
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Fire &amp; EMS</span>
-        </a>
-
-        <a class="link-tile" href="https://anmed.org/sites/default/files/2024-5.pdf
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">North Campus Map</span>
-        </a>
-
-        https://login.microsoftonline.com/
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Work E‑Mail</span>
-        </a>
-
-        http://www.google.com/voice
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Google Voice</span>
-        </a>
-
-        https://learn.emergencydispatch.org/academy/my_learning/dashboard
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">PRO‑QA Class</span>
-        </a>
-
-        <a class="link-tile" href="https://forms.office.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9ZixnyQxfHe_9EkCPctjghjHBUM002U1hLUUJTSVhMTU5Mturl
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Daily Truck Form (911 EOS)</span>
-        </a>
-
-        https://forms.microsoft.com/r/YcaLSLR43Y
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">Daily Truck Form</span>
-        </a>
-
-        https://chatgpt.com/
-          <span class="icon-wrapper"><span class="icon" aria-hidden="true"></span></span>
-          <span class="label">ChatGPT</span>
-        </a>
-      </div>
-    </section>
-
-    <section>
-      <h3>Location &amp; Weather</h3>
-      <p class="desc">(Placeholder) — hook up your weather widget here.</p>
-    </section>
-
-    <section>
-      <h3>Word of the Day</h3>
-      <p class="desc">(Placeholder) — add your script or embed here.</p>
-    </section>
+  <div id="news-ticker">
+    <div id="news-content">🔴 Loading RSS News Feed.......</div>
   </div>
 
+  <div id="weather-alert"></div>
+
+  <main>
+    <header>
+      <section id="date-time"><h2 class="sr-only">Date & Time</h2></section>
+      <section id="weather"><h2 class="sr-only">Location & Weather</h2></section>
+    </header>
+
+    <section id="traichu">
+      <h1 class="sr-only">Med-Shore Work Homepage</h1>
+
+      <div id="greeting"></div>
+      <div id="global-api-usage"></div>
+
+      <nav id="dock">
+        <ul>
+          <li><a href="https://vanguard.emsanyware.com/" title="Vanguard" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/emsanyware.JPG" alt="Vanguard"></a></li>
+          <li><a href="https://scheduling.esosuite.net/Default.aspx?DB=priorityambulance" title="ESO Suite" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/esoicon.png" alt="ESO Suite"></a></li>
+          <li><a href="https://andersoncounty911_sc.transport.net/#/login" title="Med-Trans Helo" target="_blank"><img src="https://icons.duckduckgo.com/ip3/med-trans.net.ico" alt="Med-Trans Helo"></a></li>
+          <li><a href="https://www.paycomonline.net/v4/ee/web.php/app/login" title="PayCom Online" target="_blank"><img src="https://icons.duckduckgo.com/ip3/paycomonline.net.ico" alt="PayCom Online"></a></li>
+          <li><a href="https://work.sndjy.us/camera" title="2X2 DOT Camera" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/Camera.png" alt="Camera's"></a></li>
+          <li><a href="https://work.sndjy.us/map.html" title="Map Distance" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/keys.ico" alt="Map Distance"></a></li>
+        </ul>
+      </nav>
+
+      <section id="search">
+        <h2 class="sr-only">Search</h2>
+        <form action="https://www.google.com/search" method="get">
+          <div class="search-container" id="searchContainer">
+            <input type="text" id="q" name="q" placeholder="Search..." autofocus>
+            <button type="submit" aria-label="Search"></button>
+          </div>
+        </form>
+      </section>
+
+      <section id="bookmarks">
+        <h2 class="sr-only">Bookmarks</h2>
+        <ul>
+          <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" class="favicon" alt="Daily WorkSheet">Daily WorkSheet</a></li>
+          <li><a href="https://drive.google.com/file/d/1qFbZPllJSrvdq5ZZjOMtCTm19hwlPkIU/view?usp=drive_link" target="_blank"><img src="https://icons.duckduckgo.com/ip3/dead.net.ico" class="favicon" alt="Coroner Schedule">Coroner Schedule</a></li>
+          <li><a href="https://work.sndjy.us/Respwithfire" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/desktop_w95.ico" alt="Fire & EMS">Fire & EMS</a></li>
+          <li><a href="https://anmed.org/sites/default/files/2024-08/anmed-north-campus-map-v5.pdf" target="_blank"><img src="https://icons.duckduckgo.com/ip3/anmed.org.ico" alt="North Campus Map">North Campus Map</a></li>
+          <li><a href="https://login.microsoftonline.com/" target="_blank"><img src="https://icons.duckduckgo.com/ip3/login.microsoftonline.com.ico" class="favicon" alt="Work E-Mail">Work E-Mail</a></li>
+        </ul>
+        <ul>
+          <li><a href="http://www.google.com/voice" target="_blank"><img src="https://icons.duckduckgo.com/ip3/voice.google.com.ico" class="favicon" alt="Google Voice">Google Voice</a></li>
+          <li><a href="https://learn.emergencydispatch.org/academy/my_learning/dashboard" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emergencydispatch.org.ico" class="favicon" alt="PRO-QA Class">PRO-QA Class</a></li>
+          <li><a href="https://forms.office.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9ZixnyQxfHe_9EkCPctjghjHBUM002U1hLUUJTSVhMTU5MNE5XR1g0S0ZENi4u&route=shorturl"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/network_normal_two_pcs.ico" class="favicon" alt="Daily Truck Form">911 EOS Form</a></li>
+          <li><a href="https://forms.microsoft.com/r/YcaLSLR43Y"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/2be043653580663a0484a8ae2bdaf5bd276538d7/FILE.svg" class="favicon" alt="Daily Truck Form">Daily Truck Form</a></li
+          <li><a href="https://support.priorityambulance.com/login" target="_blank"><img src="https://icons.duckduckgo.com/ip3/sndjy.us.com.ico" class="favicon" alt="Priority Support">Work Support</a></li>
+          <li><a href="https://chatgpt.com/" target="_blank"><img src="https://icons.duckduckgo.com/ip3/chatgpt.com.ico" class="favicon" alt="ChatGPT">Chat GPT</a></li>
+        </ul>
+      </section>
+
+      <section id="word-of-the-day">
+        <h2 class="sr-only">Word of the Day</h2>
+        <div id="word-container">
+          <h3 id="word-title"></h3>
+          <p id="word-definition"></p>
+        </div>
+      </section>
+    </section>
+  </main>
+
   <script>
-    // Simple local date/time display
-    function updateTime() {
-      const now = new Date();
-      const opts = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-      document.getElementById('datetime').textContent = now.toLocaleString(undefined, opts);
+    const WORKER_BASE_URL = "https://api.sndjy.us";
+
+    function setGreeting() {
+      const greetingElement = document.getElementById('greeting');
+      const currentHour = new Date().getHours();
+
+      const morning = [
+        'Good Morning!', 'Rise and Shine!', "You've been summoned.",
+        "Let's get this bread.", 'Time to make the donuts.',
+        'Greetings fellow morning hater.', 'Another day, Another Dollar.'
+      ];
+      const afternoon = [
+        'Good Afternoon.', "Is it 5 o'clock yet?", 'Surviving another day!',
+        'Keep up the great work!'
+      ];
+      const evening = [
+        'Good Evening.', 'Time to unwind.',
+        'The day is over. You can stop pretending to work now.',
+        'Time to start your real life.',
+        'May your Wi-Fi be strong and your snacks plentiful.'
+      ];
+
+      let greeting = '';
+      if (currentHour < 12) greeting = morning[Math.floor(Math.random() * morning.length)];
+      else if (currentHour < 18) greeting = afternoon[Math.floor(Math.random() * afternoon.length)];
+      else greeting = evening[Math.floor(Math.random() * evening.length)];
+
+      greetingElement.textContent = greeting;
     }
-    updateTime();
-    setInterval(updateTime, 30000);
+
+    function showApiUsage() {
+      const el = document.getElementById('api-usage');
+      if (!el) return;
+
+      let count = 0;
+      try {
+        count = Number(localStorage.getItem('googleApiCallCount') || '0');
+      } catch (e) {
+        console.warn('Cannot read API counter:', e);
+      }
+
+      el.textContent = `Google map requests (this browser): ${count}`;
+    }
+
+    async function showGlobalApiUsage() {
+      const el = document.getElementById('global-api-usage');
+      if (!el) return;
+      if (!WORKER_BASE_URL) {
+        el.textContent = "Global counter: Worker URL not set.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${WORKER_BASE_URL}/api/get`);
+        if (!res.ok) throw new Error("Bad response");
+        const data = await res.json();
+        el.textContent = `Google map requests (global): ${data.count}`;
+      } catch (e) {
+        console.warn("Unable to load global counter:", e);
+        el.textContent = "Google map requests (global): unavailable";
+      }
+    }
+
+    function setRandomBackground() {
+      const backgrounds = [
+        'background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png',
+        'background4.jpg', 'background5.jpg', 'xmas.jpg', 'PICTURE.jpg' , 'HELO.jpg'
+      ];
+      const chosen = `url('${backgrounds[Math.floor(Math.random() * backgrounds.length)]}')`;
+      document.documentElement.style.setProperty('--bg-url', chosen);
+    }
+
+    function fitToViewport() {
+      const main = document.querySelector('main');
+      const section = document.getElementById('traichu');
+      if (!main || !section) return;
+
+      section.style.transform = 'scale(1)';
+
+      const availableW = main.clientWidth - 24;
+      const availableH = main.clientHeight - 24;
+
+      const neededW = section.scrollWidth;
+      const neededH = section.scrollHeight;
+
+      let scale = 1;
+      if (neededW > 0 && neededH > 0) {
+        scale = Math.min(1, availableW / neededW, availableH / neededH);
+      }
+      section.style.transform = `scale(${scale})`;
+    }
+
+    function loadNewsFeed() {
+      const newsContent = document.getElementById('news-content');
+      const cacheKey = 'foxNewsFeedCache';
+      const cacheDuration = 15 * 60 * 1000;
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { html, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < cacheDuration) {
+          newsContent.innerHTML = html;
+          return;
+        }
+      }
+
+      fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
+        .then(r => r.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+          const items = data.querySelectorAll("item");
+          let html = '';
+          items.forEach(i => {
+            const t = i.querySelector("title").textContent;
+            const l = i.querySelector("link").textContent;
+            html += `<a href="${l}" target="_blank">🦊 ${t}</a>`;
+          });
+          if (!html) throw new Error('No items found');
+          newsContent.innerHTML = html;
+          localStorage.setItem(cacheKey, JSON.stringify({ html, timestamp: Date.now() }));
+        })
+        .catch(() => newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊');
+    }
+
+    function loadWordOfTheDay() {
+      const title = document.getElementById('word-title');
+      const def = document.getElementById('word-definition');
+      const cacheKey = 'wordOfTheDayCache';
+      const cacheDuration = 24 * 60 * 60 * 1000;
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { word, definition, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < cacheDuration) {
+          title.textContent = word;
+          def.textContent = definition;
+          return;
+        }
+      }
+
+      fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://wordsmith.org/awad/rss1.xml')}`)
+        .then(r => r.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+          const item = data.querySelector("item");
+          const w = item.querySelector("title").textContent;
+          const desc = item.querySelector("description").textContent;
+          const definition = desc.split('<br>')[0].trim();
+
+          title.textContent = w;
+          def.textContent = definition;
+          localStorage.setItem(cacheKey, JSON.stringify({ word: w, definition, timestamp: Date.now() }));
+        })
+        .catch(() => {
+          title.textContent = 'Word of the Day';
+          def.textContent = 'Could not load the word of the day.';
+        });
+    }
+
+    function sizeSearchToNav() {
+      const navUl = document.querySelector('#dock ul');
+      const searchContainer = document.getElementById('searchContainer');
+      if (!navUl || !searchContainer) return;
+
+      const navWidth = Math.ceil(navUl.getBoundingClientRect().width);
+      const finalWidth = Math.min(navWidth, document.documentElement.clientWidth * 0.95);
+      searchContainer.style.width = finalWidth + 'px';
+    }
+
+    let __resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(__resizeTimer);
+      __resizeTimer = setTimeout(() => {
+        sizeSearchToNav();
+        fitToViewport();
+      }, 120);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setGreeting();
+      setRandomBackground();
+      loadNewsFeed();
+      loadWordOfTheDay();
+      sizeSearchToNav();
+      fitToViewport();
+      showApiUsage();
+      showGlobalApiUsage();
+      setInterval(loadNewsFeed, 900000);
+    });
   </script>
-</</body>
+</body>
+</html>
