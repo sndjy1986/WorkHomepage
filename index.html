@@ -9,59 +9,40 @@
   <link rel="stylesheet" href="css/main.css">
   <title>Work Homepage</title>
 
+  <!-- designed and coded by Joey Sanders -->
+  <!-- also has a emergency warning for weather alerts in the area -->
+
 <style>
- 
+  /* ===== Config (feel free to tweak) ===== */
   :root {
-    --icon-size: 24px;                  
-    --icon-gap: 8px;                    
+    --icon-size: 32px;                  /* size for the icons in the top bar */
     --jump-duration: 600ms;
     --jump-ease: cubic-bezier(0.25, 1.35, 0.5, 1);
-    --icon-bg: #e9eef7;                 
-    --icon-border: rgba(37,99,235,0.25);
   }
 
-
-  a {
-    position: relative;
+  /* ===== Only target anchors that contain an image (your icon strip) ===== */
+  a:has(img) {
+    display: inline-flex;
+    align-items: center;
+    /* no padding/margins here so we don’t alter your layout */
   }
-  a::before {
-    content: "";
-    display: inline-block;
+
+  /* Normalize icon size without changing your layout */
+  a:has(img) img {
     width: var(--icon-size);
     height: var(--icon-size);
-    margin-right: var(--icon-gap);
-    border-radius: 6px;
-    background:
-      linear-gradient(135deg, rgba(96,165,250,0.25), rgba(37,99,235,0.08));
-    border: 1px solid var(--icon-border);
-
-   
+    display: block;
     transform-origin: center center;
     backface-visibility: hidden;
-    vertical-align: middle;             /* prevents baseline jump with text */
+    will-change: transform;
   }
 
-  /* ===== Hover: run the jump only on the icon box ===== */
-  a:hover::before {
+  /* Run the slime jump ONLY on those icons */
+  a:has(img):hover img {
     animation: slime var(--jump-duration) var(--jump-ease) both;
   }
 
-  /* ===== If you already use real icons inside links ===== */
-  /* Example: ...... Vanguard</a> */
-  a .icon {
-    display: inline-block;
-    width: var(--icon-size);
-    height: var(--icon-size);
-    margin-right: var(--icon-gap);
-    transform-origin: center center;
-    backface-visibility: hidden;
-    vertical-align: middle;
-  }
-  a:hover .icon {
-    animation: slime var(--jump-duration) var(--jump-ease) both;
-  }
-
-  /* ===== Keyframes (your original slime) ===== */
+  /* ===== Your original slime keyframes (unchanged) ===== */
   @-webkit-keyframes slime {
     0%   { -webkit-transform: scale3d(1, 1, 1); transform: scale3d(1, 1, 1); }
     30%  { -webkit-transform: scale3d(1.25, 0.75, 1); transform: scale3d(1.25, 0.75, 1); }
@@ -83,16 +64,12 @@
 
   /* ===== Accessibility: respect reduced motion ===== */
   @media (prefers-reduced-motion: reduce) {
-       a::before,
-    a .icon {
+    a:has(img) img {
       animation: none !important;
       transform: none !important;
-      transition: none !important;
+      transition      transition: none !important;
     }
   }
-
-  <!-- designed and coded by Joey Sanders -->
-  <!-- also has a emergency warning for weather alerts in the area -->
 
   <style>
     :root {
