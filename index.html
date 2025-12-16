@@ -522,18 +522,38 @@
   const bar=$('netBar');
   if (!navigator.connection){ bar.style.display='none'; return; }
 
+  const cycleList=[
+    ()=>navigator.onLine?'🟢':'🔴',
+    ()=>new Date().toLocaleTimeString('en-GB',{hour12:false}),
+    ()=>{
+      const m=['😎','😐','😴','🤯'];
+      return m[Math.floor(Math.random()*m.length)];
+    },
+    async()=>{
+      try{
+        const d=await(await fetch('https://ipapi.co/json')).json();
+        return d.city||'--';
+      }catch{return '--';}
+    },
+    ()=>navigator.getBattery?navigator.getBattery().then(b=>
+       (b.charging?'⚡':'')+(b.level*100).toFixed(0)+'%').catch(()=>'--'):'--',
+    ()=>{
+      const used=(performance.memory?.usedJSHeapSize/1048576).toFixed(0);
+      return used?used+'M':'--';
+    },
+    ()=>{                       // fallback to plain network type
+      const c=navigator.connection;
+      return c.effectiveType?c.effectiveType.toUpperCase():'--';
+    }
+  ];
+  let idx=0;
+
   const measure=async()=>{
     const start=performance.now();
     const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{mode:'cors'});
     const blob=await r.blob();
     const secs=(performance.now()-start)/1000;
     return ((blob.size*8/1e6)/secs).toFixed(1);
-  };
-
-  const getNetName=()=>{
-    const c=navigator.connection;
-    if (c.type==='wifi' && c.SSID) return c.SSID;
-    return c.effectiveType ? c.effectiveType.toUpperCase() : (c.type||'--').toUpperCase();
   };
 
   async function update(){
@@ -550,19 +570,14 @@
     fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
       .finally(()=>$('ping').querySelector('span').textContent=(performance.now()-t).toFixed(0));
 
-    $('net').textContent=getNetName();
+    // cycle last cell
+    const fn=cycleList[idx];
+    idx=(idx+1)%cycleList.length;
+    Promise.resolve(fn()).then(v=>$('net').textContent=v);
   }
-
-  // prompt for SSID on Chrome/Android
-  if ('connection' in navigator && 'requestInfo' in navigator.connection) {
-    navigator.connection.requestInfo().then(()=>update()).catch(()=>update());
-  } else {
-    update();
-  }
-  setInterval(update,30000);
+  update();
+  setInterval(update,10000);          // refresh every 10 s
 })();
 </script>
-</body>
-</body>
 </body>
 </html>
