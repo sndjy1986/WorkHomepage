@@ -247,5 +247,58 @@
       loadChannelByIndex(1, false);
     })();
   </script>
+  <!-- Network status bar -->
+<style>
+  #netBar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    height:26px;
+    background:#111; color:#eee;
+    font:12px/26px monospace;
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    z-index:9999;
+    border-top:1px solid #333;
+  }
+  #netBar span{padding:0 8px;}
+  #netBar small{color:#888;margin-left:3px}
+</style>
+<div id="netBar">
+  <span id="ip">--</span>
+  <span id="dl">↓ <span>--</span> Mbps</span>
+  <span id="ping">ping <span>--</span> ms</span>
+  <span id="net">--</span>
+</div>
+<script>
+(()=>{
+  const $=id=>document.getElementById(id);
+  const bar=$('netBar');
+  if (!navigator.connection){ bar.style.display='none'; return; }
+
+  async function update(){
+    // IP
+    try{
+      const r=await fetch('https://api.ipify.org?format=json');
+      const j=await r.json();
+      $('ip').textContent=j.ip;
+    }catch{ $('ip').textContent='--'; }
+
+    // Downlink + network
+    const c=navigator.connection;
+    $('dl').querySelector('span').textContent=(c.downlink||0).toFixed(1);
+    $('net').textContent=c.effectiveType?.toUpperCase()||'--';
+
+    // Ping (tiny 1×1 gif)
+    const t=performance.now();
+    fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
+      .finally(()=>{
+        $('ping').querySelector('span').textContent=(performance.now()-t).toFixed(0);
+      });
+  }
+  update();
+  setInterval(update,10000);
+})();
+</script>
 </body>
 </html>
