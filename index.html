@@ -494,18 +494,13 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-<!-- ==========  NEW BOTTOM BAR  ========== -->
+<!-- ==========  FIXED BOTTOM BAR  ========== -->
 <footer id="network-info">
   <div id="ip-info">IP: …</div>
   <div id="location-info">Location: …</div>
   <div id="asn-info">ASN: …</div>
   <div id="organization-info">Organization: …</div>
   <div id="speed-test">Speed: …</div>
-  <div id="contact-link">
-    <a href="contact.html" style="color:#fff;text-decoration:none;font-weight:bold;border:1px solid rgba(255,255,255,.3);padding:5px 15px;border-radius:15px;transition:all .3s ease"
-       onmouseover="this.style.backgroundColor='rgba(255,255,255,.2)';this.style.borderColor='rgba(255,255,255,.6)'"
-       onmouseout="this.style.backgroundColor='transparent';this.style.borderColor='rgba(255,255,255,.3)'">📧 Contact Me</a>
-  </div>
 </footer>
 
 <style>
@@ -516,60 +511,47 @@
   display:flex;
   justify-content:space-around;
   align-items:center;
-  padding:10px;
-  background:rgba(0,0,0,.5);
-  color:white;
-  font-size:14px;
+  padding:8px 5px;
+  background:rgba(0,0,0,.6);
+  color:#fff;
+  font:13px/1 monospace;
   flex-wrap:wrap;
-}
-@media (max-width:768px){
-  #network-info{font-size:12px;padding:8px 5px}
-  #contact-link a{font-size:12px!important;padding:3px 10px!important}
 }
 </style>
 
 <script>
-/* ---------- geo + ASN + speed ---------- */
+/* ---------- geo + speed ---------- */
 (()=>{
   const $=id=>document.getElementById(id);
-  async function fetchGeo(){
+  async function geo(){
     try{
-      const r=await fetch('https://ipapi.co/json');
-      const d=await r.json();
-      return {
-        ip:d.ip||'--',
-        city:d.city||'--',
-        region:d.region||'--',
-        asn:'AS'+d.asn||'--',
-        org:d.org?d.org.replace(/,.*/,''):'--'
-      };
+      const d=await(await fetch('https://ipapi.co/json')).json();
+      $('#ip-info').textContent=`IP: ${d.ip||'--'}`;
+      $('#location-info').textContent=`Location: ${d.city||'--'}, ${d.region||'--'}`;
+      $('#asn-info').textContent=`ASN: AS${d.asn||'--'}`;
+      $('#organization-info').textContent=`Organization: ${(d.org||'--').replace(/,.*/,'')}`;
     }catch{
-      return {ip:'--',city:'--',region:'--',asn:'--',org:'--'};
+      ['ip-info','location-info','asn-info','organization-info']
+        .forEach(id=>$(id).textContent=id.split('-')[0].toUpperCase()+': --');
     }
   }
-  async function updateBar(){
-    const g=await fetchGeo();
-    $('#ip-info').textContent=`IP: ${g.ip}`;
-    $('#location-info').textContent=`Location: ${g.city}, ${g.region}`;
-    $('#asn-info').textContent=`ASN: ${g.asn}`;
-    $('#organization-info').textContent=`Organization: ${g.org}`;
-  }
-  async function measureSpeed(){
-    const start=performance.now();
+  async function speed(){
+    $('#speed-test').textContent='Speed: …';
     try{
-      const r=await fetch(`https://speed.cloudflare.com/__down?bytes=20000000&t=${Date.now()}`,{mode:'cors'});
+      const t0=performance.now();
+      const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
       const blob=await r.blob();
-      const secs=(performance.now()-start)/1000;
+      const secs=(performance.now()-t0)/1000;
       const mbps=secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
       $('#speed-test').textContent=`Speed: ${mbps} Mbps`;
     }catch{
       $('#speed-test').textContent='Speed: --';
     }
   }
-  updateBar(); measureSpeed();
-  setInterval(()=>{updateBar(); measureSpeed();},10000);
+  geo(); speed();
+  setInterval(()=>{geo(); speed();},10000);
 })();
 </script>
-<!-- ========== /end bottom bar ========== -->
+<!-- ========== /end bar ========== -->
 </body>
 </html>
