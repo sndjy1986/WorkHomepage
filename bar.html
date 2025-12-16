@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Bar</title>
+  <style>
+    body{margin:0;height:100vh;background:#111;color:#fff;font-family:monospace}
+    #net-bar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:6px;background:rgba(0,0,0,.8)}
+    #net-bar span{color:#0ff}
+  </style>
+</head>
+<body>
+  <!-- ========== BOTTOM BAR ========== -->
+  <footer id="net-bar">
+    <div>IP: <span id="nb-ip">…</span></div>
+    <div>Location: <span id="nb-loc">…</span></div>
+    <div>ASN: <span id="nb-asn">…</span></div>
+    <div>Download: <span id="nb-dl">…</span> Mbps</div>
+    <div>Jitter: <span id="nb-jit">…</span> ms</div>
+    <div>Ping: <span id="nb-ping">…</span> ms</div>
+    <div>Network: <span id="nb-net">…</span></div>
+  </footer>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const $ = id => document.getElementById(id);
+
+    /* geo */
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(d => {
+        $('#nb-ip').textContent = d.ip;
+        return fetch(`https://ipinfo.io/${d.ip}/json`);
+      })
+      .then(r => r.json())
+      .then(g => {
+        $('#nb-loc').textContent = g.city && g.region ? `${g.city}, ${g.region}` : '--';
+        $('#nb-asn').textContent = g.org ? g.org.split(' ')[0] : '--';
+      })
+      .catch(() => {
+        $('#nb-ip').textContent = $('#nb-loc').textContent = $('#nb-asn').textContent = 'ERR';
+      });
+
+    /* speed + jitter + ping */
+    (async () => {
+      $('#nb-dl').textContent = $('#nb-jit').textContent = $('#nb-ping').textContent = '…';
+      try {
+        const t0 = performance.now();
+        await fetch('https://speed.cloudflare.com/__down?bytes=10000000&t=' + Date.now(), { mode: 'cors' });
+        const downMs = performance.now() - t0;
+        const mbps = ((10000000 * 8) / 1e6) / (downMs / 1000);
+        $('#nb-dl').textContent = mbps.toFixed(0);
+
+        const pings = await Promise.all([1, 2, 3].map(() => fetch('https://speed.cloudflare.com/__down?bytes=0&t=' + Date.now()).then(() => performance.now()).then(t => t - performance.now())));
+        const avg = pings.reduce((a, b) => a + b) / 3;
+        const jit = Math.sqrt(pings.map(p => Math.pow(p - avg, 2)).reduce((a, b) => a + b) / 3);
+        $('#nb-jit').textContent = jit.toFixed(0);
+        $('#nb-ping').textContent = avg.toFixed(0);
+      } catch {
+        $('#nb-dl').textContent = $('#nb-jit').textContent = $('#nb-ping').textContent = 'ERR';
+      }
+    })();
+
+    /* network name */
+    const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    $('#nb-net').textContent = c && c.effectiveType ? c.effectiveType.toUpperCase() : '--';
+
+    /* loop */
+    setInterval(() => {
+      fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => $('#nb-ip').textContent = d.ip);
+      navigator.connection && $('#nb-net').textContent === '--' && ($('#nb-net').textContent = navigator.connection.effectiveType ? navigator.connection.effectiveType.toUpperCase() : '--');
+    }, 15000);
+  });
+  </script>
+</body>
+</html>
