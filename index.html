@@ -536,7 +536,10 @@
     if (c.type==='wifi' && c.SSID) return c.SSID;
     return c.effectiveType ? c.effectiveType.toUpperCase() : (c.type||'--').toUpperCase();
   };
-
+// ask once per session
+if ('connection' in navigator && 'requestInfo' in navigator.connection) {
+  navigator.connection.requestInfo().then(() => update());
+}
   async function update(){
     try{
       const r=await fetch('https://api.ipify.org?format=json');
