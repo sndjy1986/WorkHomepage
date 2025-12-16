@@ -523,29 +523,40 @@
   const bar=$('netBar');
   if (!navigator.connection){ bar.style.display='none'; return; }
 
+  const measure=async()=>{
+    const start=performance.now();
+    const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{mode:'cors'});
+    const blob=await r.blob();
+    const secs=(performance.now()-start)/1000;
+    return ((blob.size*8/1e6)/secs).toFixed(1);
+  };
+
+  const getNetName=()=>{
+    const c=navigator.connection;
+    if (c.type==='wifi' && c.SSID) return c.SSID;
+    return c.effectiveType ? c.effectiveType.toUpperCase() : (c.type||'--').toUpperCase();
+  };
+
   async function update(){
-    // IP
     try{
       const r=await fetch('https://api.ipify.org?format=json');
-      const j=await r.json();
-      $('ip').textContent=j.ip;
+      $('ip').textContent=(await r.json()).ip;
     }catch{ $('ip').textContent='--'; }
 
-    // Downlink + network
-    const c=navigator.connection;
-    $('dl').querySelector('span').textContent=(c.downlink||0).toFixed(1);
-    $('net').textContent=c.effectiveType?.toUpperCase()||'--';
+    $('dl').querySelector('span').textContent='…';
+    try{ $('dl').querySelector('span').textContent=await measure(); }
+    catch{ $('dl').querySelector('span').textContent='Err'; }
 
-    // Ping (tiny 1×1 gif)
     const t=performance.now();
     fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
-      .finally(()=>{
-        $('ping').querySelector('span').textContent=(performance.now()-t).toFixed(0);
-      });
+      .finally(()=>$('ping').querySelector('span').textContent=(performance.now()-t).toFixed(0));
+
+    $('net').textContent=getNetName();
   }
   update();
-  setInterval(update,10000);
+  setInterval(update,30000);
 })();
 </script>
+</body>
 </body>
 </html>
