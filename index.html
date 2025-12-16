@@ -491,5 +491,51 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
+  <!-- ==========  NEW BOTTOM BAR  ========== -->
+<footer id="network-info">
+  <div>IP: <span id="ip">…</span></div>
+  <div>Location: <span id="loc">…</span></div>
+  <div>ASN: <span id="asn">…</span></div>
+  <div>Org: <span id="org">…</span></div>
+  <div>Speed: <span id="spd">…</span> Mbps</div>
+</footer>
+
+<style>
+#network-info{position:fixed;bottom:0;width:100%;display:flex;justify-content:space-around;align-items:center;padding:8px 5px;background:rgba(0,0,0,.6);color:#fff;font:13px/1 monospace;flex-wrap:wrap}
+</style>
+
+<script>
+/* ---------- geo + ASN + speed  (file:// safe) ---------- */
+(()=>{
+  const $=id=>document.getElementById(id);
+
+  async function geo(){
+    try{
+      const g=await(await fetch('https://ip-api.com/json/')).json();
+      $('#ip').textContent=g.query||'--';
+      $('#loc').textContent=`${g.city||'--'}, ${g.regionName||'--'}`;
+      $('#asn').textContent='AS'+g.asn||'--';
+      $('#org').textContent=(g.org||'--').split(',')[0];
+    }catch{
+      $('#ip').textContent=$('#loc').textContent=$('#asn').textContent=$('#org').textContent='--';
+    }
+  }
+  async function speed(){
+    $('#spd').textContent='…';
+    try{
+      const t0=performance.now();
+      const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
+      const blob=await r.blob();
+      const secs=(performance.now()-t0)/1000;
+      $('#spd').textContent=secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
+    }catch{
+      $('#spd').textContent='--';
+    }
+  }
+  geo(); speed();
+  setInterval(()=>{geo(); speed();},10000);
+})();
+</script>
+<!-- ========== /end bottom bar ========== -->
 </body>
 </html>
