@@ -494,7 +494,7 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
- <!-- Network status bar -->
+<!-- Network status bar -->
 <style>
   #netBar{
     position:fixed;
@@ -522,7 +522,8 @@
   const bar=$('netBar');
   if (!navigator.connection){ bar.style.display='none'; return; }
 
-  const cycleList=[
+  /* ---------- pick one item per page-load ---------- */
+  const choices=[
     ()=>navigator.onLine?'🟢':'🔴',
     ()=>new Date().toLocaleTimeString('en-GB',{hour12:false}),
     ()=>{
@@ -541,13 +542,15 @@
       const used=(performance.memory?.usedJSHeapSize/1048576).toFixed(0);
       return used?used+'M':'--';
     },
-    ()=>{                       // fallback to plain network type
+    ()=>{
       const c=navigator.connection;
       return c.effectiveType?c.effectiveType.toUpperCase():'--';
     }
   ];
-  let idx=0;
+  const fn=choices[Math.floor(Math.random()*choices.length)];
+  Promise.resolve(fn()).then(v=>$('net').textContent=v);
 
+  /* ---------- rest of bar ---------- */
   const measure=async()=>{
     const start=performance.now();
     const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{mode:'cors'});
@@ -555,7 +558,6 @@
     const secs=(performance.now()-start)/1000;
     return ((blob.size*8/1e6)/secs).toFixed(1);
   };
-
   async function update(){
     try{
       const r=await fetch('https://api.ipify.org?format=json');
@@ -569,15 +571,11 @@
     const t=performance.now();
     fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
       .finally(()=>$('ping').querySelector('span').textContent=(performance.now()-t).toFixed(0));
-
-    // cycle last cell
-    const fn=cycleList[idx];
-    idx=(idx+1)%cycleList.length;
-    Promise.resolve(fn()).then(v=>$('net').textContent=v);
   }
   update();
-  setInterval(update,10000);          // refresh every 10 s
+  setInterval(update,10000);
 })();
 </script>
+</body>
 </body>
 </html>
