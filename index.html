@@ -494,7 +494,7 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-  <!-- Network status bar -->
+ <!-- Network status bar -->
 <style>
   #netBar{
     position:fixed;
@@ -509,7 +509,6 @@
     border-top:1px solid #333;
   }
   #netBar span{padding:0 8px;}
-  #netBar small{color:#888;margin-left:3px}
 </style>
 <div id="netBar">
   <span id="ip">--</span>
@@ -536,10 +535,7 @@
     if (c.type==='wifi' && c.SSID) return c.SSID;
     return c.effectiveType ? c.effectiveType.toUpperCase() : (c.type||'--').toUpperCase();
   };
-// ask once per session
-if ('connection' in navigator && 'requestInfo' in navigator.connection) {
-  navigator.connection.requestInfo().then(() => update());
-}
+
   async function update(){
     try{
       const r=await fetch('https://api.ipify.org?format=json');
@@ -556,10 +552,17 @@ if ('connection' in navigator && 'requestInfo' in navigator.connection) {
 
     $('net').textContent=getNetName();
   }
-  update();
+
+  // prompt for SSID on Chrome/Android
+  if ('connection' in navigator && 'requestInfo' in navigator.connection) {
+    navigator.connection.requestInfo().then(()=>update()).catch(()=>update());
+  } else {
+    update();
+  }
   setInterval(update,30000);
 })();
 </script>
+</body>
 </body>
 </body>
 </html>
