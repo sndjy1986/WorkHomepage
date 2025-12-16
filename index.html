@@ -491,7 +491,7 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-<!-- ==========  BOTTOM BAR  ========== -->
+  <!-- ==========  BOTTOM BAR  ========== -->
 <footer id="network-info">
   <div>IP: <span id="ip">…</span></div>
   <div>Location: <span id="loc">…</span></div>
@@ -505,9 +505,9 @@
 </style>
 
 <script>
-(()=>{                                    // IIFE runs after footer is in DOM
+/* ---------- runs AFTER footer exists ---------- */
+(()=>{
   const $=id=>document.getElementById(id);
-
   async function geo(){
     try{
       const ipRes=await fetch('https://api.ipify.org?format=json');
@@ -538,5 +538,6 @@
 })();
 </script>
 <!-- ========== /end bar ========== -->
+</body>
 </body>
 </html>
