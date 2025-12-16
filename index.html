@@ -509,12 +509,13 @@
     border-top:1px solid #333;
   }
   #netBar span{padding:0 8px;}
+  #netBar .label{color:#888; margin-right:4px;}
 </style>
 <div id="netBar">
-  <span id="ip">--</span>
-  <span id="dl">↓ <span>--</span> Mbps</span>
-  <span id="ping">ping <span>--</span> ms</span>
-  <span id="net">--</span>
+  <span><span class="label">IP:</span><span id="ip">--</span></span>
+  <span><span class="label">Speed:</span><span id="dl">--</span> Mbps</span>
+  <span><span class="label">Ping:</span><span id="ping">--</span> ms</span>
+  <span><span class="label">Net:</span><span id="net">--</span></span>
 </div>
 <script>
 (()=>{
@@ -522,7 +523,6 @@
   const bar=$('netBar');
   if (!navigator.connection){ bar.style.display='none'; return; }
 
-  /* ---------- pick one item per page-load ---------- */
   const choices=[
     ()=>navigator.onLine?'🟢':'🔴',
     ()=>new Date().toLocaleTimeString('en-GB',{hour12:false}),
@@ -550,7 +550,6 @@
   const fn=choices[Math.floor(Math.random()*choices.length)];
   Promise.resolve(fn()).then(v=>$('net').textContent=v);
 
-  /* ---------- rest of bar ---------- */
   const measure=async()=>{
     const start=performance.now();
     const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{mode:'cors'});
@@ -564,18 +563,19 @@
       $('ip').textContent=(await r.json()).ip;
     }catch{ $('ip').textContent='--'; }
 
-    $('dl').querySelector('span').textContent='…';
-    try{ $('dl').querySelector('span').textContent=await measure(); }
-    catch{ $('dl').querySelector('span').textContent='Err'; }
+    $('dl').textContent='…';
+    try{ $('dl').textContent=await measure(); }
+    catch{ $('dl').textContent='Err'; }
 
     const t=performance.now();
     fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
-      .finally(()=>$('ping').querySelector('span').textContent=(performance.now()-t).toFixed(0));
+      .finally(()=>$('ping').textContent=(performance.now()-t).toFixed(0));
   }
   update();
   setInterval(update,10000);
 })();
 </script>
+</body>
 </body>
 </body>
 </html>
