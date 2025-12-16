@@ -493,7 +493,7 @@
       showGlobalApiUsage();
       setInterval(loadNewsFeed, 900000);
     });
-  </script>
+<!-- ==========  BOTTOM BAR  ========== -->
 <footer id="network-info">
   <div>IP: <span id="ip">…</span></div>
   <div>Location: <span id="loc">…</span></div>
@@ -502,32 +502,43 @@
   <div>Speed: <span id="spd">…</span> Mbps</div>
 </footer>
 
+<style>
+#network-info{position:fixed;bottom:0;width:100%;display:flex;justify-content:space-around;align-items:center;padding:8px 5px;background:rgba(0,0,0,.6);color:#fff;font:13px/1 monospace;flex-wrap:wrap}
+</style>
+
 <script>
-/* mini-geo + speed */
+/* ---------- file:// friendly ---------- */
 (async()=>{
   const $=id=>document.getElementById(id);
+
+  /* geo + ASN */
   try{
-    const d=await(await fetch('https://ipapi.co/json')).json();
-    $('#ip').textContent=d.ip||'--';
-    $('#loc').textContent=`${d.city||'--'}, ${d.region||'--'}`;
-    $('#asn').textContent='AS'+d.asn||'--';
-    $('#org').textContent=(d.org||'--').split(',')[0];
-  }catch(e){
-    $('#ip').textContent=$('#loc').textContent=$('#asn').textContent=$('#org').textContent='--';
-  }
-  try{
-    const t0=performance.now();
-    const r=await fetch('https://speed.cloudflare.com/__down?bytes=5000000&t='+Date.now(),{mode:'cors'});
-    const blob=await r.blob();
-    const mbps=((blob.size*8/1e6)/((performance.now()-t0)/1000)).toFixed(0);
-    $('#spd').textContent=mbps;
+    const geo=await(await fetch('https://ip-api.com/json/')).json();
+    $('#ip').textContent=geo.query||'--';
+    $('#loc').textContent=`${geo.city||'--'}, ${geo.regionName||'--'}`;
+    $('#asn').textContent='AS'+geo.asn||'--';
+    $('#org').textContent=(geo.org||'--').split(',')[0];
   }catch{
-    $('#spd').textContent='--';
+    ['ip','loc','asn','org'].forEach(id=>$(id).textContent='--');
   }
-  setInterval(async()=>{
-    try{const t0=performance.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=5000000&t='+Date.now(),{mode:'cors'});const b=await r.blob();$('#spd').textContent=((b.size*8/1e6)/((performance.now()-t0)/1000)).toFixed(0);}catch{$('#spd').textContent='--';}
-  },10000);
+
+  /* speed */
+  async function speed(){
+    $('#spd').textContent='…';
+    try{
+      const t0=performance.now();
+      const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
+      const blob=await r.blob();
+      const secs=(performance.now()-t0)/1000;
+      $('#spd').textContent=secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
+    }catch{
+      $('#spd').textContent='--';
+    }
+  }
+  await speed();
+  setInterval(speed,10000);
 })();
 </script>
+<!-- ========== /end bar ========== -->
 </body>
 </html>
