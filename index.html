@@ -496,7 +496,18 @@
   </script>
 <!-- Network status bar -->
 <style>
-  #netBar{position:fixed;bottom:0;left:0;right:0;height:26px;background:#111;color:#eee;font:12px/26px monospace;display:flex;align-items:center;justify-content:space-around;z-index:9999;border-top:1px solid #333;}
+  #netBar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    height:26px;
+    background:#111; color:#eee;
+    font:12px/26px monospace;
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    z-index:9999;
+    border-top:1px solid #333;
+  }
   #netBar span{padding:0 8px;}
   #netBar .label{color:#888;margin-right:4px;}
 </style>
@@ -504,49 +515,56 @@
   <span><span class="label">IP:</span><span id="ip">--</span></span>
   <span><span class="label">Speed:</span><span id="dl">--</span> Mbps</span>
   <span><span class="label">Ping:</span><span id="ping">--</span> ms</span>
-  <span><span class="label" id="netLabel">Net:</span><span id="net">--</span></span>
+  <span id="net">--</span>
 </div>
+
 <script>
 (()=>{
   const $=id=>document.getElementById(id);
   const bar=$('netBar');
   if (!navigator.connection){ bar.style.display='none'; return; }
 
-  function showLabel(on){ $('#netLabel').style.display=on?'inline':'none'; }
-
-  const choices=[
-    ()=>{showLabel(false); return navigator.onLine?'🟢':'🔴';},
-    ()=>{showLabel(false); return new Date().toLocaleTimeString('en-GB',{hour12:false});},
-    ()=>{showLabel(false); const m=['😎','😐','😴','🤯']; return m[Math.floor(Math.random()*m.length)];},
-    async()=>{showLabel(false); try{const d=await(await fetch('https://ipapi.co/json')).json(); return d.city||'--';}catch{return '--';}},
-    async()=>{showLabel(false); if(!navigator.getBattery)return '--'; try{const b=await navigator.getBattery(); return (b.charging?'⚡':'')+(b.level*100).toFixed(0)+'%';}catch{return '--';}},
-    ()=>{showLabel(false); const u=(performance.memory?.usedJSHeapSize/1048576).toFixed(0); return u?u+'M':'--';},
-    ()=>{showLabel(true);  const c=navigator.connection; return c.effectiveType?c.effectiveType.toUpperCase():'--';}
-  ];
-
-  async function pickNet(){                                      // ← reusable picker
-    const fn=choices[Math.floor(Math.random()*choices.length)];
-    $('#net').textContent=await Promise.resolve(fn());
+  /* ---------- geo + ASN ---------- */
+  async function fetchGeo(){
+    try{
+      const r=await fetch('https://ipapi.co/json');
+      const d=await r.json();
+      return {
+        city: d.city||'--',
+        region: d.region||'--',
+        asn: 'AS'+d.asn||'--',
+        org: d.org ? d.org.replace(/,.*/,'') : '--'
+      };
+    }catch{
+      return {city:'--',region:'--',asn:'--',org:'--'};
+    }
+  }
+  async function updateGeo(){
+    const g=await fetchGeo();
+    $('#net').textContent=`${g.city}, ${g.region}  ${g.asn}  ${g.org}`;
   }
 
+  /* ---------- speed ---------- */
   const measure=async()=>{
     const start=performance.now();
-    const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
+    const r=await fetch(`https://speed.cloudflare.com/__down?bytes=25000000&t=${Date.now()}`,{mode:'cors'});
     const blob=await r.blob();
     const secs=(performance.now()-start)/1000;
-    return secs?((blob.size*8/1e6)/secs).toFixed(1):'0.0';
+    return secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
   };
+
+  /* ---------- 10 s loop ---------- */
   async function update(){
-    try{ const r=await fetch('https://api.ipify.org?format=json'); $('ip').textContent=(await r.json()).ip; }catch{ $('ip').textContent='--'; }
+    try{ const r=await fetch('https://api.ipify.org?format=json'); $('ip').textContent=(await r.json()).ip;}catch{ $('ip').textContent='--';}
     $('dl').textContent='…';
-    try{ $('dl').textContent=await measure(); }catch{ $('dl').textContent='Err'; }
+    try{ $('dl').textContent=await measure();}catch{ $('dl').textContent='Err';}
     const t=performance.now();
     fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
       .finally(()=>$('ping').textContent=(performance.now()-t).toFixed(0));
-    pickNet();                                                   // ← cycle last cell
+    updateGeo();
   }
-  pickNet();                                                     // first paint
-  setInterval(update,10000);                                     // 10 s loop
+  updateGeo();
+  setInterval(update,10000);
 })();
 </script>
 </body>
