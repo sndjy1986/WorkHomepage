@@ -491,7 +491,8 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-  <!-- ========== BOTTOM BAR ========== -->
+</body>
+<!-- ========== BOTTOM BAR (paste entire chunk) ========== -->
 <footer id="net-bar">
   <div>IP: <span id="nb-ip">…</span></div>
   <div>Location: <span id="nb-loc">…</span></div>
@@ -511,8 +512,6 @@
 <script>
 (()=>{
   const $=id=>document.getElementById(id);
-
-  /* ---------- geo + ASN ---------- */
   async function geo(){
     try{
       const ipRes=await fetch('https://api.ipify.org?format=json');
@@ -525,45 +524,32 @@
       $('#nb-ip').textContent=$('#nb-loc').textContent=$('#nb-asn').textContent='--';
     }
   }
-
-  /* ---------- speed + jitter + ping ---------- */
   async function speedTest(){
-    const reset=()=>{$('#nb-dl').textContent=$('#nb-jit').textContent=$('#nb-ping').textContent='…';}
-    reset();
+    $('#nb-dl').textContent=$('#nb-jit').textContent=$('#nb-ping').textContent='…';
     try{
-      const downSize=10000000;                       // 10 MB
+      const downSize=10000000;
       const t0=performance.now();
-      const down=await fetch(`https://speed.cloudflare.com/__down?bytes=${downSize}&t=${Date.now()}`,{mode:'cors'});
-      await down.arrayBuffer();                      // force download
+      await fetch(`https://speed.cloudflare.com/__down?bytes=${downSize}&t=${Date.now()}`,{mode:'cors'});
       const downMs=performance.now()-t0;
       const mbps=((downSize*8)/1e6)/(downMs/1000);
       $('#nb-dl').textContent=mbps.toFixed(0);
 
-      // ping (tiny gif)
-      const pingT0=performance.now();
-      await fetch('https://speed.cloudflare.com/__down?bytes=0&t='+Date.now(),{mode:'cors'});
-      const pingMs=performance.now()-pingT0;
-      $('#nb-ping').textContent=pingMs.toFixed(0);
-
-      // jitter = 3 quick pings averaged
       const pings=await Promise.all([1,2,3].map(()=>fetch('https://speed.cloudflare.com/__down?bytes=0&t='+Date.now()).then(()=>performance.now()).then(t=>t-performance.now())));
       const avg=pings.reduce((a,b)=>a+b)/3;
       const jit=Math.sqrt(pings.map(p=>Math.pow(p-avg,2)).reduce((a,b)=>a+b)/3);
       $('#nb-jit').textContent=jit.toFixed(0);
+      $('#nb-ping').textContent=avg.toFixed(0);
     }catch{
       $('#nb-dl').textContent=$('#nb-jit').textContent=$('#nb-ping').textContent='--';
     }
   }
-
-  /* ---------- network name (wifi/cellular) ---------- */
   function networkName(){
     const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     if(!c)return '--';
-    if(c.type==='wifi'&&c.SSID)return c.SSID;   // Chrome/Android only
+    if(c.type==='wifi'&&c.SSID)return c.SSID;
     return c.effectiveType?c.effectiveType.toUpperCase():'--';
   }
   $('#nb-net').textContent=networkName();
-
   geo(); speedTest();
   setInterval(()=>{geo(); speedTest();},15000);
 })();
@@ -571,6 +557,4 @@
 <!-- ========== /end bar ========== -->
 </body>
 </html>
-</body>
-</body>
-</html>
+
