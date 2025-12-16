@@ -494,64 +494,40 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-<!-- ==========  FIXED BOTTOM BAR  ========== -->
 <footer id="network-info">
-  <div id="ip-info">IP: …</div>
-  <div id="location-info">Location: …</div>
-  <div id="asn-info">ASN: …</div>
-  <div id="organization-info">Organization: …</div>
-  <div id="speed-test">Speed: …</div>
+  <div>IP: <span id="ip">…</span></div>
+  <div>Location: <span id="loc">…</span></div>
+  <div>ASN: <span id="asn">…</span></div>
+  <div>Org: <span id="org">…</span></div>
+  <div>Speed: <span id="spd">…</span> Mbps</div>
 </footer>
 
-<style>
-#network-info{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  padding:8px 5px;
-  background:rgba(0,0,0,.6);
-  color:#fff;
-  font:13px/1 monospace;
-  flex-wrap:wrap;
-}
-</style>
-
 <script>
-/* ---------- geo + speed ---------- */
-(()=>{
+/* mini-geo + speed */
+(async()=>{
   const $=id=>document.getElementById(id);
-  async function geo(){
-    try{
-      const d=await(await fetch('https://ipapi.co/json')).json();
-      $('#ip-info').textContent=`IP: ${d.ip||'--'}`;
-      $('#location-info').textContent=`Location: ${d.city||'--'}, ${d.region||'--'}`;
-      $('#asn-info').textContent=`ASN: AS${d.asn||'--'}`;
-      $('#organization-info').textContent=`Organization: ${(d.org||'--').replace(/,.*/,'')}`;
-    }catch{
-      ['ip-info','location-info','asn-info','organization-info']
-        .forEach(id=>$(id).textContent=id.split('-')[0].toUpperCase()+': --');
-    }
+  try{
+    const d=await(await fetch('https://ipapi.co/json')).json();
+    $('#ip').textContent=d.ip||'--';
+    $('#loc').textContent=`${d.city||'--'}, ${d.region||'--'}`;
+    $('#asn').textContent='AS'+d.asn||'--';
+    $('#org').textContent=(d.org||'--').split(',')[0];
+  }catch(e){
+    $('#ip').textContent=$('#loc').textContent=$('#asn').textContent=$('#org').textContent='--';
   }
-  async function speed(){
-    $('#speed-test').textContent='Speed: …';
-    try{
-      const t0=performance.now();
-      const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
-      const blob=await r.blob();
-      const secs=(performance.now()-t0)/1000;
-      const mbps=secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
-      $('#speed-test').textContent=`Speed: ${mbps} Mbps`;
-    }catch{
-      $('#speed-test').textContent='Speed: --';
-    }
+  try{
+    const t0=performance.now();
+    const r=await fetch('https://speed.cloudflare.com/__down?bytes=5000000&t='+Date.now(),{mode:'cors'});
+    const blob=await r.blob();
+    const mbps=((blob.size*8/1e6)/((performance.now()-t0)/1000)).toFixed(0);
+    $('#spd').textContent=mbps;
+  }catch{
+    $('#spd').textContent='--';
   }
-  geo(); speed();
-  setInterval(()=>{geo(); speed();},10000);
+  setInterval(async()=>{
+    try{const t0=performance.now();const r=await fetch('https://speed.cloudflare.com/__down?bytes=5000000&t='+Date.now(),{mode:'cors'});const b=await r.blob();$('#spd').textContent=((b.size*8/1e6)/((performance.now()-t0)/1000)).toFixed(0);}catch{$('#spd').textContent='--';}
+  },10000);
 })();
 </script>
-<!-- ========== /end bar ========== -->
 </body>
 </html>
