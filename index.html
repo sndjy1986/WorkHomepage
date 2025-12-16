@@ -30,6 +30,7 @@
       min-height: 100svh;
       min-height: 100dvh;
       padding-top: 50px; 
+      padding-bottom: 34px; /* makes room for net-bar */
       transition: padding-top 0.3s ease;
       background: none; 
     }
@@ -227,21 +228,30 @@
       box-shadow: 0 0 12px rgba(102,179,255,0.7);
       border-color: #66b3ff;
     }
+
+    /* ===== NET BAR CSS (single source of truth) ===== */
+    #net-bar{
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      display:flex;
+      justify-content:space-around;
+      align-items:center;
+      padding:6px 6px;
+      background:rgba(0,0,0,.65);
+      color:#fff;
+      font:12px/1 monospace;
+      flex-wrap:wrap;
+      gap:6px;
+      z-index:9998
+    }
+    #net-bar div{white-space:nowrap}
+    #net-bar span{color:#0ff}
   </style>
 </head>
 
 <body>
-  <!-- ========== BOTTOM BAR ========== -->
-  <footer id="net-bar">
-    <div>IP: <span id="nb-ip">…</span></div>
-    <div>Location: <span id="nb-loc">…</span></div>
-    <div>ASN: <span id="nb-asn">…</span></div>
-    <div>Download: <span id="nb-dl">…</span> Mbps</div>
-    <div>Jitter: <span id="nb-jit">…</span> ms</div>
-    <div>Ping: <span id="nb-ping">…</span> ms</div>
-    <div>Network: <span id="nb-net">…</span></div>
-  </footer>
-
   <div id="news-ticker">
     <div id="news-content">🦊 Loading RSS News Feed.......</div>
   </div>
@@ -501,7 +511,8 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-  <!-- ========== BOTTOM BAR ========== -->
+
+  <!-- ===== NET BAR (single footer, at end of body) ===== -->
   <footer id="net-bar">
     <div>IP: <span id="nb-ip">…</span></div>
     <div>Location: <span id="nb-loc">…</span></div>
@@ -512,56 +523,81 @@
     <div>Network: <span id="nb-net">…</span></div>
   </footer>
 
-  <style>
-  #net-bar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:6px 4px;background:rgba(0,0,0,.65);color:#fff;font:12px/1 monospace;flex-wrap:wrap;gap:4px;z-index:9998}
-  #net-bar div{white-space:nowrap}
-  #net-bar span{color:#0ff}
-  </style>
-
+  <!-- ===== NET BAR SCRIPT (fixed + guarded) ===== -->
   <script>
-  document.addEventListener('DOMContentLoaded',()=>{
-    const $=id=>document.getElementById(id);
-    async function geo(){
-      try{
-        const ipRes=await fetch('https://api.ipify.org?format=json');
-        const {ip}=await ipRes.json();
-        const info=await(await fetch(`https://ipinfo.io/${ip}/json`)).json();
-        $('#nb-ip').textContent=ip;
-        $('#nb-loc').textContent=info.city&&info.region?`${info.city}, ${info.region}`:'--';
-        $('#nb-asn').textContent=info.org?info.org.split(' ')[0]:'--';
-      }catch{
-        $('#nb-ip').textContent=$('#nb-loc').textContent=$('#nb-asn').textContent='--';
-      }
-    }
-    async function speedTest(){
-      $('#nb-dl').textContent=$('#nb-jit').textContent=$('#nb-ping').textContent='…';
-      try{
-        const downSize=10000000;
-        const t0=performance.now();
-        await fetch(`https://speed.cloudflare.com/__down?bytes=${downSize}&t=${Date.now()}`,{mode:'cors'});
-        const downMs=performance.now()-t0;
-        const mbps=((downSize*8)/1e6)/(downMs/1000);
-        $('#nb-dl').textContent=mbps.toFixed(0);
+  document.addEventListener('DOMContentLoaded', () => {
+    const $ = (id) => document.getElementById(id);
+    const required = ['nb-ip','nb-loc','nb-asn','nb-dl','nb-jit','nb-ping','nb-net'];
+    if (!required.every(id => $(id))) return;
 
-        const pings=await Promise.all([1,2,3].map(()=>fetch('https://speed.cloudflare.com/__down?bytes=0&t='+Date.now()).then(()=>performance.now()).then(t=>t-performance.now())));
-        const avg=pings.reduce((a,b)=>a+b)/3;
-        const jit=Math.sqrt(pings.map(p=>Math.pow(p-avg,2)).reduce((a,b)=>a+b)/3);
-        $('#nb-jit').textContent=jit.toFixed(0);
-        $('#nb-ping').textContent=avg.toFixed(0);
-      }catch{
-        $('#nb-dl').textContent=$('#nb-jit').textContent=$('#nb-ping').textContent='--';
+    const set = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+
+    // Network type (best-effort)
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    set('nb-net', conn?.effectiveType ? conn.effectiveType.toUpperCase() : '--');
+
+    // IP + location
+    fetch('https://api.ipify.org?format=json')
+      .then(r => r.json())
+      .then(d => {
+        set('nb-ip', d.ip);
+        return fetch('https://ipapi.co/json/');
+      })
+      .then(r => r.json())
+      .then(g => {
+        set('nb-loc', (g.city && g.region) ? `${g.city}, ${g.region}` : '--');
+        set('nb-asn', g.asn || '--');
+      })
+      .catch(() => {
+        set('nb-ip', 'ERR'); set('nb-loc', 'ERR'); set('nb-asn', 'ERR');
+      });
+
+    // Speed + ping + jitter
+    (async () => {
+      set('nb-dl', '…'); set('nb-jit', '…'); set('nb-ping', '…');
+
+      try {
+        const bytes = 10_000_000;
+
+        // Download speed
+        const t0 = performance.now();
+        await fetch(`https://speed.cloudflare.com/__down?bytes=${bytes}&t=${Date.now()}`, { cache: 'no-store' });
+        const downMs = performance.now() - t0;
+        const mbps = ((bytes * 8) / 1e6) / (downMs / 1000);
+        set('nb-dl', mbps.toFixed(0));
+
+        // Ping
+        const pingOnce = async () => {
+          const start = performance.now();
+          await fetch(`https://speed.cloudflare.com/__down?bytes=0&t=${Date.now()}`, { cache: 'no-store' });
+          return performance.now() - start;
+        };
+
+        const pings = [];
+        for (let i = 0; i < 5; i++) pings.push(await pingOnce());
+
+        const avg = pings.reduce((a,b) => a + b, 0) / pings.length;
+        const jit = Math.sqrt(pings.reduce((a,p) => a + Math.pow(p - avg, 2), 0) / pings.length);
+
+        set('nb-ping', avg.toFixed(0));
+        set('nb-jit', jit.toFixed(0));
+      } catch {
+        set('nb-dl', 'ERR'); set('nb-jit', 'ERR'); set('nb-ping', 'ERR');
       }
-    }
-    function networkName(){
-      const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
-      if(!c)return '--';
-      if(c.type==='wifi'&&c.SSID)return c.SSID;
-      return c.effectiveType?c.effectiveType.toUpperCase():'--';
-    }
-    $('#nb-net').textContent=networkName();
-    geo(); speedTest();
-    setInterval(()=>{geo(); speedTest();},15000);
+    })();
+
+    // Refresh lightweight stuff
+    setInterval(() => {
+      fetch('https://api.ipify.org?format=json', { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => set('nb-ip', d.ip))
+        .catch(() => set('nb-ip', 'ERR'));
+
+      const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if (c?.effectiveType) set('nb-net', c.effectiveType.toUpperCase());
+    }, 15000);
   });
   </script>
+
 </body>
 </html>
