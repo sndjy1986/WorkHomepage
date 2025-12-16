@@ -491,8 +491,8 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-</body>
-<!-- ========== BOTTOM BAR (paste entire chunk) ========== -->
+  </body>
+<!-- ========== BOTTOM BAR ========== -->
 <footer id="net-bar">
   <div>IP: <span id="nb-ip">…</span></div>
   <div>Location: <span id="nb-loc">…</span></div>
@@ -510,8 +510,10 @@
 </style>
 
 <script>
+/* ---------- geo + speed  (runs AFTER footer exists) ---------- */
 (()=>{
   const $=id=>document.getElementById(id);
+
   async function geo(){
     try{
       const ipRes=await fetch('https://api.ipify.org?format=json');
@@ -524,6 +526,7 @@
       $('#nb-ip').textContent=$('#nb-loc').textContent=$('#nb-asn').textContent='--';
     }
   }
+
   async function speedTest(){
     $('#nb-dl').textContent=$('#nb-jit').textContent=$('#nb-ping').textContent='…';
     try{
@@ -543,12 +546,14 @@
       $('#nb-dl').textContent=$('#nb-jit').textContent=$('#nb-ping').textContent='--';
     }
   }
+
   function networkName(){
     const c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
     if(!c)return '--';
     if(c.type==='wifi'&&c.SSID)return c.SSID;
     return c.effectiveType?c.effectiveType.toUpperCase():'--';
   }
+
   $('#nb-net').textContent=networkName();
   geo(); speedTest();
   setInterval(()=>{geo(); speedTest();},15000);
