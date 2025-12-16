@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect x=%2230%22 y=%2210%22 width=%2240%22 height=%2280%22 fill=%22%23FF0000%22/><rect x=%2210%22 y=%2230%22 width=%2280%22 height=%2240%22 fill=%22%23FF0000%22/></svg>">
+  <script src="js/main.js"></script>
+  <link rel="stylesheet" href="css/main.css">
+  <title>Work Homepage</title>
+
+  <!-- designed and coded by Joey Sanders -->
+  <!-- also has a emergency warning for weather alerts in the area -->
+
+  <style>
+    :root {
+      --text-color: #f5f0f0;
+      --link-color: #0066cc;
+      --bg-url: url('background.jpg');
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: auto; 
+    }
+
+    body {
+      position: relative;
+      min-height: 100svh;
+      min-height: 100dvh;
+      padding-top: 50px; 
+      transition: padding-top 0.3s ease;
+      background: none; 
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: var(--bg-url) center / cover no-repeat;
+      filter: blur(20px);
+      transform: translateZ(0) scale(1.06);
+      transform-origin: center;
+      will-change: transform;
+      z-index: -1;
+    }
+
+    body.alert-active {
+      padding-top: 100px;
+    }
+
+    main {
+      position: relative !important;
+      background-color: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px);
+      border-radius: 0px;
+      height: calc(100vh - 50px - 0px);
+      margin: 0px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    #traichu {
+      transform-origin: top center;
+      will-change: transform;
+    }
+
+    #greeting {
+      text-align: center;
+      font-size: 2.5em;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px #000000;
+      margin-bottom: -10px;
+    }
+
+    #api-usage,
+    #global-api-usage {
+      font-size: 0.8rem;
+      color: var(--text-color);
+      text-align: center;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    #dock ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      height: 10px;
+    }
+
+    #dock li {
+      margin: 0 10px;
+    }
+
+    #dock li a {
+      display: inline-block;
+      transition: transform 0.2s ease-out;
+    }
+
+    #dock li img {
+      width: 50px;
+      height: 50px;
+      vertical-align: middle;
+    }
+
+    #dock li a:hover {
+      transform: scale(1.3) translateY(-10px);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-color: #ffffff;
+        --link-color: #66b3ff;
+      }
+      main {
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+    }
+
+    #news-ticker {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      color: #fff;
+      overflow: hidden;
+      z-index: 9999;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      transition: top 0.3s ease;
+    }
+
+    body.alert-active #news-ticker {
+      top: 55px;
+    }
+
+    #news-content {
+      position: absolute;
+      white-space: nowrap;
+      line-height: 50px;
+      font-size: 16px;
+      font-weight: lighter;
+      -webkit-transform: translateZ(0);
+      backface-visibility: hidden;
+      animation-name: scroll-left;
+      animation-duration: 150s;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      will-change: transform;
+    }
+
+    @keyframes scroll-left {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    #news-content a {
+      color: #fff;
+      text-decoration: none;
+      margin-right: 80px;
+    }
+
+    #news-content a:hover {
+      text-decoration: underline;
+    }
+
+    #search {
+      display: flex;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    #search .search-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 95vw;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    #search .search-container input#q {
+      flex: 1;
+      background: transparent;
+      color: white;
+      font-size: 18px;
+      padding: 10px 15px;
+      border: none;
+      outline: none;
+    }
+
+    #search .search-container input#q::placeholder {
+      color: #bbb;
+    }
+
+    #search .search-container button {
+      background: none;
+      border: none;
+      color: #66b3ff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 0 15px;
+      transition: color 0.2s ease;
+    }
+
+    #search .search-container button:hover {
+      color: #99ccff;
+    }
+
+    #search .search-container:focus-within {
+      box-shadow: 0 0 12px rgba(102,179,255,0.7);
+      border-color: #66b3ff;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="news-ticker">
+    <div id="news-content">🦊 Loading RSS News Feed.......</div>
+  </div>
+
+  <div id="weather-alert"></div>
+
+  <main>
+    <header>
+      <section id="date-time"><h2 class="sr-only">Date & Time</h2></section>
+      <section id="weather"><h2 class="sr-only">Location & Weather</h2></section>
+    </header>
+
+    <section id="traichu">
+      <h1 class="sr-only">Med-Shore Work Homepage</h1>
+
+      <div id="greeting"></div>
+      <div id="global-api-usage"></div>
+
+      <nav id="dock">
+        <ul>
+          <li><a href="https://vanguard.emsanyware.com/" title="Vanguard" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/emsanyware.JPG" alt="Vanguard"></a></li>
+          <li><a href="https://scheduling.esosuite.net/Default.aspx?DB=priorityambulance" title="ESO Suite" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/esoicon.png" alt="ESO Suite"></a></li>
+          <li><a href="https://andersoncounty911_sc.transport.net/#/login" title="Med-Trans Helo" target="_blank"><img src="https://icons.duckduckgo.com/ip3/med-trans.net.ico" alt="Med-Trans Helo"></a></li>
+          <li><a href="https://www.paycomonline.net/v4/ee/web.php/app/login" title="PayCom Online" target="_blank"><img src="https://icons.duckduckgo.com/ip3/paycomonline.net.ico" alt="PayCom Online"></a></li>
+          <li><a href="https://work.sndjy.us/camera" title="2X2 DOT Camera" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/Camera.png" alt="Camera's"></a></li>
+          <li><a href="https://work.sndjy.us/map.html" title="Map Distance" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/keys.ico" alt="Map Distance"></a></li>
+        </ul>
+      </nav>
+
+      <section id="search">
+        <h2 class="sr-only">Search</h2>
+        <form action="https://www.google.com/search" method="get">
+          <div class="search-container" id="searchContainer">
+            <input type="text" id="q" name="q" placeholder="Search..." autofocus>
+            <button type="submit" aria-label="Search"></button>
+          </div>
+        </form>
+      </section>
+
+      <section id="bookmarks">
+        <h2 class="sr-only">Bookmarks</h2>
+        <ul>
+          <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" class="favicon" alt="Daily WorkSheet">Daily WorkSheet</a></li>
+          <li><a href="https://drive.google.com/file/d/1qFbZPllJSrvdq5ZZjOMtCTm19hwlPkIU/view?usp=drive_link" target="_blank"><img src="https://icons.duckduckgo.com/ip3/dead.net.ico" class="favicon" alt="Coroner Schedule">Coroner Schedule</a></li>
+          <li><a href="https://work.sndjy.us/Respwithfire" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/desktop_w95.ico" alt="Fire & EMS">Fire & EMS</a></li>
+          <li><a href="https://anmed.org/sites/default/files/2024-08/anmed-north-campus-map-v5.pdf" target="_blank"><img src="https://icons.duckduckgo.com/ip3/anmed.org.ico" alt="North Campus Map">North Campus Map</a></li>
+          <li><a href="https://login.microsoftonline.com/" target="_blank"><img src="https://icons.duckduckgo.com/ip3/login.microsoftonline.com.ico" class="favicon" alt="Work E-Mail">Work E-Mail</a></li>
+        </ul>
+        <ul>
+          <li><a href="http://www.google.com/voice" target="_blank"><img src="https://icons.duckduckgo.com/ip3/voice.google.com.ico" class="favicon" alt="Google Voice">Google Voice</a></li>
+          <li><a href="https://learn.emergencydispatch.org/academy/my_learning/dashboard" target="_blank"><img src="https://icons.duckduckgo.com/ip3/emergencydispatch.org.ico" class="favicon" alt="PRO-QA Class">PRO-QA Class</a></li>
+          <li><a href="https://forms.office.com/pages/responsepage.aspx?id=Zh-exeJVn0SAfe_1FF9ZixnyQxfHe_9EkCPctjghjHBUM002U1hLUUJTSVhMTU5MNE5XR1g0S0ZENi4u&route=shorturl"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/network_normal_two_pcs.ico" class="favicon" alt="Daily Truck Form">911 EOS Form</a></li>
+          <li><a href="https://forms.microsoft.com/r/YcaLSLR43Y"><img src="https://raw.githubusercontent.com/sndjy1986/WorkHomepage/2be043653580663a0484a8ae2bdaf5bd276538d7/FILE.svg" class="favicon" alt="Daily Truck Form">Daily Truck Form</a></li>
+          <li><a href="https://support.priorityambulance.com/login" target="_blank"><img src="https://icons.duckduckgo.com/ip3/sndjy.us.com.ico" class="favicon" alt="Priority Support">Work Support</a></li>
+          <li><a href="https://chatgpt.com/" target="_blank"><img src="https://icons.duckduckgo.com/ip3/chatgpt.com.ico" class="favicon" alt="ChatGPT">Chat GPT</a></li>
+        </ul>
+      </section>
+
+      <section id="word-of-the-day">
+        <h2 class="sr-only">Word of the Day</h2>
+        <div id="word-container">
+          <h3 id="word-title"></h3>
+          <p id="word-definition"></p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- ==========  BOTTOM BAR  ========== -->
+  <footer id="network-info">
+    <div>IP: <span id="ip">…</span></div>
+    <div>Location: <span id="loc">…</span></div>
+    <div>ASN: <span id="asn">…</span></div>
+    <div>Org: <span id="org">…</span></div>
+    <div>Speed: <span id="spd">…</span> Mbps</div>
+  </footer>
+
+  <style>
+  #network-info{position:fixed;bottom:0;width:100%;display:flex;justify-content:space-around;align-items:center;padding:8px 5px;background:rgba(0,0,0,.6);color:#fff;font:13px/1 monospace;flex-wrap:wrap}
+  </style>
+
+  <script>
+  /* ---------- geo + speed  (file:// safe) ---------- */
+  (()=>{
+    const $=id=>document.getElementById(id);
+    async function geo(){
+      try{
+        const ipRes=await fetch('https://api.ipify.org?format=json');
+        const {ip}=await ipRes.json();
+        const info=await(await fetch(`https://ipinfo.io/${ip}/json`)).json();
+        $('#ip').textContent=ip;
+        $('#loc').textContent=info.city&&info.region?`${info.city}, ${info.region}`:'--';
+        $('#asn').textContent=info.org?info.org.split(' ')[0]:'--';
+        $('#org').textContent=info.org?info.org.replace(/^AS\d+\s*/,''):'--';
+      }catch{
+        $('#ip').textContent=$('#loc').textContent=$('#asn').textContent=$('#org').textContent='--';
+      }
+    }
+    async function speed(){
+      $('#spd').textContent='…';
+      try{
+        const t0=performance.now();
+        const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
+        const blob=await r.blob();
+        const secs=(performance.now()-t0)/1000;
+        $('#spd').textContent=secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
+      }catch{
+        $('#spd').textContent='--';
+      }
+    }
+    geo(); speed();
+    setInterval(()=>{geo();speed();},10000);
+  })();
+  </script>
+  <!-- ========== /end bar ========== -->
+
+</body>
+</html>
