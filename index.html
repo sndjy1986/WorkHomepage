@@ -527,35 +527,53 @@
     $('#netLabel').style.display=on?'inline':'none';
   }
 
+  /* ---------- bullet-proof choices ---------- */
   const choices=[
     ()=>{showLabel(false); return navigator.onLine?'🟢':'🔴';},
     ()=>{showLabel(false); return new Date().toLocaleTimeString('en-GB',{hour12:false});},
     ()=>{showLabel(false); const m=['😎','😐','😴','🤯']; return m[Math.floor(Math.random()*m.length)];},
-    async()=>{showLabel(false); try{const d=await(await fetch('https://ipapi.co/json')).json(); return d.city||'--';}catch{return '--';}},
-    ()=>{showLabel(false); return navigator.getBattery?navigator.getBattery().then(b=>(b.charging?'⚡':'')+(b.level*100).toFixed(0)+'%').catch(()=>'--'):'--';},
+    async()=>{
+      showLabel(false);
+      try{
+        const d=await(await fetch('https://ipapi.co/json')).json();
+        return d.city||'--';
+      }catch{return '--';}
+    },
+    async()=>{                       // battery: await here so DOM never sees a promise
+      showLabel(false);
+      if(!navigator.getBattery) return '--';
+      try{
+        const b=await navigator.getBattery();
+        return (b.charging?'⚡':'')+(b.level*100).toFixed(0)+'%';
+      }catch{return '--';}
+    },
     ()=>{showLabel(false); const used=(performance.memory?.usedJSHeapSize/1048576).toFixed(0); return used?used+'M':'--';},
-    ()=>{showLabel(true);  const c=navigator.connection; return c.effectiveType?c.effectiveType.toUpperCase():'--';}
+    ()=>{showLabel(true); const c=navigator.connection; return c.effectiveType?c.effectiveType.toUpperCase():'--';}
   ];
-  const fn=choices[Math.floor(Math.random()*choices.length)];
-  Promise.resolve(fn()).then(v=>$('net').textContent=v);
 
+  /* ---------- pick one & always resolve ---------- */
+  (async()=>{
+    const fn=choices[Math.floor(Math.random()*choices.length)];
+    $('#net').textContent=await Promise.resolve(fn());
+  })();
+
+  /* ---------- speed / ping / IP ---------- */
   const measure=async()=>{
     const start=performance.now();
-    const r=await fetch('https://speed.cloudflare.com/__down?bytes=10000000',{mode:'cors'});
+    // 5 MB file + cache-buster
+    const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
     const blob=await r.blob();
     const secs=(performance.now()-start)/1000;
-    return ((blob.size*8/1e6)/secs).toFixed(1);
+    return secs?((blob.size*8/1e6)/secs).toFixed(1):'0.0';
   };
   async function update(){
     try{
       const r=await fetch('https://api.ipify.org?format=json');
       $('ip').textContent=(await r.json()).ip;
     }catch{ $('ip').textContent='--';}
-
     $('dl').textContent='…';
     try{ $('dl').textContent=await measure();}
     catch{ $('dl').textContent='Err';}
-
     const t=performance.now();
     fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
       .finally(()=>$('ping').textContent=(performance.now()-t).toFixed(0));
@@ -564,6 +582,7 @@
   setInterval(update,10000);
 })();
 </script>
+</body>
 </body>
 </body>
 </body>
