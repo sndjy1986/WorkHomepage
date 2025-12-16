@@ -491,7 +491,7 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-  <!-- ==========  BOTTOM BAR  ========== -->
+<!-- ==========  BOTTOM BAR  ========== -->
 <footer id="network-info">
   <div>IP: <span id="ip">…</span></div>
   <div>Location: <span id="loc">…</span></div>
@@ -505,42 +505,39 @@
 </style>
 
 <script>
-(()=>{
+(()=>{                                    // runs after footer is in DOM
   const $=id=>document.getElementById(id);
 
-  /* ---------- geo (file:// friendly) ---------- */
   async function geo(){
     try{
-      const ipRes = await fetch('https://api.ipify.org?format=json');
-      const {ip}  = await ipRes.json();
-      const info  = await(await fetch(`https://ipinfo.io/${ip}/json`)).json();
-      $('#ip').textContent = ip;
-      $('#loc').textContent = info.city && info.region ? `${info.city}, ${info.region}` : '--';
-      $('#asn').textContent = info.org ? info.org.split(' ')[0] : '--';
-      $('#org').textContent = info.org ? info.org.replace(/^AS\d+\s*/, '') : '--';
+      const ipRes=await fetch('https://api.ipify.org?format=json');
+      const {ip}=await ipRes.json();
+      const info=await(await fetch(`https://ipinfo.io/${ip}/json`)).json();
+      $('#ip').textContent=ip;
+      $('#loc').textContent=info.city&&info.region?`${info.city}, ${info.region}`:'--';
+      $('#asn').textContent=info.org?info.org.split(' ')[0]:'--';
+      $('#org').textContent=info.org?info.org.replace(/^AS\d+\s*/,''):'--';
     }catch{
-      $('#ip').textContent = $('#loc').textContent = $('#asn').textContent = $('#org').textContent = '--';
+      $('#ip').textContent=$('#loc').textContent=$('#asn').textContent=$('#org').textContent='--';
     }
   }
-
-  /* ---------- speed ---------- */
   async function speed(){
-    $('#spd').textContent = '…';
+    $('#spd').textContent='…';
     try{
-      const t0 = performance.now();
-      const r  = await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`, {mode: 'cors'});
-      const blob = await r.blob();
-      const secs = (performance.now() - t0) / 1000;
-      $('#spd').textContent = secs ? ((blob.size * 8 / 1e6) / secs).toFixed(0) : '0';
+      const t0=performance.now();
+      const r=await fetch(`https://speed.cloudflare.com/__down?bytes=5000000&t=${Date.now()}`,{mode:'cors'});
+      const blob=await r.blob();
+      const secs=(performance.now()-t0)/1000;
+      $('#spd').textContent=secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
     }catch{
-      $('#spd').textContent = '--';
+      $('#spd').textContent='--';
     }
   }
-
   geo(); speed();
-  setInterval(() => { geo(); speed(); }, 10000);
+  setInterval(()=>{geo();speed();},10000);
 })();
 </script>
 <!-- ========== /end bar ========== -->
+</body>
 </body>
 </html>
