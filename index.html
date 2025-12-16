@@ -515,7 +515,7 @@
   <span><span class="label">IP:</span><span id="ip">--</span></span>
   <span><span class="label">Speed:</span><span id="dl">--</span> Mbps</span>
   <span><span class="label">Ping:</span><span id="ping">--</span> ms</span>
-  <span><span class="label">Net:</span><span id="net">--</span></span>
+  <span><span class="label" id="netLabel">Net:</span><span id="net">--</span></span>
 </div>
 <script>
 (()=>{
@@ -523,29 +523,18 @@
   const bar=$('netBar');
   if (!navigator.connection){ bar.style.display='none'; return; }
 
+  function showLabel(on){
+    $('#netLabel').style.display=on?'inline':'none';
+  }
+
   const choices=[
-    ()=>navigator.onLine?'🟢':'🔴',
-    ()=>new Date().toLocaleTimeString('en-GB',{hour12:false}),
-    ()=>{
-      const m=['😎','😐','😴','🤯'];
-      return m[Math.floor(Math.random()*m.length)];
-    },
-    async()=>{
-      try{
-        const d=await(await fetch('https://ipapi.co/json')).json();
-        return d.city||'--';
-      }catch{return '--';}
-    },
-    ()=>navigator.getBattery?navigator.getBattery().then(b=>
-       (b.charging?'⚡':'')+(b.level*100).toFixed(0)+'%').catch(()=>'--'):'--',
-    ()=>{
-      const used=(performance.memory?.usedJSHeapSize/1048576).toFixed(0);
-      return used?used+'M':'--';
-    },
-    ()=>{
-      const c=navigator.connection;
-      return c.effectiveType?c.effectiveType.toUpperCase():'--';
-    }
+    ()=>{showLabel(false); return navigator.onLine?'🟢':'🔴';},
+    ()=>{showLabel(false); return new Date().toLocaleTimeString('en-GB',{hour12:false});},
+    ()=>{showLabel(false); const m=['😎','😐','😴','🤯']; return m[Math.floor(Math.random()*m.length)];},
+    async()=>{showLabel(false); try{const d=await(await fetch('https://ipapi.co/json')).json(); return d.city||'--';}catch{return '--';}},
+    ()=>{showLabel(false); return navigator.getBattery?navigator.getBattery().then(b=>(b.charging?'⚡':'')+(b.level*100).toFixed(0)+'%').catch(()=>'--'):'--';},
+    ()=>{showLabel(false); const used=(performance.memory?.usedJSHeapSize/1048576).toFixed(0); return used?used+'M':'--';},
+    ()=>{showLabel(true);  const c=navigator.connection; return c.effectiveType?c.effectiveType.toUpperCase():'--';}
   ];
   const fn=choices[Math.floor(Math.random()*choices.length)];
   Promise.resolve(fn()).then(v=>$('net').textContent=v);
@@ -561,11 +550,11 @@
     try{
       const r=await fetch('https://api.ipify.org?format=json');
       $('ip').textContent=(await r.json()).ip;
-    }catch{ $('ip').textContent='--'; }
+    }catch{ $('ip').textContent='--';}
 
     $('dl').textContent='…';
-    try{ $('dl').textContent=await measure(); }
-    catch{ $('dl').textContent='Err'; }
+    try{ $('dl').textContent=await measure();}
+    catch{ $('dl').textContent='Err';}
 
     const t=performance.now();
     fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
