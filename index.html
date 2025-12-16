@@ -494,79 +494,82 @@
       setInterval(loadNewsFeed, 900000);
     });
   </script>
-<!-- Network status bar -->
+<!-- ==========  NEW BOTTOM BAR  ========== -->
+<footer id="network-info">
+  <div id="ip-info">IP: …</div>
+  <div id="location-info">Location: …</div>
+  <div id="asn-info">ASN: …</div>
+  <div id="organization-info">Organization: …</div>
+  <div id="speed-test">Speed: …</div>
+  <div id="contact-link">
+    <a href="contact.html" style="color:#fff;text-decoration:none;font-weight:bold;border:1px solid rgba(255,255,255,.3);padding:5px 15px;border-radius:15px;transition:all .3s ease"
+       onmouseover="this.style.backgroundColor='rgba(255,255,255,.2)';this.style.borderColor='rgba(255,255,255,.6)'"
+       onmouseout="this.style.backgroundColor='transparent';this.style.borderColor='rgba(255,255,255,.3)'">📧 Contact Me</a>
+  </div>
+</footer>
+
 <style>
-  #netBar{
-    position:fixed;
-    bottom:0; left:0; right:0;
-    height:26px;
-    background:#111; color:#eee;
-    font:12px/26px monospace;
-    display:flex;
-    align-items:center;
-    justify-content:space-around;
-    z-index:9999;
-    border-top:1px solid #333;
-  }
-  #netBar span{padding:0 8px;}
-  #netBar .label{color:#888;margin-right:4px;}
+#network-info{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  padding:10px;
+  background:rgba(0,0,0,.5);
+  color:white;
+  font-size:14px;
+  flex-wrap:wrap;
+}
+@media (max-width:768px){
+  #network-info{font-size:12px;padding:8px 5px}
+  #contact-link a{font-size:12px!important;padding:3px 10px!important}
+}
 </style>
-<div id="netBar">
-  <span><span class="label">IP:</span><span id="ip">--</span></span>
-  <span><span class="label">Speed:</span><span id="dl">--</span> Mbps</span>
-  <span><span class="label">Ping:</span><span id="ping">--</span> ms</span>
-  <span id="net">--</span>
-</div>
 
 <script>
+/* ---------- geo + ASN + speed ---------- */
 (()=>{
   const $=id=>document.getElementById(id);
-  const bar=$('netBar');
-  if (!navigator.connection){ bar.style.display='none'; return; }
-
-  /* ---------- geo + ASN ---------- */
   async function fetchGeo(){
     try{
       const r=await fetch('https://ipapi.co/json');
       const d=await r.json();
       return {
-        city: d.city||'--',
-        region: d.region||'--',
-        asn: 'AS'+d.asn||'--',
-        org: d.org ? d.org.replace(/,.*/,'') : '--'
+        ip:d.ip||'--',
+        city:d.city||'--',
+        region:d.region||'--',
+        asn:'AS'+d.asn||'--',
+        org:d.org?d.org.replace(/,.*/,''):'--'
       };
     }catch{
-      return {city:'--',region:'--',asn:'--',org:'--'};
+      return {ip:'--',city:'--',region:'--',asn:'--',org:'--'};
     }
   }
-  async function updateGeo(){
+  async function updateBar(){
     const g=await fetchGeo();
-    $('#net').textContent=`${g.city}, ${g.region}  ${g.asn}  ${g.org}`;
+    $('#ip-info').textContent=`IP: ${g.ip}`;
+    $('#location-info').textContent=`Location: ${g.city}, ${g.region}`;
+    $('#asn-info').textContent=`ASN: ${g.asn}`;
+    $('#organization-info').textContent=`Organization: ${g.org}`;
   }
-
-  /* ---------- speed ---------- */
-  const measure=async()=>{
+  async function measureSpeed(){
     const start=performance.now();
-    const r=await fetch(`https://speed.cloudflare.com/__down?bytes=25000000&t=${Date.now()}`,{mode:'cors'});
-    const blob=await r.blob();
-    const secs=(performance.now()-start)/1000;
-    return secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
-  };
-
-  /* ---------- 10 s loop ---------- */
-  async function update(){
-    try{ const r=await fetch('https://api.ipify.org?format=json'); $('ip').textContent=(await r.json()).ip;}catch{ $('ip').textContent='--';}
-    $('dl').textContent='…';
-    try{ $('dl').textContent=await measure();}catch{ $('dl').textContent='Err';}
-    const t=performance.now();
-    fetch('https://www.google.com/favicon.ico?t='+Date.now(),{mode:'no-cors'})
-      .finally(()=>$('ping').textContent=(performance.now()-t).toFixed(0));
-    updateGeo();
+    try{
+      const r=await fetch(`https://speed.cloudflare.com/__down?bytes=20000000&t=${Date.now()}`,{mode:'cors'});
+      const blob=await r.blob();
+      const secs=(performance.now()-start)/1000;
+      const mbps=secs?((blob.size*8/1e6)/secs).toFixed(0):'0';
+      $('#speed-test').textContent=`Speed: ${mbps} Mbps`;
+    }catch{
+      $('#speed-test').textContent='Speed: --';
+    }
   }
-  updateGeo();
-  setInterval(update,10000);
+  updateBar(); measureSpeed();
+  setInterval(()=>{updateBar(); measureSpeed();},10000);
 })();
 </script>
-</body>
+<!-- ========== /end bottom bar ========== -->
 </body>
 </html>
