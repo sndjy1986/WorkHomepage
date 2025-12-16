@@ -231,6 +231,17 @@
 </head>
 
 <body>
+  <!-- ========== BOTTOM BAR ========== -->
+  <footer id="net-bar">
+    <div>IP: <span id="nb-ip">…</span></div>
+    <div>Location: <span id="nb-loc">…</span></div>
+    <div>ASN: <span id="nb-asn">…</span></div>
+    <div>Download: <span id="nb-dl">…</span> Mbps</div>
+    <div>Jitter: <span id="nb-jit">…</span> ms</div>
+    <div>Ping: <span id="nb-ping">…</span> ms</div>
+    <div>Network: <span id="nb-net">…</span></div>
+  </footer>
+
   <div id="news-ticker">
     <div id="news-content">🦊 Loading RSS News Feed.......</div>
   </div>
@@ -299,19 +310,201 @@
     </section>
   </main>
 
-  <!-- ========== BOTTOM BAR ========== -->
-  <footer id="net-bar">
-    <div>IP: <span id="nb-ip">…</span></div>
-    <div>Location: <span id="nb-loc">…</span></div>
-    <div>ASN: <span id="nb-asn">…</span></div>
-    <div>Download: <span id="nb-dl">…</span> Mbps</div>
-    <div>Jitter: <span id="nb-jit">…</span> ms</div>
-    <div>Ping: <span id="nb-ping">…</span> ms</div>
-    <div>Network: <span id="nb-net">…</span></div>
-  </footer>
+  <script>
+    const WORKER_BASE_URL = "https://api.sndjy.us";
 
+    function setGreeting() {
+      const greetingElement = document.getElementById('greeting');
+      const currentHour = new Date().getHours();
+
+      const morning = [
+        'Good Morning!', 'Rise and Shine!', "You've been summoned.",
+        "Let's get this bread.", 'Time to make the donuts.',
+        'Greetings fellow morning hater.', 'Another day, Another Dollar.'
+      ];
+      const afternoon = [
+        'Good Afternoon.', "Is it 5 o'clock yet?", 'Surviving another day!',
+        'Keep up the great work!'
+      ];
+      const evening = [
+        'Good Evening.', 'Time to unwind.',
+        'The day is over. You can stop pretending to work now.',
+        'Time to start your real life.',
+        'May your Wi-Fi be strong and your snacks plentiful.'
+      ];
+
+      let greeting = '';
+      if (currentHour < 12) greeting = morning[Math.floor(Math.random() * morning.length)];
+      else if (currentHour < 18) greeting = afternoon[Math.floor(Math.random() * afternoon.length)];
+      else greeting = evening[Math.floor(Math.random() * evening.length)];
+
+      greetingElement.textContent = greeting;
+    }
+
+    function showApiUsage() {
+      const el = document.getElementById('api-usage');
+      if (!el) return;
+
+      let count = 0;
+      try {
+        count = Number(localStorage.getItem('googleApiCallCount') || '0');
+      } catch (e) {
+        console.warn('Cannot read API counter:', e);
+      }
+
+      el.textContent = `Google map requests (this browser): ${count}`;
+    }
+
+    async function showGlobalApiUsage() {
+      const el = document.getElementById('global-api-usage');
+      if (!el) return;
+      if (!WORKER_BASE_URL) {
+        el.textContent = "Global counter: Worker URL not set.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${WORKER_BASE_URL}/api/get`);
+        if (!res.ok) throw new Error("Bad response");
+        const data = await res.json();
+        el.textContent = `Google map requests (global): ${data.count}`;
+      } catch (e) {
+        console.warn("Unable to load global counter:", e);
+        el.textContent = "Google map requests (global): unavailable";
+      }
+    }
+
+    function setRandomBackground() {
+      const backgrounds = [
+        'background.jpg', 'Background2.jpg', 'LIFEFLIGHT.png',
+        'background4.jpg', 'background5.jpg', 'xmas.jpg', 'PICTURE.jpg' , 'HELO.jpg'
+      ];
+      const chosen = `url('${backgrounds[Math.floor(Math.random() * backgrounds.length)]}')`;
+      document.documentElement.style.setProperty('--bg-url', chosen);
+    }
+
+    function fitToViewport() {
+      const main = document.querySelector('main');
+      const section = document.getElementById('traichu');
+      if (!main || !section) return;
+
+      section.style.transform = 'scale(1)';
+
+      const availableW = main.clientWidth - 24;
+      const availableH = main.clientHeight - 24;
+
+      const neededW = section.scrollWidth;
+      const neededH = section.scrollHeight;
+
+      let scale = 1;
+      if (neededW > 0 && neededH > 0) {
+        scale = Math.min(1, availableW / neededW, availableH / neededH);
+      }
+      section.style.transform = `scale(${scale})`;
+    }
+
+    function loadNewsFeed() {
+      const newsContent = document.getElementById('news-content');
+      const cacheKey = 'foxNewsFeedCache';
+      const cacheDuration = 15 * 60 * 1000;
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { html, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < cacheDuration) {
+          newsContent.innerHTML = html;
+          return;
+        }
+      }
+
+      fetch('https://moxie.foxnews.com/google-publisher/latest.xml')
+        .then(r => r.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+          const items = data.querySelectorAll("item");
+          let html = '';
+          items.forEach(i => {
+            const t = i.querySelector("title").textContent;
+            const l = i.querySelector("link").textContent;
+            html += `<a href="${l}" target="_blank">🦊 ${t}</a>`;
+          });
+          if (!html) throw new Error('No items found');
+          newsContent.innerHTML = html;
+          localStorage.setItem(cacheKey, JSON.stringify({ html, timestamp: Date.now() }));
+        })
+        .catch(() => newsContent.innerHTML = '🦊 Unable to load news feed. Please check back later. 🦊');
+    }
+
+    function loadWordOfTheDay() {
+      const title = document.getElementById('word-title');
+      const def = document.getElementById('word-definition');
+      const cacheKey = 'wordOfTheDayCache';
+      const cacheDuration = 24 * 60 * 60 * 1000;
+
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { word, definition, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < cacheDuration) {
+          title.textContent = word;
+          def.textContent = definition;
+          return;
+        }
+      }
+
+      fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent('https://wordsmith.org/awad/rss1.xml')}`)
+        .then(r => r.text())
+        .then(str => new DOMParser().parseFromString(str, "application/xml"))
+        .then(data => {
+          const item = data.querySelector("item");
+          const w = item.querySelector("title").textContent;
+          const desc = item.querySelector("description").textContent;
+          const definition = desc.split('<br>')[0].trim();
+
+          title.textContent = w;
+          def.textContent = definition;
+          localStorage.setItem(cacheKey, JSON.stringify({ word: w, definition, timestamp: Date.now() }));
+        })
+        .catch(() => {
+          title.textContent = 'Word of the Day';
+          def.textContent = 'Could not load the word of the day.';
+        });
+    }
+
+    function sizeSearchToNav() {
+      const navUl = document.querySelector('#dock ul');
+      const searchContainer = document.getElementById('searchContainer');
+      if (!navUl || !searchContainer) return;
+
+      const navWidth = Math.ceil(navUl.getBoundingClientRect().width);
+      const finalWidth = Math.min(navWidth, document.documentElement.clientWidth * 0.95);
+      searchContainer.style.width = finalWidth + 'px';
+    }
+
+    let __resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(__resizeTimer);
+      __resizeTimer = setTimeout(() => {
+        sizeSearchToNav();
+        fitToViewport();
+      }, 120);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setGreeting();
+      setRandomBackground();
+      loadNewsFeed();
+      loadWordOfTheDay();
+      sizeSearchToNav();
+      fitToViewport();
+      showApiUsage();
+      showGlobalApiUsage();
+      setInterval(loadNewsFeed, 900000);
+    });
+  </script>
+
+  <!-- ========== BOTTOM BAR ========== -->
   <style>
-  #net-bar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:6px 4px;background:rgba(0,0,0,.65);color:#fff;font:12px/1 monospace;flex-wrap:wrap;gap:4px}
+  #net-bar{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;align-items:center;padding:6px 4px;background:rgba(0,0,0,.65);color:#fff;font:12px/1 monospace;flex-wrap:wrap;gap:4px;z-index:9998}
   #net-bar div{white-space:nowrap}
   #net-bar span{color:#0ff}
   </style>
