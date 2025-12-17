@@ -1,3 +1,72 @@
-      <audio controls autoplay>
-  <source src="https://broadcastify.cdnstream1.com/38164" type="audio/mpeg">
-</audio>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Audio Popup</title>
+
+<style>
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+
+.modal-content {
+  background: #111;
+  color: #fff;
+  padding: 20px;
+  width: 300px;
+  margin: 15% auto;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.close {
+  float: right;
+  font-size: 22px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<a href="#" id="openPlayer">Listen Live</a>
+
+<div id="audioModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+
+    <audio controls autoplay>
+      <source src="https://broadcastify.cdnstream1.com/38164" type="audio/mpeg">
+      Your browser is having a moment.
+    </audio>
+
+  </div>
+</div>
+
+<script>
+const modal = document.getElementById("audioModal");
+const openBtn = document.getElementById("openPlayer");
+const closeBtn = document.querySelector(".close");
+
+openBtn.addEventListener("click", e => {
+  e.preventDefault();
+  modal.style.display = "block";
+});
+
+closeBtn.addEventListener("click", () => {
+  modal.style.display = "none";
+});
+
+window.addEventListener("click", e => {
+  if (e.target === modal) {
+    modal.style.display = "none";
+  }
+});
+</script>
+
+</body>
+</html>
