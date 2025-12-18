@@ -296,6 +296,8 @@
       <section id="bookmarks">
         <h2 class="sr-only">Bookmarks</h2>
         <ul>
+          <li><a href="#" onclick="openPlayer(event)" title="Radio Player"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/entire_network_globe.ico" class="favicon" alt="Radio Player">Radio Player (Popup)</a></li>
+
           <li><a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank"><img src="https://icons.duckduckgo.com/ip3/drive.google.com.ico" class="favicon" alt="Daily WorkSheet">Daily WorkSheet</a></li>
           <li><a href="https://drive.google.com/file/d/1qFbZPllJSrvdq5ZZjOMtCTm19hwlPkIU/view?usp=drive_link" target="_blank"><img src="https://icons.duckduckgo.com/ip3/dead.net.ico" class="favicon" alt="Coroner Schedule">Coroner Schedule</a></li>
           <li><a href="https://work.sndjy.us/Respwithfire" target="_blank"><img src="https://raw.githubusercontent.com/sndjy1986/windows-98/refs/heads/main/icons/desktop_w95.ico" alt="Fire & EMS">Fire & EMS</a></li>
@@ -312,6 +314,7 @@
           <li><a href="https://chatgpt.com/" target="_blank"><img src="https://icons.duckduckgo.com/ip3/chatgpt.com.ico" class="favicon" alt="ChatGPT">Chat GPT</a></li>
         </ul>
       </section>
+
       <section id="word-of-the-day">
         <h2 class="sr-only">Word of the Day</h2>
         <div id="word-container">
@@ -514,7 +517,7 @@
     });
   </script>
 
-   <!-- ===== NET BAR (single footer, at end of body) ===== -->
+  <!-- ===== NET BAR (single footer, at end of body) ===== -->
   <footer id="net-bar">
     <div>IP: <span id="nb-ip">…</span></div>
     <div>Location: <span id="nb-loc">…</span></div>
@@ -543,15 +546,13 @@
     function getConnectionType() {
       const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
       if (!c) return 'UNKNOWN';
-      if (c.type) return c.type.toUpperCase();        // WIFI / CELLULAR / ETHERNET
-      if (c.effectiveType) return c.effectiveType.toUpperCase(); // 4G / 3G
+      if (c.type) return c.type.toUpperCase();
+      if (c.effectiveType) return c.effectiveType.toUpperCase();
       return 'UNKNOWN';
     }
 
-    // Initial connection type
     set('nb-conn', getConnectionType());
 
-    // IP + location (ipapi.co)
     fetch('https://api.ipify.org?format=json')
       .then(r => r.json())
       .then(d => {
@@ -569,7 +570,6 @@
         set('nb-asn','ERR');
       });
 
-    // Speed + ping + jitter
     (async () => {
       set('nb-dl','…');
       set('nb-jit','…');
@@ -578,7 +578,6 @@
       try {
         const bytes = 10_000_000;
 
-        // Download speed
         const t0 = performance.now();
         await fetch(`https://speed.cloudflare.com/__down?bytes=${bytes}&t=${Date.now()}`, {
           cache: 'no-store'
@@ -587,7 +586,6 @@
         const mbps = ((bytes * 8) / 1e6) / (downMs / 1000);
         set('nb-dl', mbps.toFixed(0));
 
-        // Ping
         const pingOnce = async () => {
           const start = performance.now();
           await fetch(`https://speed.cloudflare.com/__down?bytes=0&t=${Date.now()}`, {
@@ -615,7 +613,6 @@
       }
     })();
 
-    // Refresh lightweight values
     setInterval(() => {
       fetch('https://api.ipify.org?format=json', { cache: 'no-store' })
         .then(r => r.json())
@@ -625,6 +622,59 @@
       set('nb-conn', getConnectionType());
     }, 15000);
   });
+  </script>
+
+  <!-- ===== POPUP RADIO PLAYER (hidden by default) ===== -->
+  <div id="playerBox" style="
+    display:none;
+    position:fixed;
+    top:20%;
+    left:50%;
+    transform:translateX(-50%);
+    background:#111;
+    padding:15px;
+    border-radius:8px;
+    z-index:10000;
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+  ">
+    <span onclick="closePlayer()" style="
+      color:#fff;
+      float:right;
+      cursor:pointer;
+      font-size:18px;
+      margin-left:10px;
+    ">&times;</span>
+
+    <audio id="popupAudio" controls>
+      <source src="https://broadcastify.cdnstream1.com/38164" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <script>
+    function openPlayer(e) {
+      if (e) e.preventDefault();
+      const box = document.getElementById("playerBox");
+      const audio = document.getElementById("popupAudio");
+      if (!box || !audio) return;
+
+      box.style.display = "block";
+
+      // Try to start playback when opened (works because click = user gesture)
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+    }
+
+    function closePlayer() {
+      const box = document.getElementById("playerBox");
+      const audio = document.getElementById("popupAudio");
+      if (box) box.style.display = "none";
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }
   </script>
 
 </body>
