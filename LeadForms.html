@@ -13,7 +13,6 @@
   --field:#1b2140;
   --border:rgba(255,255,255,.22);
   --text:#f1f3ff;
-  --muted:#b8c0ff;
   --accent:#4f8cff;
 }
 
@@ -27,7 +26,6 @@ body{
   min-height:100vh;
 }
 
-/* BACKGROUND LAYER */
 .hero{
   position:fixed;
   inset:0;
@@ -38,46 +36,35 @@ body{
     linear-gradient(180deg, #05070d 0%, #0b1020 100%);
 }
 
-/* WRAPPER */
 .wrap{
   max-width:1200px;
   margin:auto;
   padding:24px 18px 80px;
 }
 
-/* WARNING */
 .warning{
   text-align:center;
   font-weight:700;
   margin-bottom:16px;
 }
 
-/* FORM PANEL */
 form{
   background: rgba(20,26,46,.92);
   border:1px solid var(--border);
   border-radius:14px;
   padding:20px;
-  box-shadow:
-    0 25px 50px rgba(0,0,0,.65),
-    inset 0 1px 0 rgba(255,255,255,.08);
+  box-shadow:0 25px 50px rgba(0,0,0,.65);
 }
 
-/* GRID */
 .grid{
   display:grid;
   grid-template-columns: repeat(4,1fr);
   gap:16px;
 }
 
-@media(max-width:1000px){
-  .grid{grid-template-columns:repeat(2,1fr);}
-}
-@media(max-width:600px){
-  .grid{grid-template-columns:1fr;}
-}
+@media(max-width:1000px){ .grid{grid-template-columns:repeat(2,1fr);} }
+@media(max-width:600px){ .grid{grid-template-columns:1fr;} }
 
-/* FIELD */
 .field{
   display:flex;
   flex-direction:column;
@@ -89,7 +76,7 @@ label{
   font-size:14px;
 }
 
-input, select, textarea{
+input, textarea{
   background: var(--field);
   border:1px solid var(--border);
   border-radius:10px;
@@ -98,31 +85,26 @@ input, select, textarea{
   font-size:14px;
 }
 
-input:focus, select:focus, textarea:focus{
+input:focus, textarea:focus{
   outline:none;
   border-color:var(--accent);
   box-shadow:0 0 0 2px rgba(79,140,255,.4);
 }
 
-/* TEXTAREAS */
 textarea{
   min-height:160px;
   resize:vertical;
   line-height:1.4;
 }
 
-/* ISSUES BOX */
 .issues{
   min-height:260px;
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
-/* BUTTONS */
 .footer{
   display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
+  justify-content:flex-end;
   margin-top:18px;
 }
 
@@ -131,18 +113,9 @@ textarea{
   border:none;
   color:white;
   font-weight:800;
-  padding:12px 18px;
-  border-radius:10px;
+  padding:14px 22px;
+  border-radius:12px;
   cursor:pointer;
-}
-
-.btn.secondary{
-  background:rgba(79,140,255,.6);
-}
-
-.btn.ghost{
-  background:rgba(255,255,255,.12);
-  border:1px solid var(--border);
 }
 </style>
 </head>
@@ -152,61 +125,23 @@ textarea{
 
 <div class="wrap">
   <div class="warning">
-    If you close this page, you will lose all data. It does not save anything.
+    Closing this page will lose all data. Nothing is saved.
   </div>
 
 <form id="shiftForm">
   <div class="grid">
 
-    <div class="field">
-      <label>Name</label>
-      <input type="text" name="name">
-    </div>
+    <div class="field"><label>Name</label><input name="name"></div>
+    <div class="field"><label>Date</label><input type="date" name="date"></div>
+    <div class="field"><label>Channel 1</label><input name="channel1"></div>
+    <div class="field"><label>Channel 2</label><input name="channel2"></div>
+    <div class="field"><label>ALSSUP</label><input name="alssup"></div>
+    <div class="field"><label>MEDSUP</label><input name="medsup"></div>
+    <div class="field"><label>3rd Person</label><input name="thirdPerson"></div>
+    <div class="field"><label>ALS 911 Transport Trucks</label><input name="als911"></div>
 
-    <div class="field">
-      <label>Date</label>
-      <input type="date" name="date">
-    </div>
-
-    <div class="field">
-      <label>Channel 1</label>
-      <input type="text" name="channel1">
-    </div>
-
-    <div class="field">
-      <label>Channel 2</label>
-      <input type="text" name="channel2">
-    </div>
-
-    <div class="field">
-      <label>ALSSUP</label>
-      <input type="text" name="alssup">
-    </div>
-
-    <div class="field">
-      <label>MEDSUP</label>
-      <input type="text" name="medsup">
-    </div>
-
-    <div class="field">
-      <label>3rd Person</label>
-      <input type="text" name="thirdPerson">
-    </div>
-
-    <div class="field">
-      <label>ALS 911 Transport Trucks</label>
-      <input type="text" name="als911">
-    </div>
-
-    <div class="field">
-      <label>Late Trucks</label>
-      <textarea name="lateTrucks"></textarea>
-    </div>
-
-    <div class="field">
-      <label>Out of Chute Times</label>
-      <textarea name="outOfChute"></textarea>
-    </div>
+    <div class="field"><label>Late Trucks</label><textarea name="lateTrucks"></textarea></div>
+    <div class="field"><label>Out of Chute Times</label><textarea name="outOfChute"></textarea></div>
 
     <div class="field" style="grid-column:span 2;">
       <label>Issues / Other Notes</label>
@@ -221,22 +156,55 @@ textarea{
   </div>
 
   <div class="footer">
-    <button type="button" class="btn ghost">Links</button>
-    <div>
-      <button type="button" class="btn secondary">Send Mid-Shift Report</button>
-      <button type="button" class="btn">Send EOS Report</button>
-    </div>
+    <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
   </div>
-
 </form>
 </div>
 
 <script>
+/* Auto-grow Issues box */
 const issues = document.querySelector(".issues");
 issues.addEventListener("input", ()=>{
   issues.style.height="auto";
   issues.style.height=issues.scrollHeight+"px";
 });
+
+/* ===== EMAIL FUNCTION ===== */
+
+/* CHANGE THIS */
+const SEND_TO_EMAILS = "person1@agency.gov,person2@agency.gov";
+
+function sendEmail(){
+  const form = document.getElementById("shiftForm");
+  const d = Object.fromEntries(new FormData(form).entries());
+
+  const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
+
+  const body = [
+    `Name: ${d.name || ""}`,
+    `Date: ${d.date || ""}`,
+    ``,
+    `Channel 1: ${d.channel1 || ""}`,
+    `Channel 2: ${d.channel2 || ""}`,
+    `ALSSUP: ${d.alssup || ""}`,
+    `MEDSUP: ${d.medsup || ""}`,
+    `3rd Person: ${d.thirdPerson || ""}`,
+    `ALS 911 Transport Trucks: ${d.als911 || ""}`,
+    ``,
+    `Late Trucks:\n${d.lateTrucks || ""}`,
+    ``,
+    `Out of Chute Times:\n${d.outOfChute || ""}`,
+    ``,
+    `Issues / Other Notes:\n${d.issues || ""}`
+  ].join("\n");
+
+  const mailto =
+    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(body)}`;
+
+  window.location.href = mailto;
+}
 </script>
 
 </body>
