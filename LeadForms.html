@@ -117,6 +117,22 @@ textarea{
   border-radius:12px;
   cursor:pointer;
 }
+/* Half-width field */
+.field.half{
+  grid-column: span 2;
+}
+
+/* Side-by-side inputs */
+.inline-inputs{
+  display:flex;
+  gap:8px;
+}
+
+.inline-inputs input{
+  flex:1;
+  text-align:center;
+  font-weight:700;
+}
 </style>
 </head>
 
@@ -167,7 +183,13 @@ textarea{
     				<option value="Channel C">Channel C</option>
   				</select>
 		</div>
-    <div class="field"><label>ALS 911 Transport Trucks</label><input name="als911"></div>
+		<div class="field half">
+  			<label>ALS Transport Trucks</label>
+  		<div class="inline-inputs">
+    		<input type="number" name="als911" placeholder="911">
+    		<input type="number" name="gtTrucks" placeholder="GT">
+  		</div>
+		</div>
 
     <div class="field"><label>Late Trucks</label><textarea name="lateTrucks"></textarea></div>
     <div class="field"><label>Out of Chute Times</label><textarea name="outOfChute"></textarea></div>
@@ -218,7 +240,9 @@ function sendEmail(){
     `ALSSUP: ${d.alssup || ""}`,
     `MEDSUP: ${d.medsup || ""}`,
     `3rd Person: ${d.thirdPerson || ""}`,
-    `ALS 911 Transport Trucks: ${d.als911 || ""}`,
+		`ALS Transport Trucks:`,
+			`  911: ${d.als911 || "0"}`,
+			`  GT:  ${d.gtTrucks || "0"}`,
     ``,
     `Late Trucks:\n${d.lateTrucks || ""}`,
     ``,
