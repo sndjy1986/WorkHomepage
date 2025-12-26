@@ -1,284 +1,329 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shift Report</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shift Report</title>
 
-  <style>
-    :root{
-      --bg-dark:#05070d;
-      --bg-mid:#0b1020;
-      --panel:#141a2e;
-      --field:#1b2140;
-      --border:rgba(255,255,255,.22);
-      --text:#f1f3ff;
-      --accent:#4f8cff;
-    }
+<style>
+:root{
+  --bg-dark:#05070d;
+  --bg-mid:#0b1020;
+  --panel:#141a2e;
+  --field:#1b2140;
+  --border:rgba(255,255,255,.22);
+  --text:#f1f3ff;
+  --accent:#4f8cff;
+}
 
-    *{ box-sizing:border-box; }
+*{ box-sizing:border-box; }
 
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      background: linear-gradient(180deg, var(--bg-dark), var(--bg-mid));
-      min-height:100vh;
-    }
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:var(--text);
+  background: linear-gradient(180deg, var(--bg-dark), var(--bg-mid));
+  min-height:100vh;
+}
 
-    .hero{
-      position:fixed;
-      inset:0;
-      z-index:-1;
-      background:
-        radial-gradient(1200px 800px at 20% 30%, rgba(80,140,255,.25), transparent 60%),
-        radial-gradient(1000px 700px at 80% 60%, rgba(255,80,120,.25), transparent 60%),
-        linear-gradient(180deg, #05070d 0%, #0b1020 100%);
-    }
+.hero{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  background:
+    radial-gradient(1200px 800px at 20% 30%, rgba(80,140,255,.25), transparent 60%),
+    radial-gradient(1000px 700px at 80% 60%, rgba(255,80,120,.25), transparent 60%),
+    linear-gradient(180deg, #05070d 0%, #0b1020 100%);
+}
 
-    .wrap{
-      max-width:1200px;
-      margin:auto;
-      padding:24px 18px 80px;
-    }
+.wrap{
+  max-width:1200px;
+  margin:auto;
+  padding:24px 18px 80px;
+}
 
-    form{
-      background: rgba(20,26,46,.92);
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:20px;
-      box-shadow:0 25px 50px rgba(0,0,0,.65);
-    }
+form{
+  background: rgba(20,26,46,.92);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 25px 50px rgba(0,0,0,.65);
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(4,1fr);
-      gap:16px;
-    }
+/* ---------- SECTIONS ---------- */
+.section{
+  margin-bottom:16px;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
 
-    @media (max-width:1000px){
-      .grid{ grid-template-columns:repeat(2,1fr); }
-    }
-    @media (max-width:600px){
-      .grid{ grid-template-columns:1fr; }
-    }
+.section-title{
+  font-weight:900;
+  font-size:14px;
+  letter-spacing:.4px;
+  margin-bottom:12px;
+}
 
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
+/* ---------- GRID ---------- */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:16px;
+}
 
-    label{
-      font-weight:700;
-      font-size:14px;
-    }
+.grid-2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:16px;
+}
 
-    input, textarea, select{
-      background: var(--field);
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:10px 12px;
-      color:var(--text);
-      font-size:14px;
-    }
+@media(max-width:1000px){
+  .grid{ grid-template-columns: repeat(2,1fr); }
+  .grid-2{ grid-template-columns:1fr; }
+}
 
-    input:focus, textarea:focus, select:focus{
-      outline:none;
-      border-color:var(--accent);
-      box-shadow:0 0 0 2px rgba(79,140,255,.4);
-    }
+@media(max-width:600px){
+  .grid{ grid-template-columns:1fr; }
+}
 
-    textarea{
-      min-height:160px;
-      resize:vertical;
-      line-height:1.4;
-    }
+/* ---------- FIELDS ---------- */
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
 
-    .issues{
-      min-height:260px;
-      font-family: ui-monospace, Menlo, Consolas, monospace;
-    }
+label{
+  font-weight:700;
+  font-size:14px;
+}
 
-    .footer{
-      display:flex;
-      justify-content:flex-end;
-      margin-top:18px;
-    }
+input, textarea, select{
+  background: var(--field);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 12px;
+  color:var(--text);
+  font-size:14px;
+}
 
-    .btn{
-      background:var(--accent);
-      border:none;
-      color:white;
-      font-weight:800;
-      padding:14px 22px;
-      border-radius:12px;
-      cursor:pointer;
-    }
+input:focus, textarea:focus, select:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px rgba(79,140,255,.4);
+}
 
-    /* Half-width field (2/4 columns on wide layout) */
-    .field.half{
-      grid-column: span 2;
-    }
+textarea{
+  resize:vertical;
+  line-height:1.4;
+}
 
-    /* Side-by-side inputs */
-    .inline-inputs{
-      display:flex;
-      gap:8px;
-    }
+.bigbox{
+  min-height:220px;
+}
 
-    .inline-inputs input{
-      flex:1;
-      text-align:center;
-      font-weight:700;
-    }
-  </style>
+.issues{
+  min-height:260px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* ---------- TRANSPORT INPUTS ---------- */
+.field.half{
+  grid-column: span 2;
+}
+
+.inline-inputs{
+  display:flex;
+  gap:8px;
+}
+
+.inline-inputs input{
+  flex:1;
+  text-align:center;
+  font-weight:800;
+}
+
+/* ---------- FOOTER ---------- */
+.footer{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:18px;
+}
+
+.btn{
+  background:var(--accent);
+  border:none;
+  color:white;
+  font-weight:900;
+  padding:14px 24px;
+  border-radius:14px;
+  cursor:pointer;
+}
+</style>
 </head>
 
 <body>
-  <div class="hero"></div>
+<div class="hero"></div>
 
-  <div class="wrap">
-    <form id="shiftForm">
-      <div class="grid">
+<div class="wrap">
 
-        <div class="field">
-          <label>Name</label>
-          <input name="name" autocomplete="name">
+<form id="shiftForm">
+
+  <!-- SHIFT INFO -->
+  <div class="section">
+    <div class="section-title">Shift Info</div>
+    <div class="grid">
+      <div class="field">
+        <label>Name</label>
+        <input name="name">
+      </div>
+
+      <div class="field">
+        <label>Date</label>
+        <input type="date" name="date">
+      </div>
+
+      <div class="field">
+        <label>Channel 1</label>
+        <select name="channel1">
+          <option value="">-- Select --</option>
+          <option>Channel A</option>
+          <option>Channel B</option>
+          <option>Channel C</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Channel 2</label>
+        <select name="channel2">
+          <option value="">-- Select --</option>
+          <option>Channel A</option>
+          <option>Channel B</option>
+          <option>Channel C</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAFFING -->
+  <div class="section">
+    <div class="section-title">Staffing</div>
+    <div class="grid">
+      <div class="field">
+        <label>ALSSUP</label>
+        <input name="alssup">
+      </div>
+
+      <div class="field">
+        <label>MEDSUP</label>
+        <input name="medsup">
+      </div>
+
+      <div class="field">
+        <label>Third Person</label>
+        <select name="thirdPerson">
+          <option value="">-- Select --</option>
+          <option>Yes</option>
+          <option>No</option>
+          <option>N/A</option>
+        </select>
+      </div>
+
+      <div class="field half">
+        <label>Transport Truck Numbers</label>
+        <div class="inline-inputs">
+          <input type="number" name="als911" placeholder="911" min="0">
+          <input type="number" name="gtTrucks" placeholder="GT" min="0">
         </div>
+      </div>
+    </div>
+  </div>
 
-        <div class="field">
-          <label>Date</label>
-          <input type="date" name="date">
-        </div>
+  <!-- TIME & EXCEPTIONS -->
+  <div class="section">
+    <div class="section-title">Time & Exceptions</div>
 
-        <div class="field">
-          <label>Channel 1</label>
-          <select name="channel1">
-            <option value="">-- Select --</option>
-            <option value="Channel A">Channel A</option>
-            <option value="Channel B">Channel B</option>
-            <option value="Channel C">Channel C</option>
-          </select>
-        </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Late Trucks</label>
+        <textarea name="lateTrucks" class="bigbox"></textarea>
+      </div>
 
-        <div class="field">
-          <label>Channel 2</label>
-          <select name="channel2">
-            <option value="">-- Select --</option>
-            <option value="Channel A">Channel A</option>
-            <option value="Channel B">Channel B</option>
-            <option value="Channel C">Channel C</option>
-          </select>
-        </div>
+      <div class="field">
+        <label>Out of Chute Times</label>
+        <textarea name="outOfChute" class="bigbox"></textarea>
+      </div>
+    </div>
 
-        <div class="field">
-          <label>ALSSUP</label>
-          <input name="alssup">
-        </div>
-
-        <div class="field">
-          <label>MEDSUP</label>
-          <input name="medsup">
-        </div>
-
-        <div class="field">
-          <label>Third Person</label>
-          <select name="thirdPerson">
-            <option value="">-- Select --</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-            <option value="N/A">N/A</option>
-          </select>
-        </div>
-
-        <div class="field half">
-          <label>Transport Truck Numbers</label>
-          <div class="inline-inputs">
-            <input type="number" name="als911" placeholder="911" min="0" step="1" inputmode="numeric">
-            <input type="number" name="gtTrucks" placeholder="GT" min="0" step="1" inputmode="numeric">
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Late Trucks</label>
-          <textarea name="lateTrucks"></textarea>
-        </div>
-
-        <div class="field">
-          <label>Out of Chute Times</label>
-          <textarea name="outOfChute"></textarea>
-        </div>
-
-        <div class="field" style="grid-column:span 2;">
-          <label>Issues / Other Notes</label>
-          <textarea
-            class="issues"
-            name="issues"
-            placeholder="• Issue:
+    <div class="field" style="margin-top:14px;">
+      <label>Issues / Other Notes</label>
+      <textarea
+        class="issues"
+        name="issues"
+        placeholder="• Issue:
 • Unit(s):
 • Time:
 • Action Taken:
 • Outcome:"
-          ></textarea>
-        </div>
-
-      </div>
-
-      <div class="footer">
-        <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
-      </div>
-    </form>
+      ></textarea>
+    </div>
   </div>
 
-  <script>
-    // Auto-grow Issues box
-    const issues = document.querySelector(".issues");
-    issues.addEventListener("input", () => {
-      issues.style.height = "auto";
-      issues.style.height = issues.scrollHeight + "px";
-    });
+  <div class="footer">
+    <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
+  </div>
 
-    // CHANGE THIS
-    const SEND_TO_EMAILS = "person1@agency.gov,person2@agency.gov";
+</form>
+</div>
 
-    function sendEmail(){
-      const form = document.getElementById("shiftForm");
-      const d = Object.fromEntries(new FormData(form).entries());
+<script>
+/* Auto-grow Issues box */
+const issues = document.querySelector(".issues");
+issues.addEventListener("input", ()=>{
+  issues.style.height = "auto";
+  issues.style.height = issues.scrollHeight + "px";
+});
 
-      const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
+/* CHANGE THIS */
+const SEND_TO_EMAILS = "person1@agency.gov,person2@agency.gov";
 
-      const body = [
-        `Name: ${d.name || ""}`,
-        `Date: ${d.date || ""}`,
-        ``,
-        `Channel 1: ${d.channel1 || ""}`,
-        `Channel 2: ${d.channel2 || ""}`,
-        `ALSSUP: ${d.alssup || ""}`,
-        `MEDSUP: ${d.medsup || ""}`,
-        `Third Person: ${d.thirdPerson || ""}`,
-        ``,
-        `Transport Truck Numbers:`,
-        `  911: ${d.als911 || "0"}`,
-        `  GT:  ${d.gtTrucks || "0"}`,
-        ``,
-        `Late Trucks:`,
-        `${d.lateTrucks || ""}`,
-        ``,
-        `Out of Chute Times:`,
-        `${d.outOfChute || ""}`,
-        ``,
-        `Issues / Other Notes:`,
-        `${d.issues || ""}`
-      ].join("\n");
+function sendEmail(){
+  const d = Object.fromEntries(new FormData(document.getElementById("shiftForm")).entries());
 
-      const mailto =
-        `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
-        `?subject=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(body)}`;
+  const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
 
-      window.location.href = mailto;
-    }
-  </script>
+  const body = [
+    `Name: ${d.name || ""}`,
+    `Date: ${d.date || ""}`,
+    ``,
+    `Channel 1: ${d.channel1 || ""}`,
+    `Channel 2: ${d.channel2 || ""}`,
+    `ALSSUP: ${d.alssup || ""}`,
+    `MEDSUP: ${d.medsup || ""}`,
+    `Third Person: ${d.thirdPerson || ""}`,
+    ``,
+    `Transport Truck Numbers:`,
+    `  911: ${d.als911 || "0"}`,
+    `  GT:  ${d.gtTrucks || "0"}`,
+    ``,
+    `Late Trucks:`,
+    `${d.lateTrucks || ""}`,
+    ``,
+    `Out of Chute Times:`,
+    `${d.outOfChute || ""}`,
+    ``,
+    `Issues / Other Notes:`,
+    `${d.issues || ""}`
+  ].join("\n");
+
+  window.location.href =
+    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(body)}`;
+}
+</script>
+
 </body>
 </html>
