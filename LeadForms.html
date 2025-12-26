@@ -125,19 +125,48 @@ textarea{
 
 <div class="wrap">
   <div class="warning">
-    Closing this page will lose all data. Nothing is saved.
   </div>
 
 <form id="shiftForm">
   <div class="grid">
 
-    <div class="field"><label>Name</label><input name="name"></div>
-    <div class="field"><label>Date</label><input type="date" name="date"></div>
-    <div class="field"><label>Channel 1</label><input name="channel1"></div>
-    <div class="field"><label>Channel 2</label><input name="channel2"></div>
+    <div class="field">
+      <label>Name</label>
+      <input name="name">
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" name="date">
+    </div>
+		<div class="field">
+ 	 		<label>Channel 1</label>
+  				<select name="channel1">
+   	 			<option value="">-- Select --</option>
+    				<option value="Channel A">Channel A</option>
+   				<option value="Channel B">Channel B</option>
+    				<option value="Channel C">Channel C</option>
+  				</select>
+		</div>
+		<div class="field">
+ 	 		<label>Channel 2</label>
+  				<select name="channel2">
+   	 			<option value="">-- Select --</option>
+    				<option value="Channel A">Channel A</option>
+   				<option value="Channel B">Channel B</option>
+    				<option value="Channel C">Channel C</option>
+  				</select>
+		</div>
     <div class="field"><label>ALSSUP</label><input name="alssup"></div>
     <div class="field"><label>MEDSUP</label><input name="medsup"></div>
-    <div class="field"><label>3rd Person</label><input name="thirdPerson"></div>
+		<div class="field">
+ 	 		<label>Third Person</label>
+  				<select name="thirdperson">
+   	 			<option value="">-- Select --</option>
+    				<option value="Channel A">Channel A</option>
+   				<option value="Channel B">Channel B</option>
+    				<option value="Channel C">Channel C</option>
+  				</select>
+		</div>
     <div class="field"><label>ALS 911 Transport Trucks</label><input name="als911"></div>
 
     <div class="field"><label>Late Trucks</label><textarea name="lateTrucks"></textarea></div>
