@@ -175,6 +175,7 @@ textarea{
   <div class="section">
     <div class="section-title">Shift Info</div>
     <div class="grid">
+
       <div class="field">
         <label>Name</label>
         <input name="name">
@@ -204,8 +205,6 @@ textarea{
           <option>Channel C</option>
         </select>
       </div>
-    </div>
-  </div>
 
       <div class="field">
         <label>Third Person</label>
@@ -216,10 +215,15 @@ textarea{
           <option>N/A</option>
         </select>
       </div>
+
+    </div>
+  </div>
+
   <!-- STAFFING -->
   <div class="section">
     <div class="section-title">Staffing</div>
     <div class="grid">
+
       <div class="field">
         <label>ALSSUP</label>
         <input name="alssup">
@@ -229,6 +233,7 @@ textarea{
         <label>MEDSUP</label>
         <input name="medsup">
       </div>
+
       <div class="field half">
         <label>Transport Truck Numbers</label>
         <div class="inline-inputs">
@@ -236,6 +241,7 @@ textarea{
           <input type="number" name="gtTrucks" placeholder="GT" min="0">
         </div>
       </div>
+
     </div>
   </div>
 
@@ -288,7 +294,9 @@ issues.addEventListener("input", ()=>{
 const SEND_TO_EMAILS = "person1@agency.gov,person2@agency.gov";
 
 function sendEmail(){
-  const d = Object.fromEntries(new FormData(document.getElementById("shiftForm")).entries());
+  const d = Object.fromEntries(
+    new FormData(document.getElementById("shiftForm")).entries()
+  );
 
   const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
 
@@ -298,9 +306,10 @@ function sendEmail(){
     ``,
     `Channel 1: ${d.channel1 || ""}`,
     `Channel 2: ${d.channel2 || ""}`,
+    `Third Person: ${d.thirdPerson || ""}`,
+    ``,
     `ALSSUP: ${d.alssup || ""}`,
     `MEDSUP: ${d.medsup || ""}`,
-    `Third Person: ${d.thirdPerson || ""}`,
     ``,
     `Transport Truck Numbers:`,
     `  911: ${d.als911 || "0"}`,
