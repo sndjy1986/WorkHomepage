@@ -293,6 +293,7 @@ textarea{
         <div class="inline-inputs">
           <input type="number" name="als911" placeholder="911" min="0">
           <input type="number" name="gtTrucks" placeholder="GT" min="0">
+          <input type="number" name="alstransports" placeholder="ALS Transport" min="0">
         </div>
       </div>
 
@@ -368,6 +369,7 @@ function sendEmail(){
     `Transport Truck Numbers:`,
     `  911: ${d.als911 || "0"}`,
     `  GT:  ${d.gtTrucks || "0"}`,
+    `  ALS Transport Trucks:  ${d.alstransports || "0"}`,
     ``,
     `Late Trucks:`,
     `${d.lateTrucks || ""}`,
