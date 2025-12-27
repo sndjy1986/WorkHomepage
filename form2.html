@@ -108,11 +108,11 @@ input, textarea, select{
   font-size:14px;
 }
 
-/* IMPORTANT: remove the tiny width cap that kept Zulu fields small */
+/* Zulu inputs should not be tiny */
 .small-input{
-  max-width:unset;      /* remove 120px cap */
-  width:100%;           /* use full column width */
-  text-align:left;      /* normal text alignment */
+  max-width:unset;
+  width:100%;
+  text-align:left;
   font-weight:700;
 }
 
@@ -145,19 +145,35 @@ textarea{
   gap:8px;
 }
 
-/* Make each inline input the same width when sharing a row */
+/* Equal widths for inline inputs */
 .inline-inputs > input{
   flex:1 1 0;
 }
 
-/* NEW: tighter spacing variant for closer Zulu fields */
+/* Tighter row for Zulu Primary/Secondary */
 .inline-inputs.tight{
-  gap:6px; /* closer together */
+  gap:6px;
 }
 
-/* Allow child field blocks to flex within inline rows */
 .inline-inputs > .field{
   flex:1 1 0;
+}
+
+/* === NEW: Truck inputs laid out in a 3-column grid === */
+.truck-grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:8px;
+}
+
+.truck-grid input{
+  width:100%;
+}
+
+/* Place ALS on the next line, same one-column width */
+.truck-grid .als{
+  grid-column: 1; /* left column */
+  grid-row: 2;    /* second line */
 }
 
 .footer{
@@ -271,8 +287,7 @@ textarea{
         </select>
       </div>
 
-      <!-- ZULU UNITS -->
-      <!-- NEW: place Zulu fields in a tight inline row; inputs are full width -->
+      <!-- ZULU UNITS (closer together) -->
       <div class="field" style="grid-column: span 4;">
         <div class="inline-inputs tight">
           <div class="field">
@@ -321,12 +336,16 @@ textarea{
       <!-- Transport Truck Numbers -->
       <div class="field half">
         <label>Transport Truck Numbers</label>
-        <!-- Keep all three inputs on the same row and equal width -->
-        <div class="inline-inputs">
-          <input type="number" name="truck911" placeholder="# 911 Trucks" min="0">
-          <input type="number" name="truckGT" placeholder="# GT Trucks" min="0">
-          <br>
-          <input type="number" name="truckALS" placeholder="ALS Transport Trucks" min="0">
+
+        <!-- 3 equal columns; ALS placed on row 2 -->
+        <div class="truck-grid">
+          <!-- Row 1 -->
+          <input type="number" name="truck911" placeholder="# 911 Trucks" min="0" style="grid-column:1; grid-row:1;">
+          <input type="number" name="truckGT"  placeholder="# GT Trucks"  min="0" style="grid-column:2; grid-row:1;">
+          <!-- leave column 3 empty on row 1 -->
+
+          <!-- Row 2 -->
+          <input type="number" name="truckALS" placeholder="ALS Transport Trucks" min="0" class="als">
         </div>
       </div>
 
