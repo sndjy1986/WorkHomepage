@@ -83,7 +83,6 @@ form{
   .grid{ grid-template-columns: repeat(2,1fr); }
   .grid-2{ grid-template-columns:1fr; }
 }
-
 @media(max-width:600px){
   .grid{ grid-template-columns:1fr; }
 }
@@ -108,12 +107,13 @@ input, textarea, select{
   font-size:14px;
 }
 
-/* Zulu inputs should not be tiny */
-.small-input{
-  max-width:unset;
+/* Zulu inputs: compact and constrained so they fit nicely */
+.zulu input{
+  padding:8px 10px;      /* smaller box */
+  font-size:13px;
+  max-width:260px;       /* keep them from stretching too wide */
   width:100%;
-  text-align:left;
-  font-weight:700;
+  justify-self:start;    /* align left within column */
 }
 
 input:focus, textarea:focus, select:focus{
@@ -150,30 +150,35 @@ textarea{
   flex:1 1 0;
 }
 
-/* Tighter row for Zulu Primary/Secondary */
-.inline-inputs.tight{
-  gap:6px;
-}
-
-.inline-inputs > .field{
-  flex:1 1 0;
-}
-
-/* === NEW: Truck inputs laid out in a 3-column grid === */
+/* === Truck inputs laid out in a 3-column grid === */
 .truck-grid{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:8px;
 }
-
-.truck-grid input{
-  width:100%;
-}
+.truck-grid input{ width:100%; }
 
 /* Place ALS on the next line, same one-column width */
 .truck-grid .als{
-  grid-column: 1; /* left column */
-  grid-row: 2;    /* second line */
+  grid-column: 1; /* left column on row 2 */
+  grid-row: 2;
+}
+
+/* --- Positioning for the row with Third Person + Zulu --- */
+.third-person{ grid-column: 1 / span 2; }  /* takes col 1-2 */
+.zulu-primary{ grid-column: 3; }           /* col 3 */
+.zulu-secondary{ grid-column: 4; }         /* col 4 */
+
+/* Stack nicely on tablet/mobile */
+@media(max-width:1000px){
+  .third-person{ grid-column: 1 / span 2; }
+  .zulu-primary{ grid-column: 1; }
+  .zulu-secondary{ grid-column: 2; }
+}
+@media(max-width:600px){
+  .third-person{ grid-column: 1; }
+  .zulu-primary{ grid-column: 1; }
+  .zulu-secondary{ grid-column: 1; }
 }
 
 .footer{
@@ -204,8 +209,8 @@ textarea{
   <!-- SHIFT INFO -->
   <div class="section">
     <div class="section-title">Shift Info</div>
-    <div class="grid">
 
+    <div class="grid">
       <div class="field">
         <label>Name</label>
         <select name="name">
@@ -268,7 +273,8 @@ textarea{
         </select>
       </div>
 
-      <div class="field">
+      <!-- ROW: Third Person + Zulu Primary + Zulu Secondary -->
+      <div class="field third-person">
         <label>Third Person</label>
         <select name="thirdPerson">
           <option value="">-- Select --</option>
@@ -287,18 +293,14 @@ textarea{
         </select>
       </div>
 
-      <!-- ZULU UNITS (closer together) -->
-      <div class="field" style="grid-column: span 4;">
-        <div class="inline-inputs tight">
-          <div class="field">
-            <label>Zulu Primary</label>
-            <input type="text" name="zuluPrimary" class="small-input" placeholder="Primary">
-          </div>
-          <div class="field">
-            <label>Zulu Secondary</label>
-            <input type="text" name="zuluSecondary" class="small-input" placeholder="Secondary">
-          </div>
-        </div>
+      <div class="field zulu zulu-primary">
+        <label>Zulu Primary</label>
+        <input type="text" name="zuluPrimary" placeholder="Primary">
+      </div>
+
+      <div class="field zulu zulu-secondary">
+        <label>Zulu Secondary</label>
+        <input type="text" name="zuluSecondary" placeholder="Secondary">
       </div>
 
     </div>
@@ -342,7 +344,7 @@ textarea{
           <!-- Row 1 -->
           <input type="number" name="truck911" placeholder="# 911 Trucks" min="0" style="grid-column:1; grid-row:1;">
           <input type="number" name="truckGT"  placeholder="# GT Trucks"  min="0" style="grid-column:2; grid-row:1;">
-          <!-- leave column 3 empty on row 1 -->
+          <!-- leave column 3 empty on row 1 to keep widths consistent -->
 
           <!-- Row 2 -->
           <input type="number" name="truckALS" placeholder="ALS Transport Trucks" min="0" class="als">
