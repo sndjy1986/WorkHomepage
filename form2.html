@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -77,6 +78,12 @@ form{
   gap:16px;
 }
 
+/* NEW: compact 2-column grid for closer spacing */
+.grid-2.compact{
+  gap:8px; /* tighter spacing */
+}
+
+/* Responsive */
 @media(max-width:1000px){
   .grid{ grid-template-columns: repeat(2,1fr); }
   .grid-2{ grid-template-columns:1fr; }
@@ -141,6 +148,11 @@ textarea{
   gap:8px;
 }
 
+/* Make each inline input the same width */
+.inline-inputs > input{
+  flex:1 1 0;
+}
+
 .footer{
   display:flex;
   justify-content:flex-end;
@@ -169,6 +181,8 @@ textarea{
   <!-- SHIFT INFO -->
   <div class="section">
     <div class="section-title">Shift Info</div>
+
+    <!-- Keep main grid for general layout -->
     <div class="grid">
 
       <div class="field">
@@ -253,14 +267,19 @@ textarea{
       </div>
 
       <!-- ZULU UNITS -->
-      <div class="field">
-        <label>Zulu Primary</label>
-        <input type="text" name="zuluPrimary" class="small-input" placeholder="Primary">
-      </div>
+      <!-- NEW: Wrap Zulu fields in a compact two-column grid to sit closer together -->
+      <div class="field" style="grid-column: span 4;">
+        <div class="grid-2 compact">
+          <div class="field">
+            <label>Zulu Primary</label>
+            <input type="text" name="zuluPrimary" class="small-input" placeholder="Primary">
+          </div>
 
-      <div class="field">
-        <label>Zulu Secondary</label>
-        <input type="text" name="zuluSecondary" class="small-input" placeholder="Secondary">
+          <div class="field">
+            <label>Zulu Secondary</label>
+            <input type="text" name="zuluSecondary" class="small-input" placeholder="Secondary">
+          </div>
+        </div>
       </div>
 
     </div>
@@ -268,7 +287,7 @@ textarea{
 
   <!-- TRANSPORT + STAFFING COMBINED -->
   <div class="section">
-    <div class="section-title">Transport & Staffing</div>
+    <div class="section-title">Transport &amp; Staffing</div>
     <div class="grid">
 
       <div class="field">
@@ -295,13 +314,17 @@ textarea{
         </select>
       </div>
 
+      <!-- Transport Truck Numbers -->
       <div class="field half">
         <label>Transport Truck Numbers</label>
+
+        <!-- Put ALS into the same inline row so it's exactly the same size as the boxes above -->
         <div class="inline-inputs">
           <input type="number" name="truck911" placeholder="# 911 Trucks" min="0">
           <input type="number" name="truckGT" placeholder="# GT Trucks" min="0">
+          <!-- NEW: moved ALS input here -->
+          <input type="number" name="truckALS" placeholder="ALS Transport Trucks" min="0">
         </div>
-        <input type="number" name="truckALS" placeholder="ALS Transport Trucks" min="0">
       </div>
 
     </div>
@@ -309,7 +332,7 @@ textarea{
 
   <!-- TIME & EXCEPTIONS -->
   <div class="section">
-    <div class="section-title">Time & Exceptions</div>
+    <div class="section-title">Time &amp; Exceptions</div>
 
     <div class="grid-2">
       <div class="field">
