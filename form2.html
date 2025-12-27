@@ -106,6 +106,12 @@ input, textarea, select{
   font-size:14px;
 }
 
+.small-input{
+  max-width:120px;
+  text-align:center;
+  font-weight:700;
+}
+
 input:focus, textarea:focus, select:focus{
   outline:none;
   border-color:var(--accent);
@@ -133,12 +139,6 @@ textarea{
 .inline-inputs{
   display:flex;
   gap:8px;
-}
-
-.inline-inputs input{
-  flex:1;
-  text-align:center;
-  font-weight:800;
 }
 
 .footer{
@@ -252,20 +252,17 @@ textarea{
         </select>
       </div>
 
-    </div>
-  </div>
-
-  <!-- ZULU UNITS -->
-  <div class="section">
-    <div class="section-title">Zulu Units On-Call</div>
-    <div class="grid">
-      <div class="field half">
-        <label>Zulu Units On-Call</label>
-        <div class="inline-inputs">
-          <input type="text" name="zuluPrimary" placeholder="Primary">
-          <input type="text" name="zuluSecondary" placeholder="Secondary">
-        </div>
+      <!-- ZULU UNITS MOVED HERE -->
+      <div class="field">
+        <label>Zulu Primary</label>
+        <input type="text" name="zuluPrimary" class="small-input" placeholder="Primary">
       </div>
+
+      <div class="field">
+        <label>Zulu Secondary</label>
+        <input type="text" name="zuluSecondary" class="small-input" placeholder="Secondary">
+      </div>
+
     </div>
   </div>
 
@@ -280,7 +277,7 @@ textarea{
           <option value="">-- Select --</option>
           <option>Shanda S</option>
           <option>Joe K</option>
-          <option<Jared B</option>
+          <option>Jared B</option>
           <option>Alex K</option>
           <option>Other</option>
         </select>
