@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -109,11 +108,11 @@ input, textarea, select{
 
 /* Zulu inputs: compact and constrained so they fit nicely */
 .zulu input{
-  padding:8px 10px;      /* smaller box */
+  padding:8px 10px;
   font-size:13px;
-  max-width:260px;       /* keep them from stretching too wide */
+  max-width:260px;
   width:100%;
-  justify-self:start;    /* align left within column */
+  justify-self:start;
 }
 
 input:focus, textarea:focus, select:focus{
@@ -140,16 +139,6 @@ textarea{
   grid-column: span 2;
 }
 
-.inline-inputs{
-  display:flex;
-  gap:8px;
-}
-
-/* Equal widths for inline inputs */
-.inline-inputs > input{
-  flex:1 1 0;
-}
-
 /* === Truck inputs laid out in a 3-column grid === */
 .truck-grid{
   display:grid;
@@ -160,25 +149,8 @@ textarea{
 
 /* Place ALS on the next line, same one-column width */
 .truck-grid .als{
-  grid-column: 1; /* left column on row 2 */
+  grid-column: 1;
   grid-row: 2;
-}
-
-/* --- Positioning for the row with Third Person + Zulu --- */
-.third-person{ grid-column: 1 / span 2; }  /* takes col 1-2 */
-.zulu-primary{ grid-column: 3; }           /* col 3 */
-.zulu-secondary{ grid-column: 4; }         /* col 4 */
-
-/* Stack nicely on tablet/mobile */
-@media(max-width:1000px){
-  .third-person{ grid-column: 1 / span 2; }
-  .zulu-primary{ grid-column: 1; }
-  .zulu-secondary{ grid-column: 2; }
-}
-@media(max-width:600px){
-  .third-person{ grid-column: 1; }
-  .zulu-primary{ grid-column: 1; }
-  .zulu-secondary{ grid-column: 1; }
 }
 
 .footer{
@@ -273,8 +245,8 @@ textarea{
         </select>
       </div>
 
-      <!-- ROW: Third Person + Zulu Primary + Zulu Secondary -->
-      <div class="field third-person">
+      <!-- ROW 2: Third Person (same size as others) + Zulu Primary + Zulu Secondary -->
+      <div class="field">
         <label>Third Person</label>
         <select name="thirdPerson">
           <option value="">-- Select --</option>
@@ -293,12 +265,12 @@ textarea{
         </select>
       </div>
 
-      <div class="field zulu zulu-primary">
+      <div class="field zulu">
         <label>Zulu Primary</label>
         <input type="text" name="zuluPrimary" placeholder="Primary">
       </div>
 
-      <div class="field zulu zulu-secondary">
+      <div class="field zulu">
         <label>Zulu Secondary</label>
         <input type="text" name="zuluSecondary" placeholder="Secondary">
       </div>
@@ -339,15 +311,14 @@ textarea{
       <div class="field half">
         <label>Transport Truck Numbers</label>
 
-        <!-- 3 equal columns; ALS placed on row 2 -->
         <div class="truck-grid">
           <!-- Row 1 -->
           <input type="number" name="truck911" placeholder="# 911 Trucks" min="0" style="grid-column:1; grid-row:1;">
           <input type="number" name="truckGT"  placeholder="# GT Trucks"  min="0" style="grid-column:2; grid-row:1;">
-          <!-- leave column 3 empty on row 1 to keep widths consistent -->
 
           <!-- Row 2 -->
-          <input type="number" name="truckALS" placeholder="ALS Transport Trucks" min="0" class="als">
+          <!-- CHANGED: ALS now accepts Med-17, Med-8, etc -->
+          <input type="text" name="truckALS" placeholder="ALS Transport Trucks (e.g., Med-17)" class="als" autocomplete="off">
         </div>
       </div>
 
@@ -403,35 +374,37 @@ function sendEmail(){
 
   const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
 
-  const body = [
+  // NOTE: mailto bodies are plain text. No real bold or font size.
+  // So headings are "bold-ish" using separators and caps.
+  const lines = [
+    "==============================",
+    "SHIFT INFO",
+    "==============================",
     `Name: ${d.name || ""}`,
     `Date: ${d.date || ""}`,
-    ``,
     `Channel 1: ${d.channel1 || ""}`,
     `Channel 2: ${d.channel2 || ""}`,
     `Third Person: ${d.thirdPerson || ""}`,
-    ``,
-    `Zulu Units On-Call:`,
-    `  Primary: ${d.zuluPrimary || ""}`,
-    `  Secondary: ${d.zuluSecondary || ""}`,
-    ``,
+    `Zulu Units On-Call: Primary=${d.zuluPrimary || ""} | Secondary=${d.zuluSecondary || ""}`,
+    "------------------------------",
+    "TRANSPORT & STAFFING",
+    "------------------------------",
     `ALSSUP: ${d.alssup || ""}`,
     `MEDSUP: ${d.medsup || ""}`,
-    ``,
-    `Transport Truck Numbers:`,
-    `  911: ${d.truck911 || "0"}`,
-    `  GT:  ${d.truckGT || "0"}`,
-    `  ALS Transport Trucks:  ${d.truckALS || "0"}`,
-    ``,
-    `Late Trucks:`,
+    `Transport Truck Numbers: 911=${d.truck911 || "0"} | GT=${d.truckGT || "0"} | ALS Transport=${d.truckALS || ""}`,
+    "------------------------------",
+    "TIME & EXCEPTIONS",
+    "------------------------------",
+    "Late Trucks:",
     `${d.lateTrucks || ""}`,
-    ``,
-    `Out of Chute Times:`,
+    "Out of Chute Times:",
     `${d.outOfChute || ""}`,
-    ``,
-    `Issues / Other Notes:`,
+    "Issues / Other Notes:",
     `${d.issues || ""}`
-  ].join("\n");
+  ];
+
+  // Use CRLF to avoid weird spacing in some email clients
+  const body = lines.join("\r\n");
 
   window.location.href =
     `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
