@@ -289,35 +289,45 @@ function sendEmail(){
 
   const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
 
-  const body = [
-    "==============================",
+  // Single divider style, used everywhere
+  const DIV = "========================================";
+
+  const bodyLines = [
+    DIV,
     "SHIFT INFO",
-    "==============================",
-    `Name: ${d.name || ""}`,
-    `Date: ${d.date || ""}`,
-    `Channel 1: ${d.channel1 || ""}`,
-    `Channel 2: ${d.channel2 || ""}`,
+    DIV,
+    `Name:         ${d.name || ""}`,
+    `Date:         ${d.date || ""}`,
+    `Channel 1:    ${d.channel1 || ""}`,
+    `Channel 2:    ${d.channel2 || ""}`,
     `Third Person: ${d.thirdPerson || ""}`,
-    `Zulu Units: Primary=${d.zuluPrimary || ""} | Secondary=${d.zuluSecondary || ""}`,
-    "------------------------------",
+    "Zulu Units On-Call:",
+    `  - Primary:   ${d.zuluPrimary || ""}`,
+    `  - Secondary: ${d.zuluSecondary || ""}`,
+    "",
+    DIV,
     "TRANSPORT & STAFFING",
-    "------------------------------",
+    DIV,
     `ALSSUP: ${d.alssup || ""}`,
     `MEDSUP: ${d.medsup || ""}`,
     "Transport Truck Numbers:",
-    `  911: ${d.truck911 || "0"}`,
-    `  GT: ${d.truckGT || "0"}`,
-    `  ALS Transport: ${d.truckALS || ""}`,
-    "------------------------------",
+    `  - 911:          ${d.truck911 || "0"}`,
+    `  - GT:           ${d.truckGT || "0"}`,
+    `  - ALS Transport: ${d.truckALS || ""}`,
+    "",
+    DIV,
     "TIME & EXCEPTIONS",
-    "------------------------------",
+    DIV,
     "Late Trucks:",
-    d.lateTrucks || "",
+    `  ${d.lateTrucks || ""}`,
     "Out of Chute Times:",
-    d.outOfChute || "",
+    `  ${d.outOfChute || ""}`,
     "Issues / Other Notes:",
-    d.issues || ""
-  ].join("\r\n");
+    `  ${d.issues || ""}`
+  ];
+
+  // Convert all newlines to CRLF for better mail client behavior
+  const body = bodyLines.join("\r\n");
 
   window.location.href =
     `mailto:${encodeURIComponent(SEND_TO_EMAILS)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
