@@ -77,7 +77,6 @@ form{
   gap:16px;
 }
 
-/* Responsive */
 @media(max-width:1000px){
   .grid{ grid-template-columns: repeat(2,1fr); }
   .grid-2{ grid-template-columns:1fr; }
@@ -106,19 +105,10 @@ input, textarea, select{
   font-size:14px;
 }
 
-/* Zulu inputs: compact and constrained so they fit nicely */
 .zulu input{
   padding:8px 10px;
   font-size:13px;
   max-width:260px;
-  width:100%;
-  justify-self:start;
-}
-
-input:focus, textarea:focus, select:focus{
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px rgba(79,140,255,.4);
 }
 
 textarea{
@@ -126,31 +116,24 @@ textarea{
   line-height:1.4;
 }
 
-.bigbox{
-  min-height:220px;
-}
+.bigbox{ min-height:220px; }
 
 .issues{
   min-height:260px;
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
-.field.half{
-  grid-column: span 2;
-}
+.field.half{ grid-column: span 2; }
 
-/* === Truck inputs laid out in a 3-column grid === */
 .truck-grid{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:8px;
 }
-.truck-grid input{ width:100%; }
 
-/* Place ALS on the next line, same one-column width */
 .truck-grid .als{
-  grid-column: 1;
-  grid-row: 2;
+  grid-column:1;
+  grid-row:2;
 }
 
 .footer{
@@ -175,208 +158,138 @@ textarea{
 <div class="hero"></div>
 
 <div class="wrap">
-
 <form id="shiftForm">
 
-  <!-- SHIFT INFO -->
-  <div class="section">
-    <div class="section-title">Shift Info</div>
+<div class="section">
+  <div class="section-title">Shift Info</div>
+  <div class="grid">
+    <div class="field">
+      <label>Name</label>
+      <select name="name">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
 
-    <div class="grid">
-      <div class="field">
-        <label>Name</label>
-        <select name="name">
-          <option value="">-- Select --</option>
-          <option>Joey S</option>
-          <option>Michael S</option>
-          <option>Rea R</option>
-          <option>Courtney F</option>
-          <option>Crystal C</option>
-          <option>Brian B</option>
-          <option>Erin B</option>
-          <option>Corrine S</option>
-          <option>Asha W</option>
-          <option>Dyonna W</option>
-          <option>Darren C</option>
-          <option>Donna W</option>
-        </select>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" name="date">
+    </div>
+
+    <div class="field">
+      <label>Channel 1</label>
+      <select name="channel1">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Channel 2</label>
+      <select name="channel2">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Third Person</label>
+      <select name="thirdPerson">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
+
+    <div class="field zulu">
+      <label>Zulu Primary</label>
+      <input type="text" name="zuluPrimary">
+    </div>
+
+    <div class="field zulu">
+      <label>Zulu Secondary</label>
+      <input type="text" name="zuluSecondary">
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Transport & Staffing</div>
+  <div class="grid">
+    <div class="field">
+      <label>ALSSUP</label>
+      <select name="alssup">
+        <option value="">-- Select --</option>
+        <option>Shanda S</option><option>Joe K</option>
+        <option>Jared B</option><option>Alex K</option><option>Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>MEDSUP</label>
+      <select name="medsup">
+        <option value="">-- Select --</option>
+        <option>Hunter S</option><option>Jeff P</option><option>Other</option>
+      </select>
+    </div>
+
+    <div class="field half">
+      <label>Transport Truck Numbers</label>
+      <div class="truck-grid">
+        <input type="number" name="truck911" placeholder="# 911 Trucks" min="0">
+        <input type="number" name="truckGT" placeholder="# GT Trucks" min="0">
+        <input type="text" name="truckALS" class="als" placeholder="ALS Transport (e.g. Med-17)">
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="field">
-        <label>Date</label>
-        <input type="date" name="date">
-      </div>
-
-      <div class="field">
-        <label>Channel 1</label>
-        <select name="channel1">
-          <option value="">-- Select --</option>
-          <option>Joey S</option>
-          <option>Michael S</option>
-          <option>Rea R</option>
-          <option>Courtney F</option>
-          <option>Crystal C</option>
-          <option>Brian B</option>
-          <option>Erin B</option>
-          <option>Corrine S</option>
-          <option>Asha W</option>
-          <option>Dyonna W</option>
-          <option>Darren C</option>
-          <option>Donna W</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Channel 2</label>
-        <select name="channel2">
-          <option value="">-- Select --</option>
-          <option>Joey S</option>
-          <option>Michael S</option>
-          <option>Rea R</option>
-          <option>Courtney F</option>
-          <option>Crystal C</option>
-          <option>Brian B</option>
-          <option>Erin B</option>
-          <option>Corrine S</option>
-          <option>Asha W</option>
-          <option>Dyonna W</option>
-          <option>Darren C</option>
-          <option>Donna W</option>
-        </select>
-      </div>
-
-      <!-- ROW 2: Third Person (same size as others) + Zulu Primary + Zulu Secondary -->
-      <div class="field">
-        <label>Third Person</label>
-        <select name="thirdPerson">
-          <option value="">-- Select --</option>
-          <option>Joey S</option>
-          <option>Michael S</option>
-          <option>Rea R</option>
-          <option>Courtney F</option>
-          <option>Crystal C</option>
-          <option>Brian B</option>
-          <option>Erin B</option>
-          <option>Corrine S</option>
-          <option>Asha W</option>
-          <option>Dyonna W</option>
-          <option>Darren C</option>
-          <option>Donna W</option>
-        </select>
-      </div>
-
-      <div class="field zulu">
-        <label>Zulu Primary</label>
-        <input type="text" name="zuluPrimary" placeholder="Primary">
-      </div>
-
-      <div class="field zulu">
-        <label>Zulu Secondary</label>
-        <input type="text" name="zuluSecondary" placeholder="Secondary">
-      </div>
-
+<div class="section">
+  <div class="section-title">Time & Exceptions</div>
+  <div class="grid-2">
+    <div class="field">
+      <label>Late Trucks</label>
+      <textarea name="lateTrucks" class="bigbox"></textarea>
+    </div>
+    <div class="field">
+      <label>Out of Chute Times</label>
+      <textarea name="outOfChute" class="bigbox"></textarea>
     </div>
   </div>
 
-  <!-- TRANSPORT + STAFFING COMBINED -->
-  <div class="section">
-    <div class="section-title">Transport &amp; Staffing</div>
-    <div class="grid">
-
-      <div class="field">
-        <label>ALSSUP</label>
-        <select name="alssup">
-          <option value="">-- Select --</option>
-          <option>Shanda S</option>
-          <option>Joe K</option>
-          <option>Jared B</option>
-          <option>Alex K</option>
-          <option>Other</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>MEDSUP</label>
-        <select name="medsup">
-          <option value="">-- Select --</option>
-          <option>Hunter S</option>
-          <option>Jeff P</option>
-          <option>Another Option</option>
-          <option>Another Option</option>
-          <option>Other</option>
-        </select>
-      </div>
-
-      <!-- Transport Truck Numbers -->
-      <div class="field half">
-        <label>Transport Truck Numbers</label>
-
-        <div class="truck-grid">
-          <!-- Row 1 -->
-          <input type="number" name="truck911" placeholder="# 911 Trucks" min="0" style="grid-column:1; grid-row:1;">
-          <input type="number" name="truckGT"  placeholder="# GT Trucks"  min="0" style="grid-column:2; grid-row:1;">
-
-          <!-- Row 2 -->
-          <!-- CHANGED: ALS now accepts Med-17, Med-8, etc -->
-          <input type="text" name="truckALS" placeholder="ALS Transport Trucks (e.g., Med-17)" class="als" autocomplete="off">
-        </div>
-      </div>
-
-    </div>
+  <div class="field" style="margin-top:14px;">
+    <label>Issues / Other Notes</label>
+    <textarea class="issues" name="issues"></textarea>
   </div>
+</div>
 
-  <!-- TIME & EXCEPTIONS -->
-  <div class="section">
-    <div class="section-title">Time &amp; Exceptions</div>
-
-    <div class="grid-2">
-      <div class="field">
-        <label>Late Trucks</label>
-        <textarea name="lateTrucks" class="bigbox"></textarea>
-      </div>
-
-      <div class="field">
-        <label>Out of Chute Times</label>
-        <textarea name="outOfChute" class="bigbox"></textarea>
-      </div>
-    </div>
-
-    <div class="field" style="margin-top:14px;">
-      <label>Issues / Other Notes</label>
-      <textarea
-        class="issues"
-        name="issues"
-        placeholder=" - Include as many details as possible"
-      ></textarea>
-    </div>
-  </div>
-
-  <div class="footer">
-    <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
-  </div>
+<div class="footer">
+  <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
+</div>
 
 </form>
 </div>
 
 <script>
-const issues = document.querySelector(".issues");
-issues.addEventListener("input", ()=>{
-  issues.style.height = "auto";
-  issues.style.height = issues.scrollHeight + "px";
-});
-
 const SEND_TO_EMAILS = "person1@agency.gov,person2@agency.gov";
 
 function sendEmail(){
-  const d = Object.fromEntries(
-    new FormData(document.getElementById("shiftForm")).entries()
-  );
+  const d = Object.fromEntries(new FormData(document.getElementById("shiftForm")).entries());
 
   const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
 
-  // NOTE: mailto bodies are plain text. No real bold or font size.
-  // So headings are "bold-ish" using separators and caps.
-  const lines = [
+  const body = [
     "==============================",
     "SHIFT INFO",
     "==============================",
@@ -385,31 +298,29 @@ function sendEmail(){
     `Channel 1: ${d.channel1 || ""}`,
     `Channel 2: ${d.channel2 || ""}`,
     `Third Person: ${d.thirdPerson || ""}`,
-    `Zulu Units On-Call: Primary=${d.zuluPrimary || ""} | Secondary=${d.zuluSecondary || ""}`,
+    `Zulu Units: Primary=${d.zuluPrimary || ""} | Secondary=${d.zuluSecondary || ""}`,
     "------------------------------",
     "TRANSPORT & STAFFING",
     "------------------------------",
     `ALSSUP: ${d.alssup || ""}`,
     `MEDSUP: ${d.medsup || ""}`,
-    `Transport Truck Numbers: 911=${d.truck911 || "0"} | GT=${d.truckGT || "0"} | ALS Transport=${d.truckALS || ""}`,
+    "Transport Truck Numbers:",
+    `  911: ${d.truck911 || "0"}`,
+    `  GT: ${d.truckGT || "0"}`,
+    `  ALS Transport: ${d.truckALS || ""}`,
     "------------------------------",
     "TIME & EXCEPTIONS",
     "------------------------------",
     "Late Trucks:",
-    `${d.lateTrucks || ""}`,
+    d.lateTrucks || "",
     "Out of Chute Times:",
-    `${d.outOfChute || ""}`,
+    d.outOfChute || "",
     "Issues / Other Notes:",
-    `${d.issues || ""}`
-  ];
-
-  // Use CRLF to avoid weird spacing in some email clients
-  const body = lines.join("\r\n");
+    d.issues || ""
+  ].join("\r\n");
 
   window.location.href =
-    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
-    `?subject=${encodeURIComponent(subject)}` +
-    `&body=${encodeURIComponent(body)}`;
+    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 </script>
 
