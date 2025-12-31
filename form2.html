@@ -77,6 +77,7 @@ form{
   gap:16px;
 }
 
+/* Responsive */
 @media(max-width:1000px){
   .grid{ grid-template-columns: repeat(2,1fr); }
   .grid-2{ grid-template-columns:1fr; }
@@ -105,10 +106,19 @@ input, textarea, select{
   font-size:14px;
 }
 
+/* Zulu inputs: compact and constrained so they fit nicely */
 .zulu input{
   padding:8px 10px;
   font-size:13px;
   max-width:260px;
+  width:100%;
+  justify-self:start;
+}
+
+input:focus, textarea:focus, select:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px rgba(79,140,255,.4);
 }
 
 textarea{
@@ -116,24 +126,31 @@ textarea{
   line-height:1.4;
 }
 
-.bigbox{ min-height:220px; }
+.bigbox{
+  min-height:220px;
+}
 
 .issues{
   min-height:260px;
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
-.field.half{ grid-column: span 2; }
+.field.half{
+  grid-column: span 2;
+}
 
+/* === Truck inputs laid out in a 3-column grid === */
 .truck-grid{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:8px;
 }
+.truck-grid input{ width:100%; }
 
+/* Place ALS on the next line, same one-column width */
 .truck-grid .als{
-  grid-column:1;
-  grid-row:2;
+  grid-column: 1;
+  grid-row: 2;
 }
 
 .footer{
@@ -151,145 +168,381 @@ textarea{
   border-radius:14px;
   cursor:pointer;
 }
+
+/* ===== Right Slide-Out Links Drawer ===== */
+.drawer-toggle{
+  position: fixed;
+  right: 16px;
+  top: 120px;
+  z-index: 50;
+  background: rgba(79,140,255,.95);
+  border: 0;
+  color: #fff;
+  font-weight: 900;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow:0 12px 30px rgba(0,0,0,.45);
+}
+
+.drawer-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 60;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+.drawer{
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(420px, 92vw);
+  z-index: 70;
+  background: rgba(20,26,46,.98);
+  border-left: 1px solid rgba(255,255,255,.16);
+  box-shadow: -20px 0 60px rgba(0,0,0,.6);
+  transform: translateX(100%);
+  transition: transform .2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer.open{ transform: translateX(0); }
+.drawer-backdrop.open{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+}
+
+.drawer-title{
+  font-weight: 900;
+  letter-spacing: .4px;
+}
+
+.drawer-close{
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.22);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.drawer-body{
+  padding: 12px 14px 16px;
+  overflow:auto;
+  flex: 1;
+}
+
+.small-note{
+  opacity: .85;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.link-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top: 12px;
+}
+
+.link-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.link-item a{
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 850;
+}
+.link-item a:hover{ text-decoration: underline; }
+
+.link-meta{
+  opacity:.8;
+  font-size:12px;
+  white-space: nowrap;
+}
 </style>
 </head>
 
 <body>
 <div class="hero"></div>
 
+<!-- Links Drawer Button -->
+<button type="button" class="drawer-toggle" onclick="toggleDrawer(true)">Links</button>
+
+<!-- Backdrop -->
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleDrawer(false)"></div>
+
+<!-- Drawer -->
+<aside class="drawer" id="linksDrawer" aria-label="Quick Links">
+  <div class="drawer-header">
+    <div class="drawer-title">Quick Links</div>
+    <button type="button" class="drawer-close" onclick="toggleDrawer(false)">Close</button>
+  </div>
+
+  <div class="drawer-body">
+    <div class="small-note">
+      Static links. Edit them directly in this HTML file under <b>Quick Links</b>.
+    </div>
+
+    <div class="link-list">
+      <!-- ===== EDIT THESE LINKS ===== -->
+      <div class="link-item">
+        <a href="https://example.com" target="_blank" rel="noopener noreferrer">Unit Status Board</a>
+        <div class="link-meta">Dashboard</div>
+      </div>
+
+      <div class="link-item">
+        <a href="https://example.com" target="_blank" rel="noopener noreferrer">CAD Login</a>
+        <div class="link-meta">CAD</div>
+      </div>
+
+      <div class="link-item">
+        <a href="https://example.com" target="_blank" rel="noopener noreferrer">Policy Manual</a>
+        <div class="link-meta">Policies</div>
+      </div>
+
+      <div class="link-item">
+        <a href="https://example.com" target="_blank" rel="noopener noreferrer">Radio Channels / Talkgroups</a>
+        <div class="link-meta">Reference</div>
+      </div>
+
+      <div class="link-item">
+        <a href="https://example.com" target="_blank" rel="noopener noreferrer">Hospital Diversion Status</a>
+        <div class="link-meta">Hospitals</div>
+      </div>
+      <!-- ===== END LINKS ===== -->
+    </div>
+  </div>
+</aside>
+
 <div class="wrap">
 <form id="shiftForm">
 
-<div class="section">
-  <div class="section-title">Shift Info</div>
-  <div class="grid">
-    <div class="field">
-      <label>Name</label>
-      <select name="name">
-        <option value="">-- Select --</option>
-        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-      </select>
-    </div>
+  <!-- SHIFT INFO -->
+  <div class="section">
+    <div class="section-title">Shift Info</div>
 
-    <div class="field">
-      <label>Date</label>
-      <input type="date" name="date">
-    </div>
+    <div class="grid">
+      <div class="field">
+        <label>Name</label>
+        <select name="name">
+          <option value="">-- Select --</option>
+          <option>Joey S</option>
+          <option>Michael S</option>
+          <option>Rea R</option>
+          <option>Courtney F</option>
+          <option>Crystal C</option>
+          <option>Brian B</option>
+          <option>Erin B</option>
+          <option>Corrine S</option>
+          <option>Asha W</option>
+          <option>Dyonna W</option>
+          <option>Darren C</option>
+          <option>Donna W</option>
+        </select>
+      </div>
 
-    <div class="field">
-      <label>Channel 1</label>
-      <select name="channel1">
-        <option value="">-- Select --</option>
-        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-      </select>
-    </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" name="date">
+      </div>
 
-    <div class="field">
-      <label>Channel 2</label>
-      <select name="channel2">
-        <option value="">-- Select --</option>
-        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-      </select>
-    </div>
+      <div class="field">
+        <label>Channel 1</label>
+        <select name="channel1">
+          <option value="">-- Select --</option>
+          <option>Joey S</option>
+          <option>Michael S</option>
+          <option>Rea R</option>
+          <option>Courtney F</option>
+          <option>Crystal C</option>
+          <option>Brian B</option>
+          <option>Erin B</option>
+          <option>Corrine S</option>
+          <option>Asha W</option>
+          <option>Dyonna W</option>
+          <option>Darren C</option>
+          <option>Donna W</option>
+        </select>
+      </div>
 
-    <div class="field">
-      <label>Third Person</label>
-      <select name="thirdPerson">
-        <option value="">-- Select --</option>
-        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-      </select>
-    </div>
+      <div class="field">
+        <label>Channel 2</label>
+        <select name="channel2">
+          <option value="">-- Select --</option>
+          <option>Joey S</option>
+          <option>Michael S</option>
+          <option>Rea R</option>
+          <option>Courtney F</option>
+          <option>Crystal C</option>
+          <option>Brian B</option>
+          <option>Erin B</option>
+          <option>Corrine S</option>
+          <option>Asha W</option>
+          <option>Dyonna W</option>
+          <option>Darren C</option>
+          <option>Donna W</option>
+        </select>
+      </div>
 
-    <div class="field zulu">
-      <label>Zulu Primary</label>
-      <input type="text" name="zuluPrimary">
-    </div>
+      <div class="field">
+        <label>Third Person</label>
+        <select name="thirdPerson">
+          <option value="">-- Select --</option>
+          <option>Joey S</option>
+          <option>Michael S</option>
+          <option>Rea R</option>
+          <option>Courtney F</option>
+          <option>Crystal C</option>
+          <option>Brian B</option>
+          <option>Erin B</option>
+          <option>Corrine S</option>
+          <option>Asha W</option>
+          <option>Dyonna W</option>
+          <option>Darren C</option>
+          <option>Donna W</option>
+        </select>
+      </div>
 
-    <div class="field zulu">
-      <label>Zulu Secondary</label>
-      <input type="text" name="zuluSecondary">
+      <div class="field zulu">
+        <label>Zulu Primary</label>
+        <input type="text" name="zuluPrimary" placeholder="Primary">
+      </div>
+
+      <div class="field zulu">
+        <label>Zulu Secondary</label>
+        <input type="text" name="zuluSecondary" placeholder="Secondary">
+      </div>
+
     </div>
   </div>
-</div>
 
-<div class="section">
-  <div class="section-title">Transport & Staffing</div>
-  <div class="grid">
-    <div class="field">
-      <label>ALSSUP</label>
-      <select name="alssup">
-        <option value="">-- Select --</option>
-        <option>Shanda S</option><option>Joe K</option>
-        <option>Jared B</option><option>Alex K</option><option>Other</option>
-      </select>
+  <!-- TRANSPORT + STAFFING COMBINED -->
+  <div class="section">
+    <div class="section-title">Transport &amp; Staffing</div>
+    <div class="grid">
+
+      <div class="field">
+        <label>ALSSUP</label>
+        <select name="alssup">
+          <option value="">-- Select --</option>
+          <option>Shanda S</option>
+          <option>Joe K</option>
+          <option>Jared B</option>
+          <option>Alex K</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>MEDSUP</label>
+        <select name="medsup">
+          <option value="">-- Select --</option>
+          <option>Hunter S</option>
+          <option>Jeff P</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field half">
+        <label>Transport Truck Numbers</label>
+        <div class="truck-grid">
+          <input type="number" name="truck911" placeholder="# 911 Trucks" min="0" style="grid-column:1; grid-row:1;">
+          <input type="number" name="truckGT"  placeholder="# GT Trucks"  min="0" style="grid-column:2; grid-row:1;">
+          <input type="text" name="truckALS" placeholder="ALS Transport (e.g., Med-17)" class="als" autocomplete="off">
+        </div>
+      </div>
+
     </div>
+  </div>
 
-    <div class="field">
-      <label>MEDSUP</label>
-      <select name="medsup">
-        <option value="">-- Select --</option>
-        <option>Hunter S</option><option>Jeff P</option><option>Other</option>
-      </select>
-    </div>
+  <!-- TIME & EXCEPTIONS -->
+  <div class="section">
+    <div class="section-title">Time &amp; Exceptions</div>
 
-    <div class="field half">
-      <label>Transport Truck Numbers</label>
-      <div class="truck-grid">
-        <input type="number" name="truck911" placeholder="# 911 Trucks" min="0">
-        <input type="number" name="truckGT" placeholder="# GT Trucks" min="0">
-        <input type="text" name="truckALS" class="als" placeholder="ALS Transport (e.g. Med-17)">
+    <div class="grid-2">
+      <div class="field">
+        <label>Late Trucks</label>
+        <textarea name="lateTrucks" class="bigbox"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Out of Chute Times</label>
+        <textarea name="outOfChute" class="bigbox"></textarea>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="section">
-  <div class="section-title">Time & Exceptions</div>
-  <div class="grid-2">
-    <div class="field">
-      <label>Late Trucks</label>
-      <textarea name="lateTrucks" class="bigbox"></textarea>
-    </div>
-    <div class="field">
-      <label>Out of Chute Times</label>
-      <textarea name="outOfChute" class="bigbox"></textarea>
+    <div class="field" style="margin-top:14px;">
+      <label>Issues / Other Notes</label>
+      <textarea
+        class="issues"
+        name="issues"
+        placeholder=" - Include as many details as possible"
+      ></textarea>
     </div>
   </div>
 
-  <div class="field" style="margin-top:14px;">
-    <label>Issues / Other Notes</label>
-    <textarea class="issues" name="issues"></textarea>
+  <div class="footer">
+    <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
   </div>
-</div>
-
-<div class="footer">
-  <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
-</div>
 
 </form>
 </div>
 
 <script>
+const issues = document.querySelector(".issues");
+issues.addEventListener("input", ()=>{
+  issues.style.height = "auto";
+  issues.style.height = issues.scrollHeight + "px";
+});
+
 const SEND_TO_EMAILS = "person1@agency.gov,person2@agency.gov";
 
+function toggleDrawer(open){
+  const drawer = document.getElementById("linksDrawer");
+  const backdrop = document.getElementById("drawerBackdrop");
+  if(open){
+    drawer.classList.add("open");
+    backdrop.classList.add("open");
+  }else{
+    drawer.classList.remove("open");
+    backdrop.classList.remove("open");
+  }
+}
+
+// ESC closes drawer
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape") toggleDrawer(false);
+});
+
 function sendEmail(){
-  const d = Object.fromEntries(new FormData(document.getElementById("shiftForm")).entries());
+  const d = Object.fromEntries(
+    new FormData(document.getElementById("shiftForm")).entries()
+  );
 
   const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
 
-  // Single divider style, used everywhere
   const DIV = "========================================";
 
   const bodyLines = [
@@ -311,8 +564,8 @@ function sendEmail(){
     `ALSSUP: ${d.alssup || ""}`,
     `MEDSUP: ${d.medsup || ""}`,
     "Transport Truck Numbers:",
-    `  - 911:          ${d.truck911 || "0"}`,
-    `  - GT:           ${d.truckGT || "0"}`,
+    `  - 911:           ${d.truck911 || "0"}`,
+    `  - GT:            ${d.truckGT || "0"}`,
     `  - ALS Transport: ${d.truckALS || ""}`,
     "",
     DIV,
@@ -326,11 +579,13 @@ function sendEmail(){
     `  ${d.issues || ""}`
   ];
 
-  // Convert all newlines to CRLF for better mail client behavior
+  // CRLF plays nicer with mail clients
   const body = bodyLines.join("\r\n");
 
   window.location.href =
-    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(body)}`;
 }
 </script>
 
