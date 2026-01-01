@@ -418,7 +418,7 @@ textarea{
         <a href="https://example.com" target="_blank" rel="noopener noreferrer">Hospital Diversion Status</a>
         <div class="link-meta">Hospitals</div>
       </div>
-      <!-- ===== END LINKS ===== -->
+       <!-- ===== END LINKS ===== -->
     </div>
   </div>
 </aside>
@@ -545,26 +545,12 @@ textarea{
     </div>
   </div>
 
-  <!-- ATTACHMENT (Manual reminder only) -->
-  <div class="section">
-    <div class="section-title">Attachment (Manual)</div>
-    <div class="field">
-      <label>Choose a file to attach</label>
-      <input type="file" id="attachment" />
-      <div class="small-note" style="margin-top:8px;">
-        Mailto can’t automatically attach files. This will include the filename in the email so you remember to attach it.
-      </div>
-    </div>
-  </div>
-
-  <!-- NEW: Paste Notes (popup modal) -->
+  <!-- Paste Notes (popup modal) -->
   <div class="section">
     <div class="section-title">Pasted Notes (Click to Expand)</div>
     <div class="field paste-preview">
       <label>Paste Notes</label>
-      <!-- readonly preview; click opens modal -->
       <textarea id="pastePreview" readonly placeholder="Click here to open the large paste box..."></textarea>
-      <!-- hidden field that actually stores the full content for email -->
       <textarea id="pasteNotes" name="pasteNotes" style="display:none;"></textarea>
       <div class="small-note" style="margin-top:8px;">
         Keeps spacing + line breaks from what you paste. (Rich text styling won’t survive mailto.)
@@ -636,12 +622,10 @@ const pasteNotesHidden = document.getElementById("pasteNotes");
 const pasteModalBackdrop = document.getElementById("pasteModalBackdrop");
 const pasteModalText = document.getElementById("pasteModalText");
 
-// Open modal on click (preview box)
 pastePreview.addEventListener("click", openPasteModal);
 pastePreview.addEventListener("focus", openPasteModal);
 
 function openPasteModal(){
-  // Load current stored value into modal
   pasteModalText.value = pasteNotesHidden.value || "";
   pasteModalBackdrop.style.display = "flex";
   setTimeout(()=> pasteModalText.focus(), 0);
@@ -649,11 +633,9 @@ function openPasteModal(){
 
 function closePasteModal(save){
   if(save){
-    // Save raw text (preserves whitespace/newlines)
     const val = pasteModalText.value || "";
     pasteNotesHidden.value = val;
 
-    // Preview: show first ~10 lines or 600 chars, whichever comes first
     const lines = val.split(/\r?\n/);
     const previewLines = lines.slice(0, 10).join("\n");
     const preview = previewLines.length > 600 ? previewLines.slice(0, 600) + "…" : previewLines;
@@ -663,17 +645,13 @@ function closePasteModal(save){
   pasteModalBackdrop.style.display = "none";
 }
 
-// Esc closes modal (save)
 document.addEventListener("keydown", (e)=>{
   if(e.key === "Escape"){
-    // close drawer too, if open
     toggleDrawer(false);
-    // close modal, save what’s in there
     if(pasteModalBackdrop.style.display === "flex") closePasteModal(true);
   }
 });
 
-/* Clipboard helper */
 async function copyToClipboard(text){
   try{
     await navigator.clipboard.writeText(text);
@@ -686,13 +664,7 @@ async function copyToClipboard(text){
 /* Email builder */
 function buildEmailBody(d){
   const DIV = "========================================";
-
-  const attachmentInput = document.getElementById("attachment");
-  const fileName = (attachmentInput && attachmentInput.files && attachmentInput.files[0])
-    ? attachmentInput.files[0].name
-    : "";
-
-  const pasted = (d.pasteNotes || "").trimEnd(); // keep formatting, just drop trailing whitespace spam
+  const pasted = (d.pasteNotes || "").trimEnd();
 
   const lines = [
     DIV,
@@ -733,18 +705,9 @@ function buildEmailBody(d){
     lines.push(DIV);
     lines.push("PASTED NOTES");
     lines.push(DIV);
-    lines.push(pasted); // raw text, preserves line breaks + spacing
+    lines.push(pasted);
   }
 
-  if(fileName){
-    lines.push("");
-    lines.push(DIV);
-    lines.push("ATTACHMENT (REMINDER)");
-    lines.push(DIV);
-    lines.push(`Attach this file: ${fileName}`);
-  }
-
-  // CRLF plays nicer with mail clients
   return lines.join("\r\n");
 }
 
@@ -756,7 +719,6 @@ async function sendEmail(){
   const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
   const body = buildEmailBody(d);
 
-  // Backup: copy report to clipboard (some mail clients are monsters)
   const copied = await copyToClipboard(body);
   showToast(copied
     ? "Report copied to clipboard (backup). Email will open now."
