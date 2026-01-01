@@ -77,7 +77,6 @@ form{
   gap:16px;
 }
 
-/* Responsive */
 @media(max-width:1000px){
   .grid{ grid-template-columns: repeat(2,1fr); }
   .grid-2{ grid-template-columns:1fr; }
@@ -106,20 +105,6 @@ input, textarea, select{
   font-size:14px;
 }
 
-.zulu input{
-  padding:8px 10px;
-  font-size:13px;
-  max-width:260px;
-  width:100%;
-  justify-self:start;
-}
-
-input:focus, textarea:focus, select:focus{
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 2px rgba(79,140,255,.4);
-}
-
 textarea{
   resize:vertical;
   line-height:1.4;
@@ -134,26 +119,21 @@ textarea{
 
 .field.half{ grid-column: span 2; }
 
-/* === Truck inputs laid out in a 3-column grid === */
 .truck-grid{
   display:grid;
   grid-template-columns: repeat(3, 1fr);
   gap:8px;
 }
-.truck-grid input{ width:100%; }
 
-/* Place ALS on the next line, same one-column width */
 .truck-grid .als{
-  grid-column: 1;
-  grid-row: 2;
+  grid-column:1;
+  grid-row:2;
 }
 
 .footer{
   display:flex;
   justify-content:flex-end;
   margin-top:18px;
-  gap:10px;
-  align-items:center;
 }
 
 .btn{
@@ -166,216 +146,45 @@ textarea{
   cursor:pointer;
 }
 
-.small-note{
-  opacity: .85;
-  font-size: 12px;
-  line-height: 1.35;
+/* ===== Paste Notes ===== */
+.paste-preview textarea{
+  height:80px;
+  resize:none;
+  cursor:pointer;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
-.toast{
-  position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  background: rgba(20,26,46,.96);
-  border: 1px solid rgba(255,255,255,.18);
-  padding: 10px 14px;
-  border-radius: 12px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.55);
-  z-index: 80;
-  display:none;
-  max-width: min(900px, 92vw);
-}
-
-/* ===== Right Slide-Out Links Drawer ===== */
-.drawer-toggle{
-  position: fixed;
-  right: 16px;
-  top: 120px;
-  z-index: 50;
-  background: rgba(79,140,255,.95);
-  border: 0;
-  color: #fff;
-  font-weight: 900;
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow:0 12px 30px rgba(0,0,0,.45);
-}
-
-.drawer-backdrop{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.55);
-  z-index: 60;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .18s ease;
-}
-
-.drawer{
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: min(420px, 92vw);
-  z-index: 70;
-  background: rgba(20,26,46,.98);
-  border-left: 1px solid rgba(255,255,255,.16);
-  box-shadow: -20px 0 60px rgba(0,0,0,.6);
-  transform: translateX(100%);
-  transition: transform .2s ease;
-  display: flex;
-  flex-direction: column;
-}
-
-.drawer.open{ transform: translateX(0); }
-.drawer-backdrop.open{
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.drawer-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 14px 14px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-
-.drawer-title{
-  font-weight: 900;
-  letter-spacing: .4px;
-}
-
-.drawer-close{
-  background: transparent;
-  border: 1px solid rgba(255,255,255,.22);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.drawer-body{
-  padding: 12px 14px 16px;
-  overflow:auto;
-  flex: 1;
-}
-
-.link-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  margin-top: 12px;
-}
-
-.link-item{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 12px;
-  padding: 10px;
-}
-
-.link-item a{
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 850;
-}
-.link-item a:hover{ text-decoration: underline; }
-
-.link-meta{
-  opacity:.8;
-  font-size:12px;
-  white-space: nowrap;
-}
-
-/* ===== Paste Notes Modal ===== */
+/* Modal */
 .modal-backdrop{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.65);
-  z-index: 90;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
   display:none;
   align-items:center;
   justify-content:center;
-  padding: 18px;
+  z-index:100;
 }
 
 .modal{
-  width: min(980px, 96vw);
-  height: min(80vh, 760px);
-  background: rgba(20,26,46,.98);
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 16px;
-  box-shadow: 0 30px 80px rgba(0,0,0,.75);
+  width:min(1000px,96vw);
+  height:min(80vh,760px);
+  background:rgba(20,26,46,.98);
+  border-radius:16px;
   display:flex;
   flex-direction:column;
-  overflow:hidden;
 }
 
-.modal-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-
-.modal-title{
-  font-weight: 900;
-  letter-spacing:.4px;
-}
-
-.modal-body{
-  padding: 12px 14px 14px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  flex: 1;
-}
-
-.modal-body textarea{
-  flex: 1;
-  min-height: 100%;
-  resize: none;
+.modal textarea{
+  flex:1;
+  resize:none;
   font-family: ui-monospace, Menlo, Consolas, monospace;
-  white-space: pre;      /* keep pasted spacing as-is */
-  overflow: auto;
+  white-space:pre;
 }
 
-.modal-actions{
+.modal-footer{
   display:flex;
   justify-content:flex-end;
-  gap:10px;
-}
-
-.btn-ghost{
-  background: transparent;
-  border: 1px solid rgba(255,255,255,.22);
-  color: var(--text);
-  font-weight: 900;
-  padding: 12px 18px;
-  border-radius: 14px;
-  cursor:pointer;
-}
-
-/* Collapsed preview box */
-.paste-preview{
-  cursor: pointer;
-}
-
-.paste-preview textarea{
-  height: 80px;
-  resize: none;
-  cursor: pointer;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  white-space: pre-wrap; /* preview wraps nicely */
-  overflow: hidden;
+  padding:10px;
 }
 </style>
 </head>
@@ -383,390 +192,141 @@ textarea{
 <body>
 <div class="hero"></div>
 
-<!-- Links Drawer Button -->
-<button type="button" class="drawer-toggle" onclick="toggleDrawer(true)">Links</button>
-
-<!-- Drawer Backdrop -->
-<div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleDrawer(false)"></div>
-
-<!-- Drawer -->
-<aside class="drawer" id="linksDrawer" aria-label="Quick Links">
-  <div class="drawer-header">
-    <div class="drawer-title">Quick Links</div>
-    <button type="button" class="drawer-close" onclick="toggleDrawer(false)">Close</button>
-  </div>
-  <div class="drawer-body">
-    <div class="small-note">
-      Static links. Edit them directly in this HTML file under <b>Quick Links</b>.
-    </div>
-
-    <div class="link-list">
-      <!-- ===== EDIT THESE LINKS ===== -->
-      <div class="link-item">
-        <a href="https://example.com" target="_blank" rel="noopener noreferrer">Unit Status Board</a>
-        <div class="link-meta">Dashboard</div>
-      </div>
-      <div class="link-item">
-        <a href="https://example.com" target="_blank" rel="noopener noreferrer">CAD Login</a>
-        <div class="link-meta">CAD</div>
-      </div>
-      <div class="link-item">
-        <a href="https://example.com" target="_blank" rel="noopener noreferrer">Policy Manual</a>
-        <div class="link-meta">Policies</div>
-      </div>
-      <div class="link-item">
-        <a href="https://example.com" target="_blank" rel="noopener noreferrer">Hospital Diversion Status</a>
-        <div class="link-meta">Hospitals</div>
-      </div>
-      <!-- ===== END LINKS ===== -->
-    </div>
-  </div>
-</aside>
-
 <div class="wrap">
 <form id="shiftForm">
 
-  <!-- SHIFT INFO -->
-  <div class="section">
-    <div class="section-title">Shift Info</div>
-    <div class="grid">
-      <div class="field">
-        <label>Name</label>
-        <select name="name">
-          <option value="">-- Select --</option>
-          <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-          <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-          <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-          <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Date</label>
-        <input type="date" name="date">
-      </div>
-
-      <div class="field">
-        <label>Channel 1</label>
-        <select name="channel1">
-          <option value="">-- Select --</option>
-          <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-          <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-          <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-          <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Channel 2</label>
-        <select name="channel2">
-          <option value="">-- Select --</option>
-          <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-          <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-          <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-          <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>Third Person</label>
-        <select name="thirdPerson">
-          <option value="">-- Select --</option>
-          <option>Joey S</option><option>Michael S</option><option>Rea R</option>
-          <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
-          <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
-          <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
-        </select>
-      </div>
-
-      <div class="field zulu">
-        <label>Zulu Primary</label>
-        <input type="text" name="zuluPrimary" placeholder="Primary">
-      </div>
-
-      <div class="field zulu">
-        <label>Zulu Secondary</label>
-        <input type="text" name="zuluSecondary" placeholder="Secondary">
-      </div>
-    </div>
-  </div>
-
-  <!-- TRANSPORT + STAFFING -->
-  <div class="section">
-    <div class="section-title">Transport &amp; Staffing</div>
-    <div class="grid">
-      <div class="field">
-        <label>ALSSUP</label>
-        <select name="alssup">
-          <option value="">-- Select --</option>
-          <option>Shanda S</option><option>Joe K</option>
-          <option>Jared B</option><option>Alex K</option><option>Other</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label>MEDSUP</label>
-        <select name="medsup">
-          <option value="">-- Select --</option>
-          <option>Hunter S</option><option>Jeff P</option><option>Other</option>
-        </select>
-      </div>
-
-      <div class="field half">
-        <label>Transport Truck Numbers</label>
-        <div class="truck-grid">
-          <input type="number" name="truck911" placeholder="# 911 Trucks" min="0" style="grid-column:1; grid-row:1;">
-          <input type="number" name="truckGT"  placeholder="# GT Trucks"  min="0" style="grid-column:2; grid-row:1;">
-          <input type="text" name="truckALS" placeholder="ALS Transport (e.g., Med-17)" class="als" autocomplete="off">
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TIME & EXCEPTIONS -->
-  <div class="section">
-    <div class="section-title">Time &amp; Exceptions</div>
-
-    <div class="grid-2">
-      <div class="field">
-        <label>Late Trucks</label>
-        <textarea name="lateTrucks" class="bigbox"></textarea>
-      </div>
-
-      <div class="field">
-        <label>Out of Chute Times</label>
-        <textarea name="outOfChute" class="bigbox"></textarea>
-      </div>
-    </div>
-
-    <div class="field" style="margin-top:14px;">
-      <label>Issues / Other Notes</label>
-      <textarea class="issues" name="issues" placeholder=" - Include as many details as possible"></textarea>
-    </div>
-  </div>
-
-  <!-- ATTACHMENT (Manual reminder only) -->
-  <div class="section">
-    <div class="section-title">Attachment (Manual)</div>
+<!-- SHIFT INFO -->
+<div class="section">
+  <div class="section-title">Shift Info</div>
+  <div class="grid">
     <div class="field">
-      <label>Choose a file to attach</label>
-      <input type="file" id="attachment" />
-      <div class="small-note" style="margin-top:8px;">
-        Mailto can’t automatically attach files. This will include the filename in the email so you remember to attach it.
-      </div>
+      <label>Name</label>
+      <select name="name">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Date</label>
+      <input type="date" name="date">
+    </div>
+
+    <div class="field">
+      <label>Channel 1</label>
+      <select name="channel1">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Channel 2</label>
+      <select name="channel2">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Third Person</label>
+      <select name="thirdPerson">
+        <option value="">-- Select --</option>
+        <option>Joey S</option><option>Michael S</option><option>Rea R</option>
+        <option>Courtney F</option><option>Crystal C</option><option>Brian B</option>
+        <option>Erin B</option><option>Corrine S</option><option>Asha W</option>
+        <option>Dyonna W</option><option>Darren C</option><option>Donna W</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- TIME & EXCEPTIONS -->
+<div class="section">
+  <div class="section-title">Time & Exceptions</div>
+
+  <div class="grid-2">
+    <div class="field">
+      <label>Late Trucks</label>
+      <textarea name="lateTrucks" class="bigbox"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Out of Chute Times</label>
+      <textarea name="outOfChute" class="bigbox"></textarea>
     </div>
   </div>
 
-  <!-- NEW: Paste Notes (popup modal) -->
-  <div class="section">
-    <div class="section-title">Pasted Notes (Click to Expand)</div>
-    <div class="field paste-preview">
-      <label>Paste Notes</label>
-      <!-- readonly preview; click opens modal -->
-      <textarea id="pastePreview" readonly placeholder="Click here to open the large paste box..."></textarea>
-      <!-- hidden field that actually stores the full content for email -->
-      <textarea id="pasteNotes" name="pasteNotes" style="display:none;"></textarea>
-      <div class="small-note" style="margin-top:8px;">
-        Keeps spacing + line breaks from what you paste. (Rich text styling won’t survive mailto.)
-      </div>
-    </div>
+  <div class="field" style="margin-top:14px;">
+    <label>Issues / Other Notes</label>
+    <textarea class="issues" name="issues"></textarea>
   </div>
+</div>
 
-  <div class="footer">
-    <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
+<!-- PASTE NOTES -->
+<div class="section">
+  <div class="section-title">Pasted Notes (Click to Expand)</div>
+  <div class="field paste-preview">
+    <label>Pasted Notes</label>
+    <textarea id="pastePreview" readonly placeholder="Click to open large paste box"></textarea>
+    <textarea id="pasteNotes" name="pasteNotes" style="display:none;"></textarea>
   </div>
+</div>
+
+<div class="footer">
+  <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
+</div>
 
 </form>
 </div>
 
-<div class="toast" id="toast"></div>
-
-<!-- Paste Notes Modal -->
-<div class="modal-backdrop" id="pasteModalBackdrop" onclick="closePasteModal(true)">
-  <div class="modal" onclick="event.stopPropagation();">
-    <div class="modal-header">
-      <div class="modal-title">Paste Notes</div>
-      <button type="button" class="btn-ghost" onclick="closePasteModal(true)">Close</button>
-    </div>
-    <div class="modal-body">
-      <div class="small-note">Paste anything. Spacing + line breaks are preserved.</div>
-      <textarea id="pasteModalText" placeholder="Paste here..."></textarea>
-      <div class="modal-actions">
-        <button type="button" class="btn-ghost" onclick="closePasteModal(false)">Cancel</button>
-        <button type="button" class="btn" onclick="closePasteModal(true)">Save & Close</button>
-      </div>
+<!-- Paste Modal -->
+<div class="modal-backdrop" id="pasteModal">
+  <div class="modal">
+    <textarea id="pasteModalText"></textarea>
+    <div class="modal-footer">
+      <button class="btn" onclick="closePasteModal()">Save & Close</button>
     </div>
   </div>
 </div>
 
 <script>
-const SEND_TO_EMAILS = "person1@agency.gov,person2@agency.gov";
-
-const issues = document.querySelector(".issues");
-issues.addEventListener("input", ()=>{
-  issues.style.height = "auto";
-  issues.style.height = issues.scrollHeight + "px";
-});
-
-/* Drawer */
-function toggleDrawer(open){
-  const drawer = document.getElementById("linksDrawer");
-  const backdrop = document.getElementById("drawerBackdrop");
-  if(open){
-    drawer.classList.add("open");
-    backdrop.classList.add("open");
-  }else{
-    drawer.classList.remove("open");
-    backdrop.classList.remove("open");
-  }
-}
-
-/* Toast */
-function showToast(msg){
-  const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.style.display = "block";
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(()=>{ el.style.display = "none"; }, 4200);
-}
-
-/* ===== Paste Notes Modal Logic ===== */
 const pastePreview = document.getElementById("pastePreview");
-const pasteNotesHidden = document.getElementById("pasteNotes");
-const pasteModalBackdrop = document.getElementById("pasteModalBackdrop");
-const pasteModalText = document.getElementById("pasteModalText");
+const pasteNotes = document.getElementById("pasteNotes");
+const modal = document.getElementById("pasteModal");
+const modalText = document.getElementById("pasteModalText");
 
-// Open modal on click (preview box)
-pastePreview.addEventListener("click", openPasteModal);
-pastePreview.addEventListener("focus", openPasteModal);
+pastePreview.onclick = ()=>{
+  modalText.value = pasteNotes.value || "";
+  modal.style.display = "flex";
+};
 
-function openPasteModal(){
-  // Load current stored value into modal
-  pasteModalText.value = pasteNotesHidden.value || "";
-  pasteModalBackdrop.style.display = "flex";
-  setTimeout(()=> pasteModalText.focus(), 0);
+function closePasteModal(){
+  pasteNotes.value = modalText.value;
+  pastePreview.value = modalText.value.split(/\r?\n/).slice(0,6).join("\n");
+  modal.style.display = "none";
 }
 
-function closePasteModal(save){
-  if(save){
-    // Save raw text (preserves whitespace/newlines)
-    const val = pasteModalText.value || "";
-    pasteNotesHidden.value = val;
-
-    // Preview: show first ~10 lines or 600 chars, whichever comes first
-    const lines = val.split(/\r?\n/);
-    const previewLines = lines.slice(0, 10).join("\n");
-    const preview = previewLines.length > 600 ? previewLines.slice(0, 600) + "…" : previewLines;
-
-    pastePreview.value = preview || "";
-  }
-  pasteModalBackdrop.style.display = "none";
-}
-
-// Esc closes modal (save)
-document.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape"){
-    // close drawer too, if open
-    toggleDrawer(false);
-    // close modal, save what’s in there
-    if(pasteModalBackdrop.style.display === "flex") closePasteModal(true);
-  }
-});
-
-/* Clipboard helper */
-async function copyToClipboard(text){
-  try{
-    await navigator.clipboard.writeText(text);
-    return true;
-  }catch{
-    return false;
-  }
-}
-
-/* Email builder */
-function buildEmailBody(d){
-  const DIV = "========================================";
-
-  const attachmentInput = document.getElementById("attachment");
-  const fileName = (attachmentInput && attachmentInput.files && attachmentInput.files[0])
-    ? attachmentInput.files[0].name
-    : "";
-
-  const pasted = (d.pasteNotes || "").trimEnd(); // keep formatting, just drop trailing whitespace spam
-
-  const lines = [
-    DIV,
-    "SHIFT INFO",
-    DIV,
-    `Name:         ${d.name || ""}`,
-    `Date:         ${d.date || ""}`,
-    `Channel 1:    ${d.channel1 || ""}`,
-    `Channel 2:    ${d.channel2 || ""}`,
-    `Third Person: ${d.thirdPerson || ""}`,
-    "Zulu Units On-Call:",
-    `  - Primary:   ${d.zuluPrimary || ""}`,
-    `  - Secondary: ${d.zuluSecondary || ""}`,
-    "",
-    DIV,
-    "TRANSPORT & STAFFING",
-    DIV,
-    `ALSSUP: ${d.alssup || ""}`,
-    `MEDSUP: ${d.medsup || ""}`,
-    "Transport Truck Numbers:",
-    `  - 911:           ${d.truck911 || "0"}`,
-    `  - GT:            ${d.truckGT || "0"}`,
-    `  - ALS Transport: ${d.truckALS || ""}`,
-    "",
-    DIV,
-    "TIME & EXCEPTIONS",
-    DIV,
-    "Late Trucks:",
-    `  ${d.lateTrucks || ""}`,
-    "Out of Chute Times:",
-    `  ${d.outOfChute || ""}`,
-    "Issues / Other Notes:",
-    `  ${d.issues || ""}`
-  ];
-
-  if(pasted){
-    lines.push("");
-    lines.push(DIV);
-    lines.push("PASTED NOTES");
-    lines.push(DIV);
-    lines.push(pasted); // raw text, preserves line breaks + spacing
-  }
-
-  if(fileName){
-    lines.push("");
-    lines.push(DIV);
-    lines.push("ATTACHMENT (REMINDER)");
-    lines.push(DIV);
-    lines.push(`Attach this file: ${fileName}`);
-  }
-
-  // CRLF plays nicer with mail clients
-  return lines.join("\r\n");
-}
-
-async function sendEmail(){
-  const d = Object.fromEntries(
-    new FormData(document.getElementById("shiftForm")).entries()
-  );
-
-  const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
-  const body = buildEmailBody(d);
-
-  // Backup: copy report to clipboard (some mail clients are monsters)
-  const copied = await copyToClipboard(body);
-  showToast(copied
-    ? "Report copied to clipboard (backup). Email will open now."
-    : "Email will open now. (Clipboard copy blocked by browser.)"
-  );
+function sendEmail(){
+  const d = Object.fromEntries(new FormData(document.getElementById("shiftForm")).entries());
+  const body = [
+    "========================================",
+    "PASTED NOTES",
+    "========================================",
+    d.pasteNotes || ""
+  ].join("\r\n");
 
   window.location.href =
-    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
-    `?subject=${encodeURIComponent(subject)}` +
-    `&body=${encodeURIComponent(body)}`;
+    `mailto:person1@agency.gov?subject=Shift Report&body=${encodeURIComponent(body)}`;
 }
 </script>
 
