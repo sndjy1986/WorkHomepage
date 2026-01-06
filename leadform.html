@@ -803,8 +803,10 @@ function buildEmailBody(d){
     DIV,
     "Late Trucks:",
     `    ${d.lateTrucks || ""}`,
+    <br><br>
     "Out of Chute Times:",
     `    ${d.outOfChute || ""}`,
+    <br><br>
     "Issues / Other Notes:",
     `    ${d.issues || ""}`
   ];
