@@ -399,15 +399,15 @@ textarea{
         <a href="https://drive.google.com/file/d/1YRmQRgyxRjqlGWiBLsNaiYhmssqDeCet/view?usp=drive_link" target="_blank" rel="noopener noreferrer">911 SOG'S County</a>
         <div class="link-meta">County Reg's</div>
       </div>
-      <div class="link-item">
+            <div class="link-item">
         <a href="https://drive.google.com/file/d/15IL2nx3foN5V4L2ue6OBAp8kmZkpWzma/view?usp=drive_link" target="_blank" rel="noopener noreferrer">Priority Employee Handbook</a>
         <div class="link-meta">Employee Handbook</div>
       </div>
-      <div class="link-item">
+           <div class="link-item">
         <a href="https://docs.google.com/spreadsheets/d/1ywTY-EVDLJYfPsxKPDGLdNJStJ63W-_yYS-Y4CU31Bw/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Shift Calendar</a>
         <div class="link-meta">Shift Calendar</div>
       </div>
-      <div class="link-item">
+            <div class="link-item">
         <a href="https://docs.google.com/spreadsheets/d/1H6C59UoF_g1QHSutXQCqBUUhfW4r2rLoNaTe0ZRQYSw/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Daily Worksheet</a>
         <div class="link-meta">Daily Worksheet</div>
       </div>
@@ -546,6 +546,7 @@ textarea{
   </div>
 
   <div class="footer">
+    <div id="saveStatus" class="small-note" style="margin-right:auto;">Not saved yet</div>
     <button type="button" class="btn-ghost" onclick="clearSavedData()">Clear Saved Data</button>
     <button type="button" class="btn" onclick="sendEmail()">Send Email</button>
   </div>
@@ -573,17 +574,21 @@ textarea{
 </div>
 
 <script>
-/* -----------------------------
-   EMAIL SETTINGS
------------------------------- */
 const SEND_TO_EMAILS = "asanders@medshore.com; gwilliams@medshore.com; hshore1@medshore.com; isettle@medshore.com; jhoward@medshore.com; jstrickland@medshore.com; rbrooks@medshore.com; rhuff@medshore.com";
 
 /* -----------------------------
    LOCAL STORAGE (PAGE DRAFT)
-   Saves the entire form on this page.
 ------------------------------ */
-const STORAGE_KEY = "shiftReportDraft_v1"; // change suffix if you ever want to invalidate old saves
+const STORAGE_KEY = "shiftReportDraft_v1";
 let __saveTimer = null;
+
+function updateSaveStatus(dateObj = new Date()){
+  const el = document.getElementById("saveStatus");
+  if(!el) return;
+
+  const time = dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  el.textContent = `Locally auto saved at ${time}`;
+}
 
 function scheduleSave(){
   clearTimeout(__saveTimer);
@@ -594,7 +599,7 @@ function getFormDraftObject(){
   const form = document.getElementById("shiftForm");
   const data = Object.fromEntries(new FormData(form).entries());
 
-  // Make sure hidden pasteNotes is stored as-is
+  // Ensure hidden pasteNotes is included exactly
   const pasteNotesHidden = document.getElementById("pasteNotes");
   if(pasteNotesHidden) data.pasteNotes = pasteNotesHidden.value || "";
 
@@ -608,9 +613,22 @@ function saveDraftNow(){
       data: getFormDraftObject()
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    updateSaveStatus(new Date());
   }catch(e){
     console.warn("localStorage save failed:", e);
   }
+}
+
+function refreshPastePreview(){
+  const pastePreview = document.getElementById("pastePreview");
+  const pasteNotesHidden = document.getElementById("pasteNotes");
+  if(!pastePreview || !pasteNotesHidden) return;
+
+  const val = pasteNotesHidden.value || "";
+  const lines = val.split(/\r?\n/);
+  const previewLines = lines.slice(0, 10).join("\n");
+  const preview = previewLines.length > 600 ? previewLines.slice(0, 600) + "…" : previewLines;
+  pastePreview.value = preview || "";
 }
 
 function restoreDraft(){
@@ -628,14 +646,16 @@ function restoreDraft(){
       if(el) el.value = value ?? "";
     }
 
-    // Refresh paste preview from hidden value
     refreshPastePreview();
 
-    // Re-grow Issues box
     const issuesEl = document.querySelector(".issues");
     if(issuesEl){
       issuesEl.style.height = "auto";
       issuesEl.style.height = issuesEl.scrollHeight + "px";
+    }
+
+    if(payload?.savedAt){
+      updateSaveStatus(new Date(payload.savedAt));
     }
   }catch(e){
     console.warn("localStorage restore failed:", e);
@@ -648,7 +668,6 @@ function clearSavedData(){
 
   try{ localStorage.removeItem(STORAGE_KEY); }catch{}
 
-  // Reset form
   const form = document.getElementById("shiftForm");
   form.reset();
 
@@ -660,10 +679,13 @@ function clearSavedData(){
   if(pastePreview) pastePreview.value = "";
   if(pasteModalText) pasteModalText.value = "";
 
-  // Collapse UI bits
+  // Close UI bits
   toggleDrawer(false);
   const pasteModalBackdrop = document.getElementById("pasteModalBackdrop");
   if(pasteModalBackdrop) pasteModalBackdrop.style.display = "none";
+
+  const saveStatus = document.getElementById("saveStatus");
+  if(saveStatus) saveStatus.textContent = "Not saved yet";
 
   showToast("Saved draft cleared + form reset.");
 }
@@ -711,21 +733,18 @@ function openPasteModal(){
   setTimeout(()=> pasteModalText.focus(), 0);
 }
 
-function refreshPastePreview(){
-  const val = pasteNotesHidden.value || "";
-  const lines = val.split(/\r?\n/);
-  const previewLines = lines.slice(0, 10).join("\n");
-  const preview = previewLines.length > 600 ? previewLines.slice(0, 600) + "…" : previewLines;
-  pastePreview.value = preview || "";
-}
-
 function closePasteModal(save){
   if(save){
     const val = pasteModalText.value || "";
     pasteNotesHidden.value = val;
-    refreshPastePreview();
 
-    // Save immediately when paste modal closes
+    const lines = val.split(/\r?\n/);
+    const previewLines = lines.slice(0, 10).join("\n");
+    const preview = previewLines.length > 600 ? previewLines.slice(0, 600) + "…" : previewLines;
+
+    pastePreview.value = preview || "";
+
+    // Save immediately when modal closes
     saveDraftNow();
   }
   pasteModalBackdrop.style.display = "none";
@@ -828,14 +847,11 @@ async function sendEmail(){
 function initAutosave(){
   const form = document.getElementById("shiftForm");
 
-  // Restore saved draft on load
   restoreDraft();
 
-  // Save on changes
   form.addEventListener("input", scheduleSave);
   form.addEventListener("change", scheduleSave);
 
-  // Also save right before the page unloads (belt + suspenders)
   window.addEventListener("beforeunload", saveDraftNow);
 }
 
