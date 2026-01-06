@@ -388,7 +388,7 @@ textarea{
   </div>
   <div class="drawer-body">
     <div class="small-note">
-      Static links. Edit them directly in this HTML file under <b>Quick Links</b>.
+    </div>
     </div>
     <div class="link-list">
       <div class="link-item">
@@ -587,7 +587,7 @@ function updateSaveStatus(dateObj = new Date()){
   if(!el) return;
 
   const time = dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  el.textContent = `Locally auto saved at ${time}`;
+  el.textContent = `Locally Auto Saved at ${time}`;
 }
 
 function scheduleSave(){
