@@ -767,50 +767,69 @@ async function copyToClipboard(text){
 
 function buildEmailBody(d){
   const DIV = "==============================";
+  const indent = "    "; // 4 spaces
   const pasted = (d.pasteNotes || "").trimEnd();
+
+  const indentBlock = (text) => {
+    const t = (text || "").trimEnd();
+    if(!t) return ""; // keep blank if empty
+    return indent + t.replace(/\r?\n/g, "\r\n" + indent);
+  };
 
   const lines = [
     DIV,
     "SHIFT INFO",
     DIV,
-    `    -Name:         ${d.name || ""}`,
-    `    -Date:         ${d.date || ""}`,
-    `    -Channel 1:    ${d.channel1 || ""}`,
-    `    -Channel 2:    ${d.channel2 || ""}`,
-    `    -Third Person: ${d.thirdPerson || ""}`,
+    `${indent}-Name:         ${d.name || ""}`,
+    `${indent}-Date:         ${d.date || ""}`,
+    `${indent}-Channel 1:    ${d.channel1 || ""}`,
+    `${indent}-Channel 2:    ${d.channel2 || ""}`,
+    `${indent}-Third Person: ${d.thirdPerson || ""}`,
     "",
     DIV,
     "Zulu Units On-Call:",
     DIV,
-    `    - Primary: ${d.zuluPrimary || ""}`,
-    `    - Secondary: ${d.zuluSecondary || ""}`,
+    `${indent}- Primary:   ${d.zuluPrimary || ""}`,
+    `${indent}- Secondary: ${d.zuluSecondary || ""}`,
     "",
     DIV,
     "TRANSPORT & STAFFING",
     DIV,
-    `    -ALSSUP: ${d.alssup || ""}`,
-    `    -MEDSUP: ${d.medsup || ""}`,
+    `${indent}-ALSSUP: ${d.alssup || ""}`,
+    `${indent}-MEDSUP: ${d.medsup || ""}`,
     "",
     DIV,
     "Transport Truck Numbers:",
     DIV,
-    `    - 911: ${d.truck911 || "0"}`,
-    `    - GT: ${d.truckGT || "0"}`,
-    `    - ALS Transport: ${d.truckALS || ""}`,
+    `${indent}- 911:          ${d.truck911 || "0"}`,
+    `${indent}- GT:           ${d.truckGT || "0"}`,
+    `${indent}- ALS Transport: ${d.truckALS || ""}`,
     "",
     DIV,
     "TIME & EXCEPTIONS",
     DIV,
     "Late Trucks:",
-    `    ${d.lateTrucks || ""}`,
+    indentBlock(d.lateTrucks),
     "",
     "Out of Chute Times:",
-    `    ${d.outOfChute || ""}`,
+    indentBlock(d.outOfChute),
     "",
     "Issues / Other Notes:",
-    `    ${d.issues || ""}`
+    indentBlock(d.issues)
   ];
 
+  if(pasted){
+    lines.push("");
+    lines.push(DIV);
+    lines.push("PASTED NOTES");
+    lines.push(DIV);
+    // Keep pasted notes formatting and indent it too (optional, but usually looks cleaner)
+    lines.push(indentBlock(pasted));
+  }
+
+  return lines.join("\r\n");
+}
+  
   if(pasted){
     lines.push("");
     lines.push(DIV);
