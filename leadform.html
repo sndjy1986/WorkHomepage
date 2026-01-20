@@ -779,8 +779,8 @@ function buildEmailBody(d){
   var lines = [
     DIV,
     "         SHIFT INFO",
-    DIV,
-      </DIV>
+    DIV, <BR>
+    <BR>
     "     -Name:" + (d.name || ""),
     "     -Date:" + (d.date || ""),
     "     -Channel 1:" + (d.channel1 || ""),
@@ -789,15 +789,15 @@ function buildEmailBody(d){
     "",
     DIV,
     "Zulu Units On-Call:",
-    DIV,
-      </DIV>
+    DIV, <BR>
+    <BR>
     "     - Primary:" + (d.zuluPrimary || ""),
     "     - Secondary:" + (d.zuluSecondary || ""),
     "",
     DIV,
     "TRANSPORT & STAFFING",
-    DIV,
-      </DIV>
+    DIV, <BR>
+    <BR>
     "     -ALSSUP: " + (d.alssup || ""),
     "     -MEDSUP: " + (d.medsup || ""),
     "",
