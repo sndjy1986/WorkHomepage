@@ -779,7 +779,7 @@ function buildEmailBody(d){
 
   var lines = [
     DIV,
-    "         SHIFT INFO",
+    "         SHIFT INFO - updated",
     DIV,
     LINE,
     LINE,    
@@ -845,7 +845,7 @@ async function sendEmail(){
     new FormData(document.getElementById("shiftForm")).entries()
   );
 
-  const subject = `Shift Report - ${d.date || ""} - ${d.name || ""}`;
+  const subject = `Shift Report - ${d.name || ""} - ${d.date || ""}`;
   const body = buildEmailBody(d);
 
   const copied = await copyToClipboard(body);
