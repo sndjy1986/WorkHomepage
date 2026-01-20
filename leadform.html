@@ -782,7 +782,7 @@ function buildEmailBody(d){
     "         SHIFT INFO",
     DIV,
     LINE,
-    
+    LINE,    
     "     -Name:" + (d.name || ""),
     "     -Date:" + (d.date || ""),
     "     -Channel 1:" + (d.channel1 || ""),
@@ -793,7 +793,7 @@ function buildEmailBody(d){
     "Zulu Units On-Call:",
     DIV,
     LINE,
-    
+    LINE,    
     "     - Primary:" + (d.zuluPrimary || ""),
     "     - Secondary:" + (d.zuluSecondary || ""),
     "",
@@ -801,7 +801,7 @@ function buildEmailBody(d){
     "TRANSPORT & STAFFING",
     DIV,
     LINE,
-    
+    LINE,    
     "     -ALSSUP: " + (d.alssup || ""),
     "     -MEDSUP: " + (d.medsup || ""),
     "",
@@ -809,7 +809,7 @@ function buildEmailBody(d){
     "Transport Truck Numbers:",
     DIV,
     LINE,
-    
+    LINE,    
     "     - 911:" + (d.truck911 || "0"),
     "     - GT:" + (d.truckGT || "0"),
     "     - ALS Transport:" + (d.truckALS || ""),
@@ -818,7 +818,7 @@ function buildEmailBody(d){
     "TIME & EXCEPTIONS",
     DIV,
     LINE,
-    
+    LINE,    
     "Late Trucks:",
     indentBlock(d.lateTrucks),
     "",
