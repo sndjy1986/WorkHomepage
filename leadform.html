@@ -761,6 +761,7 @@ async function copyToClipboard(text){
 ------------------------------ */
 function buildEmailBody(d){
   var DIV = "==============================";
+  var LINE = "                              ";
   var indent = "    ";
 
   function rtrim(s){
@@ -780,6 +781,7 @@ function buildEmailBody(d){
     DIV,
     "         SHIFT INFO",
     DIV,
+    LINE,
     "     -Name:" + (d.name || ""),
     "     -Date:" + (d.date || ""),
     "     -Channel 1:" + (d.channel1 || ""),
