@@ -1,1 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Posting Map</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin=""
+  ></script>
+
+  <!-- Robust CSV parser -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body { margin:0; font-family: system-ui, Arial, sans-serif; }
+    header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ddd;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    #map { height: calc(100vh - 58px); width: 100%; }
+    select { padding: 6px 10px; }
+    .badge { padding: 2px 8px; border: 1px solid #ccc; border-radius: 999px; font-size: 12px; }
+    .warn { color:#b00020; font-weight:600; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Units Avail:</strong>
+    <select id="levelSelect"></select>
+    <span class="badge" id="countBadge">0 markers</span>
+    <span class="badge warn" id="warnBadge" style="display:none;"></span>
+  </header>
+
+  <div id="map"></div>
+
+  <script>
+    // ======== CONFIG: Put your CSV links here ========
+    const POSTS_CSV =
+      "https://docs.google.com/spreadsheets/d/1FfTU_Lcynd757UEtghkXqclLLDuPo3eD7JpfuKK3uS4/gviz/tq?tqx=out:csv&sheet=Sheet1";
+
+    const PLAN_CSV =
+      "https://docs.google.com/spreadsheets/d/1FfTU_Lcynd757UEtghkXqclLLDuPo3eD7JpfuKK3uS4/gviz/tq?tqx=out:csv&sheet=Sheet3";
+
+    // ======== Helpers ========
+    const norm = (s) => String(s || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+
+    const toNum = (v) => {
+      const n = Number(String(v).trim());
+      return Number.isFinite(n) ? n : null;
+    };
+
+    // ======== Load CSVs ========
+    function loadCsv(url) {
+      return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          download: true,
+          header: true,
+          skipEmptyLines: true,
+          complete: (res) => resolve(res.data),
+          error: (err) => reject(err)
+        });
+      });
+    }
+
+    // ======== Map init ========
+    const map = L.map("map").setView([34.52, -82.65], 10); // Anderson-ish default
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap"
+    }).addTo(map);
+
+    const layer = L.layerGroup().addTo(map);
+
+    let postsByName = {};
+    let planRows = [];
+
+    function clearMarkers() {
+      layer.clearLayers();
+    }
+
+    function addMarkersForLevel(levelVal) {
+      clearMarkers();
+
+      const warnBadge = document.
 
