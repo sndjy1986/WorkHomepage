@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Unit Distance Checker + Map Routes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      background: #0b0c10;
+      color: #f5f5f5;
+    }
+
+    h1 { margin-bottom: 0.5rem; }
+    .subtitle {
+      margin-bottom: 1.5rem;
+      color: #c7c7c7;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: #151821;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      margin-bottom: 1.25rem;
+    }
+
+    form {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.5rem;
+      border: 1px solid #333;
+      background: #0e1017;
+      color: #f5f5f5;
+    }
+    input::placeholder { color: #777; }
+
+    button {
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.5rem;
+      background: #2c82ff;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button:hover { background: #1f6ad4; }
+
+    .status {
+      margin-top: 0.75rem;
+      min-height: 1.2rem;
+    }
+
+    .view-toggle {
+      margin: 1rem 0;
+      background: #11131b;
+      border-radius: 999px;
+      display: inline-flex;
+      padding: 0.2rem;
+    }
+    .view-toggle button {
+      background: transparent;
+      border-radius: 999px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      border: none;
+      color: #fff;
+    }
+    .view-toggle button.active { background: #2c82ff; }
+
+    #list-view { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    #map-view { display: none; }
+
+    table {
+      width: 100%;
+      margin-top: 0.75rem;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th {
+      text-align: left;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #333;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #c7c7c7;
+    }
+    td { padding: 0.45rem 0.25rem; }
+    tr.highlight td { background: rgba(44,130,255,0.15); }
+
+    #map {
+      width: 100%;
+      height: 450px;
+      border-radius: 0.75rem;
+    }
+
+    .layer-toggle {
+      margin: 0.5rem 0 0.75rem;
+      font-size: 0.85rem;
+      color: #ccc;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+    }
+    .layer-toggle label {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Unit Distance Checker</h1>
+  <div class="subtitle">Driving distance, ETA, and map routes from all EMS units.</div>
+
+  <!-- INPUT CARD -->
+  <div class="card">
+    <form id="address-form">
+      <input id="address-input" type="text" placeholder="5531 Airport Rd. Anderson, SC 29625" />
+      <button type="submit">Check Distances</button>
+    </form>
+    <div id="status" class="status"></div>
+
+    <!-- VIEW TOGGLE -->
+    <div class="view-toggle">
+      <button id="btn-list" class="active">List View</button>
+      <button id="btn-map">Map View</button>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="list-view">
+    <div class="card" style="flex:1;">
+      <h2>Transport Trucks</h2>
+      <table id="results-transport" style="display:none;">
+        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="flex:1;">
+      <h2>QRV Paramedics</h2>
+      <table id="results-qrv" style="display:none;">
+        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MAP VIEW -->
+  <div id="map-view" class="card">
+    <h2>Map View</h2>
+    <p style="color:#aaa;font-size:0.85rem;">Call location + units + routes + EMS layers</p>
+
+    <!-- LAYER TOGGLES (based on your folder titles) -->
+    <div class="layer-toggle">
+      <label><input type="checkbox" id="toggle-paramedic-areas" checked /> Paramedic Areas</label>
+      <label><input type="checkbox" id="toggle-posting-locations" checked /> Posting Locations</label>
+      <label><input type="checkbox" id="toggle-transport-trucks" checked /> Transport Trucks</label>
+      <label><input type="checkbox" id="toggle-transport-areas" checked /> Transport Areas</label>
+      <label><input type="checkbox" id="toggle-medshore-qrv" checked /> Medshore QRV</label>
+      <label><input type="checkbox" id="toggle-als-trucks" checked /> ALS Trucks</label>
+      <label><input type="checkbox" id="toggle-fire-departments" /> Fire Departments</label>
+    </div>
+
+    <div id="map"></div>
+  </div>
+
+<script>
+<!-- API Counter Code -->
+
+async function incrementApiCounter() {
+  try {
+    const res = await fetch("https://api.sndjy.us/api/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+    });
+    if (!res.ok) {
+      console.error("API counter increment failed with status", res.status);
+      return;
+    }
+    const data = await res.json();
+    console.log("API count is now:", data.count);
+  } catch (err) {
+    console.error("Error calling /api/increment:", err);
+  }
+}
+
+<!-- Map Data Code -->
+
+const MAPDATA_URL =
+  "https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/mapdata.json";
+
+<!-- Map Layers -->
+const FOLDER_TITLE_TO_LAYER = {
+  "Paramedic Area's": "paramedicAreas",
+  "Posting Locations": "postingLocations",
+  "Transport Trucks": "transportTrucks",
+  "Transport Area's": "transportAreas",
+  "Medshore QRV": "medshoreQRV",
+  "ALS Trucks": "alsTrucks",
+  "Fire Departments": "fireDepartments",
+};
+
+const TRANSPORT_UNITS = [
+  { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
+  { name: "Med-1", address: "1009 N Fant St. Anderson, SC 29625" },
+  { name: "Med-2", address: "135 HWY 413, Belton SC 29627" },
+  { name: "Med-3", address: "3228 S Main St, Anderson, SC 29624" },
+  { name: "Med-4", address: "902 Anderson Dr. Williamston SC 29697" },
+  { name: "Med-5", address: "2850 Concord Rd Anderson SC 29621" },
+  { name: "Med-6", address: "9711 SC-81, Iva SC 29655" },
+  { name: "Med-7", address: "108 N Depot St Pendleton SC 29670" },
+  { name: "Med-8", address: "8508 SC-24 Townville SC 29689" },
+  { name: "Med-9", address: "103 Construction Way Anderson SC 29625" },
+  { name: "Med-10", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-11", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-12", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-13", address: "6 Gaines Rd Honea Path SC 29654" },
+  { name: "Med-14", address: "10600 Anderson Rd Easley SC 29642" },
+  { name: "Med-15", address: "2209 SC-86 Piedmont SC 29673" },
+  { name: "Med-16", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-17", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-18", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-19", address: "1009 N Fant St Anderson SC 29625" },
+];
+
+const QRV_UNITS = [
+  { name: "A-5",  address: "103 Construction Way Anderson SC 29625" },
+  { name: "A-8",  address: "1009 N Fant St Anderson SC 29625" },
+  { name: "ALS-2", address: "5321 US-76 Pendleton SC 29670" },
+  { name: "ALS-3", address: "3228 S Main St Anderson SC 29624" },
+  { name: "ALS-4", address: "7715 SC-81 Starr SC 29684" },
+  { name: "ALS-6", address: "101 Main St Pelzer SC 29669" },
+  { name: "ALS-7", address: "10600 Anderson Rd Easley SC 29642" },
+  { name: "ALS-11", address: "5125 Dobbins Bridge Rd Anderson SC 29626" },
+  { name: "ALS-12", address: "1 Holmes St Belton SC 29627" },
+  { name: "ALS-17", address: "316 Hattons Ford Rd Townville SC 29689" },
+  { name: "ALS-19", address: "1058 Martin Rd Anderson SC 29621" },
+  { name: "ALS-21", address: "1118 Trail Rd Honea Path SC 29654" },
+  { name: "ALS-23", address: "1416 Due West Hwy Anderson SC 29621" },
+  { name: "ALS-24", address: "2209 SC-86 Piedmont SC 29673" },
+  { name: "ALS-27", address: "3738 SC-187 Anderson SC 29626" }
+];
+
+//Google Services
+
+let geocoder;
+let distanceMatrix;
+
+let map;
+let markers = [];
+let directionsRenderers = [];
+let lastDestination = null;
+
+let transportResults = [];
+let qrvResults = [];
+
+<!-- Raw mapdata + folder index + grouped features -->
+let rawFeatures = [];
+let folderById = {};           // { folderId -> folderTitle }
+let layerSourceFeatures = {    // { layerKey -> [features...] }
+  paramedicAreas: [],
+  postingLocations: [],
+  transportTrucks: [],
+  transportAreas: [],
+  medshoreQRV: [],
+  alsTrucks: [],
+  fireDepartments: []
+};
+
+<!-- Live map objects (markers/polys) per layer -->
+let layerObjects = {
+  paramedicAreas: [],
+  postingLocations: [],
+  transportTrucks: [],
+  transportAreas: [],
+  medshoreQRV: [],
+  alsTrucks: [],
+  fireDepartments: []
+};
+
+let layerEnabled = {
+  paramedicAreas: true,
+  postingLocations: true,
+  transportTrucks: true,
+  transportAreas: true,
+  medshoreQRV: true,
+  alsTrucks: true,
+  fireDepartments: false
+};
+
+function initMapsServices() {
+  geocoder = new google.maps.Geocoder();
+  distanceMatrix = new google.maps.DistanceMatrixService();
+}
+
+
+   <!-- LOAD MAPDATA.JSON & BUILD FOLDER GROUPS -->
+
+
+fetch(MAPDATA_URL)
+  .then(r => r.json())
+  .then(data => {
+    if (!data || !Array.isArray(data.features)) {
+      console.error("mapdata.json has unexpected structure:", data);
+      return;
+    }
+    rawFeatures = data.features;
+
+    // 1) index all folders
+    rawFeatures.forEach(f => {
+      if (f.properties && f.properties.class === "Folder") {
+        folderById[f.id] = f.properties.title;
+      }
+    });
+
+    // 2) group real features by folder title
+    rawFeatures.forEach(f => {
+      if (!f.geometry) return;
+      const props = f.properties || {};
+      const folderId = props.folderId;
+      const folderTitle = folderById[folderId];
+      if (!folderTitle) return;
+
+      const key = FOLDER_TITLE_TO_LAYER[folderTitle];
+      if (!key || !(key in layerSourceFeatures)) return;
+
+      layerSourceFeatures[key].push(f);
+    });
+
+    console.log("Layer grouping complete:", layerSourceFeatures);
+    initializeLayersIfReady();
+  })
+  .catch(err => {
+    console.error("Failed to load mapdata.json:", err);
+  });
+
+/* ======================================================
+   VIEW TOGGLE
+====================================================== */
+
+const btnList = document.getElementById("btn-list");
+const btnMap = document.getElementById("btn-map");
+const listView = document.getElementById("list-view");
+const mapView = document.getElementById("map-view");
+
+const toggleParamedicAreas    = document.getElementById("toggle-paramedic-areas");
+const togglePostingLocations  = document.getElementById("toggle-posting-locations");
+const toggleTransportTrucks   = document.getElementById("toggle-transport-trucks");
+const toggleTransportAreas    = document.getElementById("toggle-transport-areas");
+const toggleMedshoreQRV       = document.getElementById("toggle-medshore-qrv");
+const toggleALSTrucks         = document.getElementById("toggle-als-trucks");
+const toggleFireDepartments   = document.getElementById("toggle-fire-departments");
+
+btnList.onclick = () => {
+  listView.style.display = "flex";
+  mapView.style.display = "none";
+  btnList.classList.add("active");
+  btnMap.classList.remove("active");
+};
+
+btnMap.onclick = () => {
+  listView.style.display = "none";
+  mapView.style.display = "block";
+  btnMap.classList.add("active");
+  btnList.classList.remove("active");
+  setTimeout(() => initOrUpdateMap(), 50);
+};
+
+toggleParamedicAreas.addEventListener("change", (e) =>
+  setLayerVisibility("paramedicAreas", e.target.checked)
+);
+togglePostingLocations.addEventListener("change", (e) =>
+  setLayerVisibility("postingLocations", e.target.checked)
+);
+toggleTransportTrucks.addEventListener("change", (e) =>
+  setLayerVisibility("transportTrucks", e.target.checked)
+);
+toggleTransportAreas.addEventListener("change", (e) =>
+  setLayerVisibility("transportAreas", e.target.checked)
+);
+toggleMedshoreQRV.addEventListener("change", (e) =>
+  setLayerVisibility("medshoreQRV", e.target.checked)
+);
+toggleALSTrucks.addEventListener("change", (e) =>
+  setLayerVisibility("alsTrucks", e.target.checked)
+);
+toggleFireDepartments.addEventListener("change", (e) =>
+  setLayerVisibility("fireDepartments", e.target.checked)
+);
+
+/* ======================================================
+   ADDRESS SEARCH + CALCULATIONS
+====================================================== */
+
+document.getElementById("address-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const address = document.getElementById("address-input").value.trim();
+  const status = document.getElementById("status");
+
+  if (!address) {
+    status.textContent = "Enter an address.";
+    return;
+  }
+
+  status.textContent = "Locating address...";
+
+  geocoder.geocode({ address }, (results, code) => {
+    if (code !== "OK" || !results || !results[0]) {
+      status.textContent = "Address not found.";
+      return;
+    }
+
+    lastDestination = results[0].geometry.location;
+
+    <!-- API calls x 3 every time address is checked - only charged for one -->
+    incrementApiCounter();
+
+    transportResults = [];
+    qrvResults = [];
+
+    calculateGroup(TRANSPORT_UNITS, "results-transport", transportResults);
+    calculateGroup(QRV_UNITS, "results-qrv", qrvResults);
+
+    status.textContent = "Closest units highlighted.";
+  });
+});
+
+/* ======================================================
+   DISTANCE MATRIX
+====================================================== */
+
+function calculateGroup(units, tableId, store) {
+  distanceMatrix.getDistanceMatrix({
+    origins: units.map(u => u.address),
+    destinations: [lastDestination],
+    travelMode: google.maps.TravelMode.DRIVING,
+    unitSystem: google.maps.UnitSystem.IMPERIAL
+  }, (res, status) => {
+    if (status !== "OK" || !res || !res.rows) return;
+
+    const rows = res.rows;
+    const results = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const el = rows[i].elements[0];
+      results.push({
+        unit: units[i],
+        distanceText: el.status === "OK" ? el.distance.text : "N/A",
+        durationText: el.status === "OK" ? el.duration.text : "N/A",
+        distanceValue: el.status === "OK" ? el.distance.value : Infinity
+      });
+    }
+
+    results.sort((a, b) => a.distanceValue - b.distanceValue);
+    store.length = 0;
+    store.push(...results);
+    renderTable(results, tableId);
+  });
+}
+
+/* ======================================================
+   RENDER TABLE
+====================================================== */
+
+function renderTable(results, tableId) {
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector("tbody");
+
+  tbody.innerHTML = "";
+  results.forEach((r, i) => {
+    const row = document.createElement("tr");
+    if (i === 0) row.classList.add("highlight");
+    row.innerHTML = `
+      <td>${r.unit.name}</td>
+      <td>${r.unit.address}</td>
+      <td>${r.distanceText}</td>
+      <td>${r.durationText}</td>`;
+    tbody.appendChild(row);
+  });
+
+  table.style.display = "table";
+}
+
+/* ======================================================
+   MAP + ROUTES
+====================================================== */
+
+function clearMarkers() {
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+}
+
+function clearRoutes() {
+  directionsRenderers.forEach(r => r.setMap(null));
+  directionsRenderers = [];
+}
+
+function initOrUpdateMap() {
+  if (!lastDestination) return;
+
+  const mapDiv = document.getElementById("map");
+
+  map = new google.maps.Map(mapDiv, {
+    center: lastDestination,
+    zoom: 11,
+    streetViewControl: false,
+    mapTypeControl: false
+  });
+
+  clearMarkers();
+  clearRoutes();
+
+  const bounds = new google.maps.LatLngBounds();
+
+  // Call location marker
+  const callMarker = new google.maps.Marker({
+    position: lastDestination,
+    map,
+    title: "Call Location",
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 9,
+      fillColor: "#ff4444",
+      fillOpacity: 1,
+      strokeColor: "#ffffff",
+      strokeWeight: 2
+    }
+  });
+  markers.push(callMarker);
+  bounds.extend(lastDestination);
+
+  // Draw EMS layers on current map
+  initializeLayersIfReady();
+
+  plotUnitsWithRoutes(transportResults, "#2c82ff");  // blue
+  plotUnitsWithRoutes(qrvResults, "#00d68f");       // green
+
+  setTimeout(() => map.fitBounds(bounds), 400);
+
+  function plotUnitsWithRoutes(results, color) {
+    const directions = new google.maps.DirectionsService();
+
+    results.forEach(r => {
+      if (!r.unit || !r.unit.address) return;
+      geocoder.geocode({ address: r.unit.address }, (res, code) => {
+        if (code !== "OK" || !res || !res[0]) return;
+
+        const unitLoc = res[0].geometry.location;
+
+        const marker = new google.maps.Marker({
+          position: unitLoc,
+          map,
+          title: r.unit.name,
+          icon: {
+            path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+            scale: 5,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: "#000000",
+            strokeWeight: 1
+          }
+        });
+
+        const info = new google.maps.InfoWindow({
+          content: `
+            <div style="font-size:14px;">
+              <strong>${r.unit.name}</strong><br>
+              ${r.unit.address}<br><br>
+              Distance: ${r.distanceText}<br>
+              ETA: ${r.durationText}
+            </div>`
+        });
+
+        marker.addListener("click", () => info.open(map, marker));
+        markers.push(marker);
+        bounds.extend(unitLoc);
+
+        directions.route({
+          origin: unitLoc,
+          destination: lastDestination,
+          travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+          if (status === "OK" && result && result.routes && result.routes[0]) {
+            const renderer = new google.maps.DirectionsRenderer({
+              map,
+              directions: result,
+              suppressMarkers: true,
+              polylineOptions: {
+                strokeColor: color,
+                strokeWeight: 4,
+                strokeOpacity: 0.85
+              }
+            });
+
+            directionsRenderers.push(renderer);
+            bounds.union(result.routes[0].bounds);
+            map.fitBounds(bounds);
+          }
+        });
+      });
+    });
+  }
+}
+
+   <!-- EMS LAYERS FROM FOLDER-BASED JSON -->
+
+function initializeLayersIfReady() {
+  if (!map || !rawFeatures.length) return;
+  refreshAllLayers();
+}
+
+function refreshAllLayers() {
+  Object.keys(layerObjects).forEach(clearLayer);
+  Object.keys(layerEnabled).forEach(key => {
+    if (layerEnabled[key]) addLayer(key);
+  });
+}
+
+function setLayerVisibility(key, enabled) {
+  layerEnabled[key] = enabled;
+  if (!map) return;
+  if (enabled) addLayer(key); else clearLayer(key);
+}
+
+function clearLayer(key) {
+  const objs = layerObjects[key] || [];
+  objs.forEach(obj => obj.setMap && obj.setMap(null));
+  layerObjects[key] = [];
+}
+
+function addLayer(key) {
+  const source = layerSourceFeatures[key];
+  if (!source || !source.length) return;
+
+  clearLayer(key);
+  const store = layerObjects[key];
+
+  // Styling per layer
+  let options = {};
+  switch (key) {
+    case "paramedicAreas":
+      options = {
+        defaultTitle: "Paramedic Area",
+        polygonStroke: "#00d68f",
+        polygonFill: "#00d68f",
+        pointIcon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 5,
+          fillColor: "#00d68f",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "postingLocations":
+      options = {
+        defaultTitle: "Posting Location",
+        pointIcon: {
+          path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#2c82ff",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "transportTrucks":
+      options = {
+        defaultTitle: "Transport Truck",
+        pointIcon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 7,
+          fillColor: "#ffc107",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "transportAreas":
+      options = {
+        defaultTitle: "Transport Area",
+        polygonStroke: "#ffc107",
+        polygonFill: "#ffc107",
+        pointIcon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 4,
+          fillColor: "#ffc107",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "medshoreQRV":
+      options = {
+        defaultTitle: "Medshore QRV",
+        pointIcon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#00bcd4",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "alsTrucks":
+      options = {
+        defaultTitle: "ALS Truck",
+        pointIcon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 6,
+          fillColor: "#9c27b0",
+          fillOpacity: 1,
+          strokeColor: "#000",
+          strokeWeight: 1
+        }
+      };
+      break;
+    case "fireDepartments":
+      options = {
+        defaultTitle: "Fire Department",
+        pointIcon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 6,
+          fillColor: "#ff0000",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 1
+        }
+      };
+      break;
+  }
+
+  source.forEach(feature => {
+    const geom = feature.geometry;
+    if (!geom) return;
+    const props = feature.properties || {};
+    const name = props.title || options.defaultTitle || key;
+
+    if (geom.type === "Point") {
+      const coords = geom.coordinates || [];
+      if (coords.length < 2) return;
+      const lng = coords[0];
+      const lat = coords[1];
+      const position = { lat, lng };
+
+      const marker = new google.maps.Marker({
+        position,
+        map,
+        title: name,
+        icon: options.pointIcon || null
+      });
+
+      const info = new google.maps.InfoWindow({
+        content: `
+          <div style="font-size:13px;">
+            <strong>${name}</strong><br>
+            <span style="opacity:0.75;">${key}</span>
+          </div>`
+      });
+
+      marker.addListener("click", () => info.open(map, marker));
+      store.push(marker);
+    } else if (geom.type === "Polygon") {
+      const rings = geom.coordinates && geom.coordinates[0];
+      if (!rings || !rings.length) return;
+
+      const path = rings.map(pair => {
+        const lng = pair[0];
+        const lat = pair[1];
+        return { lat, lng };
+      });
+
+      const polygon = new google.maps.Polygon({
+        map,
+        paths: path,
+        strokeColor: options.polygonStroke || "#ffffff",
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: options.polygonFill || "#ffffff",
+        fillOpacity: 0.15
+      });
+
+      store.push(polygon);
+    }
+  });
+}
+</script>
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD6nSsnOuLe5-BBep0DnfkxaXkPrTtYCM&callback=initMapsServices">
+</script>
+
+</body>
+</html>
