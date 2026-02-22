@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Med Unit Dispatch Map</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; }
+        #map-container {
+            position: relative;
+            width: fit-content;
+            margin-top: 20px;
+            border: 2px solid #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        #background-map {
+            display: block;
+            max-width: 1000px; /* Adjust based on your image size */
+        }
+        .ambulance-icon {
+            position: absolute;
+            width: 80px;
+            height: 50px;
+            background: white;
+            border: 2px solid red;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            user-select: none;
+            z-index: 10;
+        }
+        .ambulance-icon::before {
+            content: "🚑";
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Med Unit Tracker</h2>
+    <p>Click and drag the units to position them on the map.</p>
+
+    <div id="map-container">
+        <img src="map.png" id="background-map" alt="Base Map">
+    </div>
+
+    <script>
+        const units = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9",  "Med-10", "Med-11", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18" "Med-19",];
+        const container = document.getElementById('map-container');
+
+        // Create icons dynamically
+        units.forEach((unit, index) => {
+            const div = document.createElement('div');
+            div.className = 'ambulance-icon';
+            div.innerText = unit;
+            div.style.left = "10px";
+            div.style.top = (index * 55 + 10) + "px"; // Stack them on the left side initially
+            
+            container.appendChild(div);
+            makeDraggable(div);
+        });
+
+        function makeDraggable(el) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            el.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                el.style.top = (el.offsetTop - pos2) + "px";
+                el.style.left = (el.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+    </script>
+</body>
+</html>
