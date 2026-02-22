@@ -4,17 +4,16 @@
     <meta charset="UTF-8">
     <title>Med Unit Tracker</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; background: #1a1a1a; color: white; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #1a1a1a; color: white; height: 100vh; overflow: hidden; }
         
-        /* Sidebar for the units */
         #sidebar {
-            width: 100px;
+            width: 110px;
             background: #252525;
             padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            border-right: 1px solid #444;
+            gap: 12px;
+            border-right: 2px solid #444;
             overflow-y: auto;
             z-index: 1001;
         }
@@ -26,67 +25,55 @@
             background: #000;
         }
 
-        #background-map {
-            display: block;
-            /* Map stays at original size */
-        }
+        #background-map { display: block; }
 
         .ambulance-icon {
             position: absolute;
-            width: 60px; /* Smaller size */
-            height: auto;
-            background: transparent; /* Removed background */
-            color: #ff3b3b; /* Red text */
+            width: 70px;
+            cursor: grab;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            cursor: grab;
-            font-weight: 800;
-            font-size: 11px;
-            /* Text shadow makes it readable on any map color */
-            text-shadow: 2px 2px 2px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
             z-index: 1000;
             user-select: none;
             transition: transform 0.1s;
         }
 
-        .ambulance-icon:active { cursor: grabbing; transform: scale(1.2); }
-        
-        .ambulance-icon::before {
-            content: "🚑";
-            font-size: 22px; /* The emoji is the main visual */
-            margin-bottom: -2px;
+        .unit-label {
+            color: #ff3b3b;
+            font-weight: 900;
+            font-size: 14px; /* Slightly bigger labels */
+            text-align: center;
+            /* High contrast stroke for readability */
+            text-shadow: 
+                -1px -1px 0 #000,  1px -1px 0 #000,
+                -1px  1px 0 #000,  1px  1px 0 #000,
+                 2px  2px 3px #000;
         }
+
+        .ambulance-icon:active { cursor: grabbing; transform: scale(1.1); }
+        .emoji { font-size: 26px; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <p style="font-size: 10px; text-align: center; color: #888; text-transform: uppercase; letter-spacing: 1px;">Units</p>
-        </div>
+    <div id="sidebar" id="unit-list">
+        <p style="font-size: 10px; text-align: center; color: #888; letter-spacing: 1px;">AVAILABLE</p>
+    </div>
 
     <div id="map-container">
-        <img src="map.jpeg" id="background-map" alt="Loading Map...">
+        <img src="map.jpeg" id="background-map">
     </div>
 
     <script>
-        // Updated list: Med-0 thru Med-9, then Med-12 thru Med-18
-        const units = [
-            "Med-0", "Med-1", "Med-2", "Med-3", "Med-4", 
-            "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", 
-            "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"
-        ];
-        
+        const units = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
         const sidebar = document.getElementById('sidebar');
         const container = document.getElementById('map-container');
 
         units.forEach((unit) => {
             const div = document.createElement('div');
             div.className = 'ambulance-icon';
-            div.innerText = unit;
-            
-            // Start in sidebar
+            div.innerHTML = `<span class="emoji">🚑</span><span class="unit-label">${unit}</span>`;
             div.style.position = "relative"; 
             sidebar.appendChild(div);
             makeDraggable(div);
@@ -97,16 +84,13 @@
             
             el.onmousedown = function(e) {
                 e.preventDefault();
-                
-                // Switch from sidebar flow to absolute map positioning on first move
                 if (el.parentElement.id === 'sidebar') {
                     const rect = el.getBoundingClientRect();
                     el.style.position = 'absolute';
-                    el.style.left = (rect.left + window.scrollX) + 'px';
-                    el.style.top = (rect.top + window.scrollY) + 'px';
+                    el.style.left = rect.left + 'px';
+                    el.style.top = rect.top + 'px';
                     container.appendChild(el);
                 }
-                
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 document.onmouseup = closeDragElement;
@@ -119,8 +103,6 @@
                 pos2 = pos4 - e.clientY;
                 pos3 = e.clientX;
                 pos4 = e.clientY;
-                
-                // Calculate new position
                 el.style.top = (el.offsetTop - pos2) + "px";
                 el.style.left = (el.offsetLeft - pos1) + "px";
             }
@@ -128,6 +110,14 @@
             function closeDragElement() {
                 document.onmouseup = null;
                 document.onmousemove = null;
+                
+                // RETURN TO LIST LOGIC: If dropped near or in the sidebar area
+                if (parseInt(el.style.left) < 110) {
+                    el.style.position = "relative";
+                    el.style.left = "0px";
+                    el.style.top = "0px";
+                    sidebar.appendChild(el);
+                }
             }
         }
     </script>
