@@ -2,33 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Med Unit Tracker</title>
+    <title>Priority Dispatch Tracker</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #1a1a1a; color: white; height: 100vh; overflow: hidden; }
         
+        /* Left Sidebar with Home Boxes */
         #sidebar {
-            width: 110px;
+            width: 140px;
             background: #252525;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             border-right: 2px solid #444;
             overflow-y: auto;
-            z-index: 1001;
         }
 
-        #map-container {
+        .unit-slot {
+            width: 120px;
+            height: 70px;
+            border: 2px dashed #444;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
-            flex-grow: 1;
-            overflow: auto;
-            background: #000;
+            background: #1e1e1e;
         }
 
+        /* Top Right Info Panel */
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #ff3b3b;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 2000;
+            pointer-events: none; /* Allows clicking through if needed */
+        }
+
+        #info-panel h2 { margin: 0; color: #ff3b3b; font-size: 24px; }
+        #info-panel p { margin: 5px 0 0; font-size: 18px; color: #ccc; }
+
+        #map-container { position: relative; flex-grow: 1; overflow: auto; background: #000; }
         #background-map { display: block; }
 
         .ambulance-icon {
-            position: absolute;
             width: 70px;
             cursor: grab;
             display: flex;
@@ -36,29 +58,27 @@
             align-items: center;
             z-index: 1000;
             user-select: none;
-            transition: transform 0.1s;
         }
 
         .unit-label {
             color: #ff3b3b;
             font-weight: 900;
-            font-size: 14px; /* Slightly bigger labels */
-            text-align: center;
-            /* High contrast stroke for readability */
-            text-shadow: 
-                -1px -1px 0 #000,  1px -1px 0 #000,
-                -1px  1px 0 #000,  1px  1px 0 #000,
-                 2px  2px 3px #000;
+            font-size: 14px;
+            text-shadow: 2px 2px 2px #000;
         }
 
-        .ambulance-icon:active { cursor: grabbing; transform: scale(1.1); }
         .emoji { font-size: 26px; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar" id="unit-list">
-        <p style="font-size: 10px; text-align: center; color: #888; letter-spacing: 1px;">Busy/On a Call/Not Available</p>
+    <div id="sidebar">
+        <p style="font-size: 10px; text-align: center; color: #888;">UNIT SLOTS</p>
+    </div>
+
+    <div id="info-panel">
+        <h2 id="info-id">Select Unit</h2>
+        <p id="info-details">Click or drag a unit</p>
     </div>
 
     <div id="map-container">
@@ -66,31 +86,61 @@
     </div>
 
     <script>
-        const units = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
+        const unitList = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
         const sidebar = document.getElementById('sidebar');
         const container = document.getElementById('map-container');
+        let unitData = {};
 
-        units.forEach((unit) => {
-            const div = document.createElement('div');
-            div.className = 'ambulance-icon';
-            div.innerHTML = `<span class="emoji">🚑</span><span class="unit-label">${unit}</span>`;
-            div.style.position = "relative"; 
-            sidebar.appendChild(div);
-            makeDraggable(div);
-        });
+        // 1. Load Spreadsheet Data
+        fetch('units.csv')
+            .then(res => res.text())
+            .then(data => {
+                const rows = data.split('\n').slice(1);
+                rows.forEach(row => {
+                    const [id, label, details] = row.split(',');
+                    if(id) unitData[id.trim()] = { label, details };
+                });
+                init();
+            });
+
+        function init() {
+            unitList.forEach((id) => {
+                // Create Slot
+                const slot = document.createElement('div');
+                slot.className = 'unit-slot';
+                slot.id = `slot-${id}`;
+                sidebar.appendChild(slot);
+
+                // Create Unit
+                const div = document.createElement('div');
+                div.className = 'ambulance-icon';
+                div.id = id;
+                div.innerHTML = `<span class="emoji">🚑</span><span class="unit-label">${id}</span>`;
+                
+                slot.appendChild(div);
+                makeDraggable(div);
+            });
+        }
 
         function makeDraggable(el) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             
             el.onmousedown = function(e) {
                 e.preventDefault();
-                if (el.parentElement.id === 'sidebar') {
+                
+                // Show info in Top Right
+                const data = unitData[el.id] || { label: el.id, details: "No data in CSV" };
+                document.getElementById('info-id').innerText = data.label;
+                document.getElementById('info-details').innerText = data.details;
+
+                if (el.parentElement.classList.contains('unit-slot')) {
                     const rect = el.getBoundingClientRect();
                     el.style.position = 'absolute';
                     el.style.left = rect.left + 'px';
                     el.style.top = rect.top + 'px';
                     container.appendChild(el);
                 }
+                
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 document.onmouseup = closeDragElement;
@@ -111,12 +161,13 @@
                 document.onmouseup = null;
                 document.onmousemove = null;
                 
-                // RETURN TO LIST LOGIC: If dropped near or in the sidebar area
-                if (parseInt(el.style.left) < 110) {
+                // If dragged back to sidebar area, snap to its specific slot
+                if (parseInt(el.style.left) < 140) {
+                    const mySlot = document.getElementById(`slot-${el.id}`);
                     el.style.position = "relative";
                     el.style.left = "0px";
                     el.style.top = "0px";
-                    sidebar.appendChild(el);
+                    mySlot.appendChild(el);
                 }
             }
         }
