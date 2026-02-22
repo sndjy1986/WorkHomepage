@@ -2,82 +2,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Med Unit Dispatch Map</title>
+    <title>Med Unit Tracker</title>
     <style>
-        body { font-family: sans-serif; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: sans-serif; margin: 0; display: flex; background: #222; color: white; }
+        
+        /* Sidebar for the units */
+        #sidebar {
+            width: 120px;
+            background: #333;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-right: 2px solid #444;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
         #map-container {
             position: relative;
-            width: fit-content;
-            margin-top: 20px;
-            border: 2px solid #333;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            overflow: hidden;
+            flex-grow: 1;
+            overflow: auto;
         }
+
         #background-map {
             display: block;
-            max-width: 1000px; /* Adjust based on your image size */
+            /* Keeps the map at its natural size */
         }
+
         .ambulance-icon {
             position: absolute;
-            width: 80px;
+            width: 90px;
             height: 50px;
             background: white;
-            border: 2px solid red;
-            border-radius: 5px;
+            color: black;
+            border: 3px solid #d32f2f;
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            cursor: move;
+            cursor: grab;
             font-weight: bold;
-            font-size: 12px;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            font-size: 13px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            z-index: 999; /* STOPS THEM FROM HIDING */
             user-select: none;
-            z-index: 10;
         }
+
+        .ambulance-icon:active { cursor: grabbing; }
+        
         .ambulance-icon::before {
             content: "🚑";
-            font-size: 20px;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
 
-    <h2>Med Unit Tracker</h2>
-    <p>Click and drag the units to position them on the map.</p>
+    <div id="sidebar">
+        <p style="font-size: 12px; text-align: center;">DRAG UNITS -> </p>
+        </div>
 
     <div id="map-container">
-        <img src="map.jpeg" id="background-map" alt="Base Map">
+        <img src="map.jpeg" id="background-map">
     </div>
 
     <script>
-        const units = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9",  "Med-10", "Med-11", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18" "Med-19",];
+        const units = ["Med-0", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
+        const sidebar = document.getElementById('sidebar');
         const container = document.getElementById('map-container');
 
-        // Create icons dynamically
         units.forEach((unit, index) => {
             const div = document.createElement('div');
             div.className = 'ambulance-icon';
             div.innerText = unit;
-            div.style.left = "10px";
-            div.style.top = (index * 55 + 10) + "px"; // Stack them on the left side initially
             
-            container.appendChild(div);
+            // Start them in the sidebar
+            div.style.position = "relative"; 
+            div.style.marginBottom = "10px";
+            
+            sidebar.appendChild(div);
             makeDraggable(div);
         });
 
         function makeDraggable(el) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            el.onmousedown = dragMouseDown;
-
-            function dragMouseDown(e) {
+            
+            el.onmousedown = function(e) {
                 e.preventDefault();
+                // Move from sidebar to map container on first click
+                if (el.parentElement.id === 'sidebar') {
+                    const rect = el.getBoundingClientRect();
+                    el.style.position = 'absolute';
+                    el.style.left = rect.left + 'px';
+                    el.style.top = rect.top + 'px';
+                    container.appendChild(el);
+                }
+                
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 document.onmouseup = closeDragElement;
                 document.onmousemove = elementDrag;
-            }
+            };
 
             function elementDrag(e) {
                 e.preventDefault();
