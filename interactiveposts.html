@@ -27,12 +27,12 @@
         /* Workspace */
         #workspace { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
         #map-container { flex: 1; position: relative; overflow: auto; background: #000; transition: all 0.4s ease-in-out; border-bottom: 2px solid #333; }
-        #map-container.hidden { flex: 0; height: 0; border: none; overflow: hidden; }
+        #map-container.hidden { flex: 0 !important; height: 0 !important; border: none; overflow: hidden; }
         #background-map { display: block; min-width: 100%; }
 
         /* Timer Drawer */
         #timer-section { height: 280px; background: #111; display: flex; flex-direction: column; transition: all 0.4s ease-in-out; }
-        #timer-section.maximized { height: 100%; }
+        #timer-section.maximized { height: 100% !important; }
         #timer-header { padding: 10px 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         #timer-grid { flex-grow: 1; display: flex; gap: 15px; padding: 15px; overflow-x: auto; align-items: flex-start; }
 
@@ -43,20 +43,19 @@
         /* Unit Icons */
         .unit-slot { height: 45px; border: 1px solid #222; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; position: relative; background: #0f0f0f; }
         .ambulance-icon { width: 45px; cursor: grab; display: flex; flex-direction: column; align-items: center; z-index: 50; transition: filter 0.3s; }
-        .ambulance-icon.oos { filter: grayscale(1) brightness(0.4); }
-        .ambulance-icon.on-call { filter: sepia(1) hue-rotate(10deg) saturate(3); } /* Yellowish tint for active calls */
+        .ambulance-icon.oos { filter: grayscale(1) brightness(0.4) !important; }
+        .ambulance-icon.on-call { filter: sepia(1) hue-rotate(10deg) saturate(3); } 
         .unit-label { font-size: 10px; font-weight: bold; background: #000; padding: 1px 4px; border-radius: 2px; }
 
         /* Context Menu */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 175px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); }
         .menu-item { padding: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: var(--accent); color: white; }
-        .menu-item.call-opt:hover { background: var(--call-active); color: black; }
 
         /* Timer Cards */
-        .timer-card { min-width: 190px; background: #222; border-top: 4px solid var(--accent); padding: 12px; border-radius: 4px; position: relative; }
+        .timer-card { min-width: 180px; background: #222; border-top: 4px solid var(--accent); padding: 12px; border-radius: 4px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .timer-card.type-logistics { border-top-color: #888; }
-        .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; color: white; }
+        .timer-display { font-family: 'Courier New', monospace; font-size: 32px; margin: 5px 0; color: white; }
         .timer-card.expired { animation: alert 0.8s infinite; }
         @keyframes alert { 50% { background: #4d0000; } }
     </style>
@@ -84,7 +83,7 @@
                     <button class="view-btn" onclick="setView('split')">Split View</button>
                     <button class="view-btn" onclick="setView('timer')">Timer View</button>
                 </div>
-                <div style="font-size: 12px; color: #444; letter-spacing: 2px; font-weight: bold;">DISPATCH CONSOLE</div>
+                <div style="font-size: 12px; color: #555; letter-spacing: 2px; font-weight: bold;">DISPATCH CONSOLE</div>
             </div>
             <div id="timer-grid"></div>
         </div>
@@ -92,12 +91,12 @@
 
     <div id="context-menu">
         <div style="padding: 8px; font-size: 10px; color: #888; background: #000; text-align: center;" id="menu-id">UNIT</div>
-        <div class="menu-item call-opt" style="color: var(--call-active); font-weight: bold;" onclick="toggleCallState()">ON A CALL (Toggle)</div>
-        <div class="menu-item" onclick="startTimer(20, 'Hosp: GMH', 'hosp')">Hosp: GMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'Hosp: AMH', 'hosp')">Hosp: AMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'Hosp: APE', 'hosp')">Hosp: APE (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'Hosp: SFCH', 'hosp')">Hosp: SFCH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'Hosp: BMC', 'hosp')">Hosp: BMC (20m)</div>
+        <div class="menu-item" style="color: var(--call-active); font-weight: bold;" onclick="toggleCallState()">ON A CALL (Toggle)</div>
+        <div class="menu-item" onclick="startTimer(20, 'GMH', 'hosp')">Hosp: GMH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'AMH', 'hosp')">Hosp: AMH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'APE', 'hosp')">Hosp: APE (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'SFCH', 'hosp')">Hosp: SFCH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'BMC', 'hosp')">Hosp: BMC (20m)</div>
         <div class="menu-item" onclick="startTimer(10, 'Logistics', 'logistics')">Logistics (10m)</div>
         <div class="menu-item" onclick="toggleOOS()" style="color: #888; border-top: 1px solid #333;">Toggle OOS</div>
     </div>
@@ -112,12 +111,13 @@
 
         function setView(mode) {
             const timerSec = document.getElementById('timer-section');
-            mapBox.classList.remove('hidden');
-            timerSec.classList.remove('maximized');
-            
             if (mode === 'map') {
+                mapBox.classList.remove('hidden');
+                timerSec.classList.remove('maximized');
                 timerSec.style.height = "45px";
             } else if (mode === 'split') {
+                mapBox.classList.remove('hidden');
+                timerSec.classList.remove('maximized');
                 timerSec.style.height = "280px";
             } else if (mode === 'timer') {
                 mapBox.classList.add('hidden');
@@ -126,7 +126,6 @@
         }
 
         function updateGauge() {
-            // Count units in sidebar that are NOT OOS and NOT ON-CALL
             const avail = document.querySelectorAll('#unit-list-container .ambulance-icon:not(.oos):not(.on-call)').length;
             gauge.innerText = avail;
             gauge.style.color = avail <= 2 ? "#ff3b3b" : avail <= 5 ? "#ffcc00" : "#00ff41";
@@ -182,18 +181,22 @@
             updateGauge();
         }
 
-        function startTimer(min, label, type) {
+        function startTimer(min, hospitalName, type) {
             const id = Date.now();
             const card = document.createElement('div');
             card.className = `timer-card type-${type}`;
+            card.id = `card-${id}`;
             card.innerHTML = `
-                <div style="font-weight:bold; font-size:16px;">${selectedUnit}</div>
-                <div style="font-size:10px; color:#aaa; margin-bottom:5px;">${label}</div>
+                <div style="font-weight:bold; font-size:18px; color:white;">${selectedUnit}</div>
+                <div style="font-size:11px; color:#888; font-weight:bold; margin-bottom:5px;">${hospitalName}</div>
                 <div class="timer-display" id="time-${id}">--:--</div>
-                <button onclick="this.parentElement.remove()" style="width:100%; font-size:9px; background:#333; color:white; border:none; padding:4px; cursor:pointer;">DISMISS</button>
+                <button onclick="dismissTimer('${id}')" style="width:100%; font-size:10px; background:#444; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">DISMISS</button>
             `;
             timerGrid.appendChild(card);
             ctxMenu.style.display = 'none';
+
+            // Ensure we see the timers if we were in "Map Focus"
+            if(document.getElementById('timer-section').style.height === "45px") setView('split');
 
             let sec = min * 60;
             const run = setInterval(() => {
@@ -206,6 +209,11 @@
                 el.innerText = (sec < 0 ? "-" : "") + `${m}:${s}`;
                 if(sec < 0) card.classList.add('expired');
             }, 1000);
+        }
+
+        function dismissTimer(id) {
+            const card = document.getElementById(`card-${id}`);
+            if(card) card.remove();
         }
 
         function makeDraggable(el) {
