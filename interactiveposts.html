@@ -26,43 +26,16 @@
 
         /* Workspace */
         #workspace { flex-grow: 1; display: flex; flex-direction: column; position: relative; height: 100vh; }
-        
-        /* Map Container Logic */
-        #map-container { 
-            flex: 1; 
-            position: relative; 
-            overflow: auto; 
-            background: #000; 
-            transition: all 0.4s ease-in-out; 
-            border-bottom: 2px solid #333;
-            min-height: 0; 
-        }
-        #map-container.hidden { 
-            flex: 0 !important; 
-            height: 0 !important; 
-            border: none !important; 
-        }
-
+        #map-container { flex: 1; position: relative; overflow: auto; background: #000; transition: all 0.4s ease-in-out; border-bottom: 2px solid #333; min-height: 0; }
+        #map-container.hidden { flex: 0 !important; height: 0 !important; border: none !important; }
         #background-map { display: block; min-width: 100%; }
 
-        /* Timer Section Logic */
-        #timer-section { 
-            height: 280px; 
-            background: #111; 
-            display: flex; 
-            flex-direction: column; 
-            transition: all 0.4s ease-in-out; 
-            flex-shrink: 0;
-        }
-        #timer-section.maximized { 
-            height: 100% !important; 
-            flex: 1 !important; 
-        }
-
+        /* Timer Section */
+        #timer-section { height: 280px; background: #111; display: flex; flex-direction: column; transition: all 0.4s ease-in-out; flex-shrink: 0; }
+        #timer-section.maximized { height: 100% !important; flex: 1 !important; }
         #timer-header { padding: 10px 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         #timer-grid { flex-grow: 1; display: flex; gap: 15px; padding: 15px; overflow-x: auto; align-items: flex-start; }
 
-        /* UI Buttons */
         .view-btn { background: #333; color: white; border: 1px solid #555; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
         .view-btn:hover { background: var(--accent); }
 
@@ -73,12 +46,20 @@
         .ambulance-icon.on-call { filter: sepia(1) hue-rotate(10deg) saturate(3); } 
         .unit-label { font-size: 10px; font-weight: bold; background: #000; padding: 1px 4px; border-radius: 2px; }
 
-        /* Context Menu */
-        #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 175px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); }
+        /* Context Menu - Fixed for Smart Positioning */
+        #context-menu { 
+            position: fixed; 
+            display: none; 
+            background: #1a1a1a; 
+            border: 1px solid #444; 
+            z-index: 10000; 
+            width: 175px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7); 
+            pointer-events: auto;
+        }
         .menu-item { padding: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: var(--accent); color: white; }
 
-        /* Timer Cards */
         .timer-card { min-width: 180px; background: #222; border-top: 4px solid var(--accent); padding: 12px; border-radius: 4px; position: relative; }
         .timer-card.type-logistics { border-top-color: #888; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 32px; margin: 5px 0; color: white; }
@@ -137,10 +118,9 @@
         let selectedUnit = null;
 
         function setView(mode) {
-            // Remove all layout classes first
             mapBox.classList.remove('hidden');
             timerSec.classList.remove('maximized');
-            timerSec.style.height = ""; // Reset inline height
+            timerSec.style.height = ""; 
 
             if (mode === 'map') {
                 timerSec.style.height = "45px";
@@ -172,8 +152,25 @@
                     e.preventDefault();
                     selectedUnit = id;
                     document.getElementById('menu-id').innerText = id;
+                    
                     ctxMenu.style.display = 'block';
-                    ctxMenu.style.left = e.pageX + 'px'; ctxMenu.style.top = e.pageY + 'px';
+                    
+                    // Smart Positioning Logic
+                    const menuWidth = ctxMenu.offsetWidth;
+                    const menuHeight = ctxMenu.offsetHeight;
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+
+                    let posX = e.pageX;
+                    let posY = e.pageY;
+
+                    // If menu goes off right, shift it left
+                    if ((posX + menuWidth) > windowWidth) posX = windowWidth - menuWidth - 10;
+                    // If menu goes off bottom, shift it up
+                    if ((posY + menuHeight) > windowHeight) posY = windowHeight - menuHeight - 10;
+
+                    ctxMenu.style.left = posX + 'px';
+                    ctxMenu.style.top = posY + 'px';
                 };
 
                 const savedPos = localStorage.getItem(`pos-${id}`);
