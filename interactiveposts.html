@@ -3,232 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch Tracker | Multi-Panel</title>
+    <title>Advanced Dispatch Command</title>
     <style>
         :root {
-            --sidebar-width: 160px;
-            --timer-height: 200px;
+            --sidebar-width: 180px;
+            --timer-height: 250px;
             --accent: #ff3b3b;
-            --bg-dark: #1a1a1a;
-            --panel-bg: #252525;
+            --bg-dark: #0f0f0f;
+            --panel-bg: #1e1e1e;
+            --warning: #ffcc00;
         }
 
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            margin: 0; 
-            display: flex; 
-            background: var(--bg-dark); 
-            color: white; 
-            height: 100vh; 
-            overflow: hidden; 
-        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; }
         
-        /* Left Sidebar - Scrollable Unit List */
-        #sidebar {
-            width: var(--sidebar-width);
-            background: var(--panel-bg);
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border-right: 2px solid #444;
-            overflow-y: auto;
-            height: 100vh;
-        }
+        /* Layout Controls */
+        #sidebar { width: var(--sidebar-width); background: var(--panel-bg); display: flex; flex-direction: column; border-right: 2px solid #333; transition: 0.3s; position: relative; }
+        #sidebar.collapsed { width: 0; padding: 0; overflow: hidden; border: none; }
 
-        /* Right Column - Map (Top) and Timers (Bottom) */
-        #main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            position: relative;
-        }
+        #main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
 
-        #map-container { 
-            flex-grow: 1; 
-            position: relative;
-            overflow: auto; 
-            background: #000;
-            border-bottom: 2px solid #444;
-        }
-        
+        /* Map Section */
+        #map-container { flex-grow: 1; position: relative; overflow: auto; background: #000; transition: 0.3s; }
+        #map-container.hidden { flex-grow: 0; height: 0; }
         #background-map { display: block; min-width: 100%; }
 
-        /* Bottom Timer Section */
-        #timer-section {
-            height: var(--timer-height);
-            background: #111;
-            padding: 15px;
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            align-items: center;
-        }
+        /* Timer Section */
+        #timer-section { height: var(--timer-height); background: #111; border-top: 2px solid #444; display: flex; flex-direction: column; transition: 0.3s; }
+        #timer-section.maximized { height: 100vh; }
+        
+        .timer-header { padding: 10px; background: #222; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #333; }
+        #timer-grid { flex-grow: 1; display: flex; gap: 15px; padding: 15px; overflow-x: auto; align-items: flex-start; }
 
+        /* Timer Cards */
         .timer-card {
-            min-width: 180px;
-            height: 140px;
-            background: var(--panel-bg);
-            border-left: 4px solid var(--accent);
-            border-radius: 4px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .timer-display { font-family: monospace; font-size: 28px; color: var(--accent); }
-
-        /* Unit Styling */
-        .unit-slot {
-            width: 100%;
-            height: 70px;
-            border: 2px dashed #444;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #1e1e1e;
-        }
-
-        .ambulance-icon {
-            width: 60px;
-            cursor: grab;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 100;
-            position: absolute;
-        }
-
-        .ambulance-icon:active { cursor: grabbing; z-index: 1000; }
-
-        .unit-label {
-            color: var(--accent);
-            font-weight: 900;
-            font-size: 12px;
-            text-shadow: 2px 2px 2px #000;
-            background: rgba(0,0,0,0.7);
-            padding: 1px 4px;
-            border-radius: 3px;
-        }
-
-        .emoji { font-size: 28px; }
-
-        /* Floating Info Panel */
-        #info-panel {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 220px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 1px solid var(--accent);
+            min-width: 200px;
+            background: #252525;
+            border-top: 4px solid var(--accent);
             padding: 12px;
-            border-radius: 6px;
-            z-index: 2000;
-            pointer-events: none;
+            border-radius: 4px;
+            position: relative;
+        }
+        .timer-card.expired { animation: flash 1s infinite; border-top-color: #ff0000; }
+        .timer-card.expired .timer-display { color: #ff5555; }
+        
+        @keyframes flash {
+            0% { background: #252525; }
+            50% { background: #4d0000; }
+            100% { background: #252525; }
         }
 
-        h2, h3, p { margin: 0; }
-        .section-title { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .timer-display { font-family: 'Courier New', monospace; font-size: 32px; font-weight: bold; margin: 5px 0; }
+
+        /* UI Elements */
+        .unit-slot { height: 60px; border: 1px solid #333; margin: 5px; display: flex; align-items: center; justify-content: center; background: #151515; }
+        .ambulance-icon { width: 50px; cursor: grab; display: flex; flex-direction: column; align-items: center; z-index: 100; position: absolute; }
+        .unit-label { font-size: 10px; color: var(--accent); font-weight: bold; background: black; padding: 0 4px; }
+        
+        /* Buttons */
+        button { background: #333; color: white; border: 1px solid #555; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        button:hover { background: #444; }
+        select { background: #333; color: white; border: 1px solid #555; padding: 5px; }
+
+        .view-toggle { position: absolute; bottom: 10px; right: 10px; z-index: 3000; display: flex; gap: 5px; }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
-        <p class="section-title">Units</p>
+        <div style="padding: 10px; font-size: 12px; color: #888; border-bottom: 1px solid #333;">UNITS</div>
+        <div id="unit-list-container" style="overflow-y: auto;"></div>
     </div>
 
     <div id="main-content">
-        <div id="info-panel">
-            <h2 id="info-id" style="font-size: 18px; color: var(--accent);">Ready</h2>
-            <p id="info-details" style="font-size: 13px; color: #ccc;">Select a unit</p>
-        </div>
-
         <div id="map-container">
             <img src="map.jpeg" id="background-map">
         </div>
 
         <div id="timer-section">
-            <div style="min-width: 150px;">
-                <p class="section-title">Active Timers</p>
-                <button onclick="addTimer()" style="background: #444; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px;">+ New Call</button>
+            <div class="timer-header">
+                <span style="font-weight: bold; font-size: 14px; margin-right: 10px;">DISPATCH PANEL</span>
+                <select id="unit-select"></select>
+                <select id="status-select">
+                    <option value="20">At Destination (20m)</option>
+                    <option value="10">Logistics (10m)</option>
+                    <option value="5">Standard (5m)</option>
+                </select>
+                <button onclick="startNewTimer()">START TIMER</button>
             </div>
-            </div>
+            <div id="timer-grid"></div>
+        </div>
+
+        <div class="view-toggle">
+            <button onclick="toggleSidebar()">Toggle List</button>
+            <button onclick="toggleMap()">Toggle Map</button>
+            <button onclick="toggleTimers()">Full Timers</button>
+        </div>
     </div>
 
     <script>
-        const unitList = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
+        const units = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
+        const grid = document.getElementById('timer-grid');
+        const unitSelect = document.getElementById('unit-select');
         const sidebar = document.getElementById('sidebar');
-        const container = document.getElementById('map-container');
-        const timerSection = document.getElementById('timer-section');
-        let unitData = {};
+        const mapCont = document.getElementById('map-container');
+        const timerSec = document.getElementById('timer-section');
 
-        // 1. Initialize CSV Data (Placeholder logic)
-        fetch('units.csv').then(res => res.text()).then(data => {
-            const rows = data.split('\n').slice(1);
-            rows.forEach(row => {
-                const cols = row.split(',');
-                if(cols[0]) unitData[cols[0].trim()] = { label: cols[1], details: cols[2] };
-            });
-            init();
-        }).catch(() => init());
-
+        // Initialize Units
         function init() {
-            unitList.forEach(id => {
+            units.forEach(id => {
+                // Populate Sidebar
                 const slot = document.createElement('div');
                 slot.className = 'unit-slot';
                 slot.id = `slot-${id}`;
-                sidebar.appendChild(slot);
+                document.getElementById('unit-list-container').appendChild(slot);
 
                 const div = document.createElement('div');
                 div.className = 'ambulance-icon';
                 div.id = id;
-                div.innerHTML = `<span class="emoji">🚑</span><span class="unit-label">${id}</span>`;
+                div.innerHTML = `<span style="font-size:24px">🚑</span><span class="unit-label">${id}</span>`;
                 
-                const savedPos = localStorage.getItem(`pos-${id}`);
-                if (savedPos) {
-                    const pos = JSON.parse(savedPos);
-                    div.style.left = pos.left;
-                    div.style.top = pos.top;
-                    container.appendChild(div);
+                // Position logic
+                const saved = localStorage.getItem(`pos-${id}`);
+                if(saved) {
+                    const p = JSON.parse(saved);
+                    div.style.left = p.left; div.style.top = p.top;
+                    mapCont.appendChild(div);
                 } else {
                     div.style.position = "relative";
                     slot.appendChild(div);
                 }
                 makeDraggable(div);
+
+                // Populate Dropdown
+                let opt = document.createElement('option');
+                opt.value = id; opt.innerText = id;
+                unitSelect.appendChild(opt);
             });
         }
 
-        // 2. Drag Logic
+        // Layout Toggles
+        function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
+        function toggleMap() { mapCont.classList.toggle('hidden'); }
+        function toggleTimers() { timerSec.classList.toggle('maximized'); }
+
+        // Timer Logic
+        function startNewTimer() {
+            const unit = unitSelect.value;
+            const duration = parseInt(document.getElementById('status-select').value) * 60;
+            const id = Date.now();
+            
+            const card = document.createElement('div');
+            card.className = 'timer-card';
+            card.id = `card-${id}`;
+            
+            card.innerHTML = `
+                <div style="font-weight:bold; color:var(--accent)">${unit}</div>
+                <div style="font-size:10px; color:#888">${document.getElementById('status-select').selectedOptions[0].text}</div>
+                <div class="timer-display" id="time-${id}">--:--</div>
+                <button onclick="this.parentElement.remove()" style="width:100%; margin-top:5px; font-size:10px;">CLEAR</button>
+            `;
+            grid.appendChild(card);
+
+            let timeLeft = duration;
+            const interval = setInterval(() => {
+                const display = document.getElementById(`time-${id}`);
+                if (!display) { clearInterval(interval); return; }
+
+                timeLeft--;
+                const isExpired = timeLeft < 0;
+                const absTime = Math.abs(timeLeft);
+                const m = Math.floor(absTime / 60).toString().padStart(2, '0');
+                const s = (absTime % 60).toString().padStart(2, '0');
+
+                display.innerText = (isExpired ? "-" : "") + `${m}:${s}`;
+
+                if (isExpired && !card.classList.contains('expired')) {
+                    card.classList.add('expired');
+                }
+            }, 1000);
+        }
+
+        // Dragging Logic (Optimized)
         function makeDraggable(el) {
             let offX = 0, offY = 0;
-            el.onmousedown = function(e) {
-                e.preventDefault();
-                const data = unitData[el.id] || { label: el.id, details: "Active" };
-                document.getElementById('info-id').innerText = data.label;
-                document.getElementById('info-details').innerText = data.details;
-
+            el.onmousedown = (e) => {
                 const rect = el.getBoundingClientRect();
                 offX = e.clientX - rect.left;
                 offY = e.clientY - rect.top;
-
                 if (el.parentElement.classList.contains('unit-slot')) {
                     el.style.position = 'absolute';
-                    container.appendChild(el);
+                    mapCont.appendChild(el);
                 }
-                document.onmousemove = (e) => {
-                    const cRect = container.getBoundingClientRect();
-                    el.style.left = (e.clientX - cRect.left - offX) + "px";
-                    el.style.top = (e.clientY - cRect.top - offY) + "px";
+                document.onmousemove = (ev) => {
+                    const c = mapCont.getBoundingClientRect();
+                    el.style.left = (ev.clientX - c.left - offX) + "px";
+                    el.style.top = (ev.clientY - c.top - offY) + "px";
                 };
-                document.onmouseup = (e) => {
+                document.onmouseup = (ev) => {
                     document.onmousemove = null;
-                    if (e.clientX < 165) {
-                        const slot = document.getElementById(`slot-${el.id}`);
+                    if (ev.clientX < 180) {
+                        const s = document.getElementById(`slot-${el.id}`);
                         el.style.position = "relative"; el.style.left = "0"; el.style.top = "0";
-                        slot.appendChild(el);
+                        s.appendChild(el);
                         localStorage.removeItem(`pos-${el.id}`);
                     } else {
                         localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
@@ -237,29 +213,7 @@
             };
         }
 
-        // 3. Timer Logic
-        function addTimer() {
-            const id = Date.now();
-            const card = document.createElement('div');
-            card.className = 'timer-card';
-            card.id = `timer-${id}`;
-            let seconds = 0;
-            
-            card.innerHTML = `
-                <div style="font-size: 12px; font-weight: bold;">INCIDENT #${id.toString().slice(-4)}</div>
-                <div class="timer-display" id="display-${id}">00:00</div>
-                <button onclick="this.parentElement.remove()" style="background:transparent; border:1px solid #555; color:#888; cursor:pointer; font-size:10px;">CLEAR</button>
-            `;
-            timerSection.appendChild(card);
-
-            setInterval(() => {
-                seconds++;
-                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-                const s = (seconds % 60).toString().padStart(2, '0');
-                const display = document.getElementById(`display-${id}`);
-                if(display) display.innerText = `${m}:${s}`;
-            }, 1000);
-        }
+        init();
     </script>
 </body>
 </html>
