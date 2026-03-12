@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v16</title>
+    <title>Priority Dispatch | Command Console v17</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -15,12 +15,7 @@
         }
 
         /* PREVENT SELECTION HIGHLIGHT */
-        * { 
-            -webkit-user-select: none; 
-            user-select: none; 
-            -webkit-user-drag: none; 
-            outline: none; 
-        }
+        * { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; outline: none; }
 
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; display: flex; }
 
@@ -32,56 +27,46 @@
 
         #workspace { flex-grow: 1; display: flex; flex-direction: column; position: relative; height: 100vh; }
         
-        /* Map Container */
-        #map-container { 
-            flex: 1; 
-            position: relative; 
-            overflow: hidden; 
-            background: #000; 
-            border-bottom: 2px solid #333; 
-            cursor: grab;
-        }
+        #map-container { flex: 1; position: relative; overflow: hidden; background: #000; border-bottom: 2px solid #333; cursor: grab; }
         #map-container:active { cursor: grabbing; }
         #map-container.hidden { display: none; }
 
-        /* Map Content Layer */
-        #map-content {
-            position: absolute;
-            transform-origin: 0 0;
-            will-change: transform;
-            top: 0;
-            left: 0;
-        }
-
+        #map-content { position: absolute; transform-origin: 0 0; will-change: transform; top: 0; left: 0; }
         #background-map { display: block; pointer-events: none; }
 
-        /* Timer Section */
         #timer-section { height: 280px; background: #111; display: flex; flex-direction: column; transition: height 0.4s; flex-shrink: 0; z-index: 10; }
         #timer-section.maximized { height: 100% !important; }
         #timer-header { padding: 10px 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         #timer-grid { flex-grow: 1; display: flex; gap: 15px; padding: 15px; overflow-x: auto; align-items: flex-start; }
 
         .view-btn { background: #333; color: white; border: 1px solid #555; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
-        .view-btn:hover { background: #444; }
 
-        /* Unit Icons & States */
+        /* Unit Icons */
         .unit-slot { height: 45px; border: 1px solid #222; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; position: relative; background: #0f0f0f; }
         .ambulance-icon { width: 45px; cursor: grab; display: flex; flex-direction: column; align-items: center; z-index: 50; }
-        
         .unit-label { font-size: 11px; font-weight: bold; background: #000; padding: 1px 5px; border-radius: 2px; }
         
+        /* Dynamic Colors */
         .state-avail .unit-label { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
         .state-map .unit-label { color: var(--bright-red); text-shadow: 0 0 5px var(--bright-red); }
         .state-dest .unit-label { color: var(--hosp-orange); text-shadow: 0 0 5px var(--hosp-orange); }
-        
         .oos { filter: grayscale(1) brightness(0.4) !important; opacity: 0.5; }
-        
-        /* Context Menu */
-        #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 175px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); }
+
+        /* FIXED CONTEXT MENU */
+        #context-menu { 
+            position: fixed; 
+            display: none; 
+            background: #1a1a1a; 
+            border: 1px solid #444; 
+            z-index: 10000; 
+            width: 175px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
         .menu-item { padding: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: #333; }
 
-        /* Timer Cards */
         .timer-card { min-width: 180px; background: #222; border-top: 4px solid var(--hosp-orange); padding: 12px; border-radius: 4px; position: relative; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 32px; margin: 5px 0; color: white; }
     </style>
@@ -104,7 +89,6 @@
                 <img src="map.jpeg" id="background-map">
             </div>
         </div>
-
         <div id="timer-section">
             <div id="timer-header">
                 <div style="display:flex; gap:8px;">
@@ -113,14 +97,14 @@
                     <button class="view-btn" onclick="setView('timer')">Timers</button>
                     <button class="view-btn" onclick="resetView()" style="background:#222;">Reset Map</button>
                 </div>
-                <div style="font-size: 10px; color: #444;">SCROLL: Zoom | SHIFT+DRAG: Move Map</div>
+                <div style="font-size: 10px; color: #444;">RIGHT-CLICK: Dispatch Options</div>
             </div>
             <div id="timer-grid"></div>
         </div>
     </div>
 
     <div id="context-menu">
-        <div id="menu-id" style="text-align:center; padding:5px; font-size:10px; color:#888;">UNIT</div>
+        <div id="menu-id" style="text-align:center; padding:8px; font-size:10px; color:#888; background:#000;">UNIT</div>
         <div class="menu-item" onclick="startTimer(20, 'GMH')">Hosp: GMH (20m)</div>
         <div class="menu-item" onclick="startTimer(20, 'AMH')">Hosp: AMH (20m)</div>
         <div class="menu-item" onclick="startTimer(20, 'APE')">Hosp: APE (20m)</div>
@@ -141,45 +125,32 @@
         let selectedUnit = null;
         let scale = 1, posX = 0, posY = 0;
 
-        function updateTransform() {
-            mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-
+        function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
         function resetView() { scale = 1; posX = 0; posY = 0; updateTransform(); }
 
-        // --- MAP ZOOM (CENTERED) ---
+        // MAP NAVIGATION
         mapContainer.onwheel = e => {
             e.preventDefault();
             const rect = mapContainer.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
+            const mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top;
             const zoomFactor = 1 + (-Math.sign(e.deltaY) * 0.1);
             const newScale = scale * zoomFactor;
-
             if (newScale > 0.2 && newScale < 5) {
                 posX = mouseX - (mouseX - posX) * zoomFactor;
                 posY = mouseY - (mouseY - posY) * zoomFactor;
-                scale = newScale;
-                updateTransform();
+                scale = newScale; updateTransform();
             }
         };
 
-        // --- MAP PAN (SHIFT + DRAG) ---
         mapContainer.onmousedown = e => {
             if (e.shiftKey || e.button === 1) {
-                let startX = e.clientX - posX;
-                let startY = e.clientY - posY;
-
-                document.onmousemove = ev => {
-                    posX = ev.clientX - startX;
-                    posY = ev.clientY - startY;
-                    updateTransform();
-                };
+                let sX = e.clientX - posX, sY = e.clientY - posY;
+                document.onmousemove = ev => { posX = ev.clientX - sX; posY = ev.clientY - sY; updateTransform(); };
                 document.onmouseup = () => document.onmousemove = null;
             }
         };
 
+        // UI STATUS
         function updateStatus() {
             unitList.forEach(id => {
                 const el = document.getElementById(id);
@@ -187,7 +158,6 @@
                 el.classList.remove('state-avail', 'state-map', 'state-dest');
                 const hasTimer = document.querySelectorAll(`.timer-card[data-unit="${id}"]`).length > 0;
                 const isOnMap = el.parentElement.id === 'map-content';
-                
                 if (hasTimer) el.classList.add('state-dest');
                 else if (isOnMap) el.classList.add('state-map');
                 else el.classList.add('state-avail');
@@ -200,18 +170,17 @@
         function setView(m) {
             mapContainer.classList.remove('hidden');
             const ts = document.getElementById('timer-section');
-            ts.classList.remove('maximized');
-            ts.style.height = "";
+            ts.classList.remove('maximized'); ts.style.height = "";
             if(m==='map') ts.style.height = "45px";
             else if(m==='timer') { mapContainer.classList.add('hidden'); ts.classList.add('maximized'); }
         }
 
+        // INITIALIZATION
         function init() {
             unitList.forEach(id => {
                 const slot = document.createElement('div');
                 slot.className = 'unit-slot'; slot.id = `slot-${id}`;
                 document.getElementById('unit-list-container').appendChild(slot);
-
                 const div = document.createElement('div');
                 div.className = 'ambulance-icon'; div.id = id;
                 div.innerHTML = `<span style="font-size:20px">🚑</span><span class="unit-label">${id}</span>`;
@@ -221,20 +190,26 @@
                     selectedUnit = id;
                     document.getElementById('menu-id').innerText = id;
                     ctxMenu.style.display = 'block';
+                    
+                    // SMART POSITIONING
+                    const menuH = ctxMenu.offsetHeight || 280; // Fallback estimate
+                    const windowH = window.innerHeight;
+                    let topPos = e.pageY;
+                    // If menu would go off bottom, open upwards
+                    if (topPos + menuH > windowH) { topPos = e.pageY - menuH; }
+                    
                     ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 180) + 'px';
-                    ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 250) + 'px';
+                    ctxMenu.style.top = Math.max(10, topPos) + 'px';
                 };
 
                 if (localStorage.getItem(`oos-${id}`) === 'true') div.classList.add('oos');
-                
                 const savedPos = localStorage.getItem(`pos-${id}`);
                 if (savedPos) {
                     const pos = JSON.parse(savedPos);
                     div.style.position = 'absolute'; div.style.left = pos.left; div.style.top = pos.top;
                     mapContent.appendChild(div);
                 } else {
-                    div.style.position = "relative";
-                    slot.appendChild(div);
+                    div.style.position = "relative"; slot.appendChild(div);
                 }
                 makeDraggable(div);
             });
@@ -248,10 +223,8 @@
                 e.preventDefault(); e.stopPropagation();
                 const r = el.getBoundingClientRect();
                 ox = (e.clientX - r.left) / scale; oy = (e.clientY - r.top) / scale;
-                
                 if (el.parentElement.classList.contains('unit-slot')) {
-                    el.style.position = 'absolute';
-                    mapContent.appendChild(el);
+                    el.style.position = 'absolute'; mapContent.appendChild(el);
                 }
                 document.onmousemove = (ev) => {
                     const c = mapContent.getBoundingClientRect();
@@ -276,11 +249,10 @@
             const timerId = Date.now();
             const card = document.createElement('div');
             card.className = 'timer-card'; card.id = `card-${timerId}`; card.dataset.unit = selectedUnit;
-            card.innerHTML = `<div style="font-weight:bold; font-size:18px;">${selectedUnit}</div><div style="font-size:11px; color:#888;">${hosp}</div><div class="timer-display" id="time-${timerId}">--:--</div><button onclick="dismissTimer('${timerId}','${selectedUnit}')" style="width:100%; font-size:10px; background:#444; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button>`;
+            card.innerHTML = `<div style="font-weight:bold; font-size:18px;">${selectedUnit}</div><div style="font-size:11px; color:#888;">${hosp}</div><div class="timer-display" id="time-${timerId}">--:--</div><button onclick="dismissTimer('${timerId}')" style="width:100%; font-size:10px; background:#444; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button>`;
             timerGrid.appendChild(card);
             ctxMenu.style.display = 'none';
             updateStatus();
-
             let sec = min * 60;
             const run = setInterval(() => {
                 const el = document.getElementById(`time-${timerId}`);
@@ -290,10 +262,7 @@
             }, 1000);
         }
 
-        function dismissTimer(tId, uId) {
-            document.getElementById(`card-${tId}`).remove();
-            updateStatus();
-        }
+        function dismissTimer(tId) { document.getElementById(`card-${tId}`).remove(); updateStatus(); }
 
         function toggleOOS() {
             const isOOS = document.getElementById(selectedUnit).classList.toggle('oos');
