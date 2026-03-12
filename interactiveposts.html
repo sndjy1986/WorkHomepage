@@ -3,164 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch Tracker Pro</title>
+    <title>Priority Dispatch Tracker | Multi-Panel</title>
     <style>
+        :root {
+            --sidebar-width: 160px;
+            --timer-height: 200px;
+            --accent: #ff3b3b;
+            --bg-dark: #1a1a1a;
+            --panel-bg: #252525;
+        }
+
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             margin: 0; 
             display: flex; 
-            background: #1a1a1a; 
+            background: var(--bg-dark); 
             color: white; 
             height: 100vh; 
             overflow: hidden; 
         }
         
-        /* Left Sidebar */
+        /* Left Sidebar - Scrollable Unit List */
         #sidebar {
-            width: 160px;
-            background: #252525;
+            width: var(--sidebar-width);
+            background: var(--panel-bg);
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 12px;
             border-right: 2px solid #444;
             overflow-y: auto;
-            z-index: 10;
+            height: 100vh;
         }
 
+        /* Right Column - Map (Top) and Timers (Bottom) */
+        #main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+
+        #map-container { 
+            flex-grow: 1; 
+            position: relative;
+            overflow: auto; 
+            background: #000;
+            border-bottom: 2px solid #444;
+        }
+        
+        #background-map { display: block; min-width: 100%; }
+
+        /* Bottom Timer Section */
+        #timer-section {
+            height: var(--timer-height);
+            background: #111;
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            align-items: center;
+        }
+
+        .timer-card {
+            min-width: 180px;
+            height: 140px;
+            background: var(--panel-bg);
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .timer-display { font-family: monospace; font-size: 28px; color: var(--accent); }
+
+        /* Unit Styling */
         .unit-slot {
-            width: 140px;
-            height: 80px;
+            width: 100%;
+            height: 70px;
             border: 2px dashed #444;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
             background: #1e1e1e;
         }
 
-        /* Info Panel */
-        #info-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 280px;
-            background: rgba(20, 20, 20, 0.9);
-            border: 2px solid #ff3b3b;
-            padding: 15px;
-            border-radius: 10px;
-            z-index: 2000;
-            pointer-events: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        #info-panel h2 { margin: 0; color: #ff3b3b; font-size: 22px; text-transform: uppercase; }
-        #info-panel p { margin: 8px 0 0; font-size: 16px; color: #bbb; line-height: 1.4; }
-
-        /* Map Area */
-        #map-container { 
-            position: relative; 
-            flex-grow: 1; 
-            overflow: auto; 
-            background: #000; 
-        }
-        
-        #background-map { 
-            display: block; 
-            min-width: 100%;
-        }
-
-        /* Ambulance Icons */
         .ambulance-icon {
-            width: 70px;
+            width: 60px;
             cursor: grab;
             display: flex;
             flex-direction: column;
             align-items: center;
             z-index: 100;
-            user-select: none;
             position: absolute;
-            transition: transform 0.05s linear;
         }
 
         .ambulance-icon:active { cursor: grabbing; z-index: 1000; }
 
         .unit-label {
-            color: #ff3b3b;
+            color: var(--accent);
             font-weight: 900;
-            font-size: 13px;
+            font-size: 12px;
             text-shadow: 2px 2px 2px #000;
-            background: rgba(0,0,0,0.6);
-            padding: 2px 5px;
-            border-radius: 4px;
-            margin-top: -5px;
+            background: rgba(0,0,0,0.7);
+            padding: 1px 4px;
+            border-radius: 3px;
         }
 
-        .emoji { font-size: 32px; filter: drop-shadow(2px 2px 2px black); }
+        .emoji { font-size: 28px; }
 
-        /* Scrollbar Styling */
-        #sidebar::-webkit-scrollbar { width: 6px; }
-        #sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        /* Floating Info Panel */
+        #info-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 220px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--accent);
+            padding: 12px;
+            border-radius: 6px;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        h2, h3, p { margin: 0; }
+        .section-title { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
-        <h3 style="font-size: 12px; text-align: center; color: #888; margin-top: 0;">AVAILABLE UNITS</h3>
+        <p class="section-title">Units</p>
     </div>
 
-    <div id="info-panel">
-        <h2 id="info-id">Dispatch Ready</h2>
-        <p id="info-details">Select a unit to view status.</p>
-    </div>
+    <div id="main-content">
+        <div id="info-panel">
+            <h2 id="info-id" style="font-size: 18px; color: var(--accent);">Ready</h2>
+            <p id="info-details" style="font-size: 13px; color: #ccc;">Select a unit</p>
+        </div>
 
-    <div id="map-container">
-        <img src="map.jpeg" id="background-map" alt="City Map">
+        <div id="map-container">
+            <img src="map.jpeg" id="background-map">
+        </div>
+
+        <div id="timer-section">
+            <div style="min-width: 150px;">
+                <p class="section-title">Active Timers</p>
+                <button onclick="addTimer()" style="background: #444; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 3px;">+ New Call</button>
+            </div>
+            </div>
     </div>
 
     <script>
         const unitList = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
         const sidebar = document.getElementById('sidebar');
         const container = document.getElementById('map-container');
+        const timerSection = document.getElementById('timer-section');
         let unitData = {};
 
-        // Load CSV and Initialize
-        fetch('units.csv')
-            .then(res => res.text())
-            .then(data => {
-                const rows = data.split('\n').slice(1);
-                rows.forEach(row => {
-                    const cols = row.split(',');
-                    if(cols[0]) {
-                        unitData[cols[0].trim()] = { 
-                            label: cols[1] ? cols[1].trim() : cols[0].trim(), 
-                            details: cols[2] ? cols[2].trim() : "Standard Response Unit" 
-                        };
-                    }
-                });
-                init();
-            })
-            .catch(err => {
-                console.error("CSV not found, using defaults", err);
-                init();
+        // 1. Initialize CSV Data (Placeholder logic)
+        fetch('units.csv').then(res => res.text()).then(data => {
+            const rows = data.split('\n').slice(1);
+            rows.forEach(row => {
+                const cols = row.split(',');
+                if(cols[0]) unitData[cols[0].trim()] = { label: cols[1], details: cols[2] };
             });
+            init();
+        }).catch(() => init());
 
         function init() {
-            unitList.forEach((id) => {
-                // 1. Create Slot in Sidebar
+            unitList.forEach(id => {
                 const slot = document.createElement('div');
                 slot.className = 'unit-slot';
                 slot.id = `slot-${id}`;
                 sidebar.appendChild(slot);
 
-                // 2. Create Unit Icon
                 const div = document.createElement('div');
                 div.className = 'ambulance-icon';
                 div.id = id;
                 div.innerHTML = `<span class="emoji">🚑</span><span class="unit-label">${id}</span>`;
                 
-                // 3. Check for saved position
                 const savedPos = localStorage.getItem(`pos-${id}`);
                 if (savedPos) {
                     const pos = JSON.parse(savedPos);
@@ -171,72 +197,68 @@
                     div.style.position = "relative";
                     slot.appendChild(div);
                 }
-
                 makeDraggable(div);
             });
         }
 
+        // 2. Drag Logic
         function makeDraggable(el) {
-            let offsetX = 0, offsetY = 0;
-
+            let offX = 0, offY = 0;
             el.onmousedown = function(e) {
                 e.preventDefault();
-                
-                // Update Info Panel
-                const data = unitData[el.id] || { label: el.id, details: "Unit active on frequency." };
+                const data = unitData[el.id] || { label: el.id, details: "Active" };
                 document.getElementById('info-id').innerText = data.label;
                 document.getElementById('info-details').innerText = data.details;
 
-                // Calculate click offset relative to the icon's top-left
                 const rect = el.getBoundingClientRect();
-                offsetX = e.clientX - rect.left;
-                offsetY = e.clientY - rect.top;
+                offX = e.clientX - rect.left;
+                offY = e.clientY - rect.top;
 
-                // Move to map container if it was in a sidebar slot
                 if (el.parentElement.classList.contains('unit-slot')) {
                     el.style.position = 'absolute';
-                    // Place it exactly where it was before moving it in the DOM
-                    el.style.left = (rect.left - container.getBoundingClientRect().left) + "px";
-                    el.style.top = (rect.top - container.getBoundingClientRect().top) + "px";
                     container.appendChild(el);
                 }
-
-                document.onmousemove = elementDrag;
-                document.onmouseup = closeDragElement;
+                document.onmousemove = (e) => {
+                    const cRect = container.getBoundingClientRect();
+                    el.style.left = (e.clientX - cRect.left - offX) + "px";
+                    el.style.top = (e.clientY - cRect.top - offY) + "px";
+                };
+                document.onmouseup = (e) => {
+                    document.onmousemove = null;
+                    if (e.clientX < 165) {
+                        const slot = document.getElementById(`slot-${el.id}`);
+                        el.style.position = "relative"; el.style.left = "0"; el.style.top = "0";
+                        slot.appendChild(el);
+                        localStorage.removeItem(`pos-${el.id}`);
+                    } else {
+                        localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
+                    }
+                };
             };
+        }
 
-            function elementDrag(e) {
-                e.preventDefault();
-                const containerRect = container.getBoundingClientRect();
-                
-                // Calculate position relative to map container
-                let x = e.clientX - containerRect.left - offsetX;
-                let y = e.clientY - containerRect.top - offsetY;
+        // 3. Timer Logic
+        function addTimer() {
+            const id = Date.now();
+            const card = document.createElement('div');
+            card.className = 'timer-card';
+            card.id = `timer-${id}`;
+            let seconds = 0;
+            
+            card.innerHTML = `
+                <div style="font-size: 12px; font-weight: bold;">INCIDENT #${id.toString().slice(-4)}</div>
+                <div class="timer-display" id="display-${id}">00:00</div>
+                <button onclick="this.parentElement.remove()" style="background:transparent; border:1px solid #555; color:#888; cursor:pointer; font-size:10px;">CLEAR</button>
+            `;
+            timerSection.appendChild(card);
 
-                el.style.left = x + "px";
-                el.style.top = y + "px";
-            }
-
-            function closeDragElement(e) {
-                document.onmouseup = null;
-                document.onmousemove = null;
-
-                // Snap back to sidebar if dropped over the sidebar area (width 160px)
-                if (e.clientX < 165) {
-                    const mySlot = document.getElementById(`slot-${el.id}`);
-                    el.style.position = "relative";
-                    el.style.left = "0px";
-                    el.style.top = "0px";
-                    mySlot.appendChild(el);
-                    localStorage.removeItem(`pos-${el.id}`);
-                } else {
-                    // Save position
-                    localStorage.setItem(`pos-${el.id}`, JSON.stringify({
-                        left: el.style.left,
-                        top: el.style.top
-                    }));
-                }
-            }
+            setInterval(() => {
+                seconds++;
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                const display = document.getElementById(`display-${id}`);
+                if(display) display.innerText = `${m}:${s}`;
+            }, 1000);
         }
     </script>
 </body>
