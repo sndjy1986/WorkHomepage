@@ -3,31 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v11</title>
+    <title>Priority Dispatch | Command Console v13</title>
     <style>
         :root {
-            --accent: #ff3b3b;
-            --call-active: #ffcc00;
+            --neon-green: #00ff41;
+            --bright-red: #ff0000;
+            --hosp-orange: #ff8c00;
             --bg-dark: #0a0a0a;
             --panel-bg: #161616;
-            --oos-color: #444;
-            --avail-color: #00ff41;
             --sidebar-w: 180px;
+        }
+
+        /* PREVENT BLUE SELECTION HIGHLIGHT */
+        * {
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
+            outline: none;
         }
 
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; display: flex; }
 
         /* Sidebar & Status */
         #sidebar { width: var(--sidebar-w); background: var(--panel-bg); display: flex; flex-direction: column; border-right: 2px solid #222; z-index: 100; flex-shrink: 0; }
-        #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid var(--accent); }
-        #gas-gauge { font-size: 56px; font-weight: 900; line-height: 1; margin: 5px 0; }
+        #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid #333; }
+        #gas-gauge { font-size: 56px; font-weight: 900; line-height: 1; margin: 5px 0; transition: color 0.3s; }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; }
         #unit-list-container { flex-grow: 1; overflow-y: auto; padding: 10px; }
 
         /* Workspace */
         #workspace { flex-grow: 1; display: flex; flex-direction: column; position: relative; height: 100vh; }
         
-        /* Map Container */
         #map-container { 
             flex: 1; 
             position: relative; 
@@ -40,13 +47,8 @@
         #map-container:active { cursor: grabbing; }
         #map-container.hidden { flex: 0 !important; height: 0 !important; border: none !important; }
 
-        #map-content {
-            position: absolute;
-            transform-origin: 0 0; /* Keeps math predictable for unit placement */
-            will-change: transform;
-        }
-
-        #background-map { display: block; pointer-events: none; }
+        #map-content { position: absolute; transform-origin: 0 0; will-change: transform; }
+        #background-map { display: block; pointer-events: none; -webkit-user-drag: none; }
 
         /* Timer Section */
         #timer-section { height: 280px; background: #111; display: flex; flex-direction: column; transition: all 0.4s ease-in-out; flex-shrink: 0; z-index: 10; }
@@ -55,32 +57,42 @@
         #timer-grid { flex-grow: 1; display: flex; gap: 15px; padding: 15px; overflow-x: auto; align-items: flex-start; }
 
         .view-btn { background: #333; color: white; border: 1px solid #555; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
-        .view-btn:hover { background: var(--accent); }
+        .view-btn:hover { background: #444; border-color: #777; }
 
-        /* Unit Icons */
+        /* Unit Icons & States */
         .unit-slot { height: 45px; border: 1px solid #222; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; position: relative; background: #0f0f0f; }
-        .ambulance-icon { width: 45px; cursor: grab; display: flex; flex-direction: column; align-items: center; z-index: 50; }
-        .ambulance-icon.oos { filter: grayscale(1) brightness(0.4) !important; }
-        .ambulance-icon.on-call { filter: sepia(1) hue-rotate(10deg) saturate(3) !important; } 
+        .ambulance-icon { width: 45px; cursor: grab; display: flex; flex-direction: column; align-items: center; z-index: 50; transition: transform 0.1s; }
         
-        .ambulance-icon.expired-alarm {
-            animation: mapFlash 0.8s infinite;
-            z-index: 1000;
-        }
+        /* Unit Labels Color Logic */
+        .unit-label { font-size: 11px; font-weight: bold; background: #000; padding: 1px 5px; border-radius: 2px; transition: color 0.3s; }
+        
+        /* AVAILABLE (Sidebar) */
+        .ambulance-icon.state-avail .unit-label { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
+        
+        /* ON MAP (Dispatched) */
+        .ambulance-icon.state-map .unit-label { color: var(--bright-red); text-shadow: 0 0 5px var(--bright-red); }
+        
+        /* AT DESTINATION (Hosp/Timer) */
+        .ambulance-icon.state-dest .unit-label { color: var(--hosp-orange); text-shadow: 0 0 5px var(--hosp-orange); }
+
+        /* OOS (Greyed out) */
+        .ambulance-icon.oos { filter: grayscale(1) brightness(0.4) !important; opacity: 0.5; }
+
+        /* Flashing Alarm */
+        .ambulance-icon.expired-alarm { animation: mapFlash 0.8s infinite; z-index: 1000; }
         @keyframes mapFlash {
             0% { transform: scale(1); }
-            50% { transform: scale(1.4); filter: drop-shadow(0 0 20px red) invert(1); }
+            50% { transform: scale(1.4); filter: drop-shadow(0 0 20px var(--bright-red)) invert(1); }
             100% { transform: scale(1); }
         }
-
-        .unit-label { font-size: 10px; font-weight: bold; background: #000; padding: 1px 4px; border-radius: 2px; }
 
         /* Context Menu */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 175px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); }
         .menu-item { padding: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #222; }
-        .menu-item:hover { background: var(--accent); color: white; }
+        .menu-item:hover { background: #333; color: white; }
 
-        .timer-card { min-width: 180px; background: #222; border-top: 4px solid var(--accent); padding: 12px; border-radius: 4px; position: relative; }
+        /* Timer Cards */
+        .timer-card { min-width: 180px; background: #222; border-top: 4px solid var(--hosp-orange); padding: 12px; border-radius: 4px; position: relative; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 32px; margin: 5px 0; color: white; }
         .timer-card.expired { animation: alert 0.8s infinite; }
         @keyframes alert { 50% { background: #4d0000; } }
@@ -112,7 +124,7 @@
                     <button class="view-btn" onclick="setView('timer')">Timers</button>
                     <button class="view-btn" onclick="resetZoom()" style="background:#222;">Reset Map</button>
                 </div>
-                <div style="font-size: 10px; color: #444;">SCROLL: Zoom | SHIFT+DRAG: Move Map | RIGHT-CLICK: Dispatch</div>
+                <div style="font-size: 10px; color: #444;">SCROLL: Zoom | SHIFT+DRAG: Move Map | RIGHT-CLICK: Status</div>
             </div>
             <div id="timer-grid"></div>
         </div>
@@ -120,13 +132,13 @@
 
     <div id="context-menu">
         <div style="padding: 8px; font-size: 10px; color: #888; background: #000; text-align: center;" id="menu-id">UNIT</div>
-        <div class="menu-item" style="color: var(--call-active); font-weight: bold;" onclick="toggleCallState()">ON A CALL (Toggle)</div>
-        <div class="menu-item" onclick="startTimer(20, 'GMH', 'hosp')">Hosp: GMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'AMH', 'hosp')">Hosp: AMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'APE', 'hosp')">Hosp: APE (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'SFCH', 'hosp')">Hosp: SFCH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'BMC', 'hosp')">Hosp: BMC (20m)</div>
-        <div class="menu-item" onclick="startTimer(10, 'Logistics', 'logistics')">Logistics (10m)</div>
+        <div class="menu-item" style="color: var(--bright-red); font-weight: bold;" onclick="toggleManualCall()">TOGGLE ACTIVE CALL</div>
+        <div class="menu-item" onclick="startTimer(20, 'GMH')">Hosp: GMH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'AMH')">Hosp: AMH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'APE')">Hosp: APE (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'SFCH')">Hosp: SFCH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'BMC')">Hosp: BMC (20m)</div>
+        <div class="menu-item" onclick="startTimer(10, 'Logistics')">Logistics (10m)</div>
         <div class="menu-item" onclick="toggleOOS()" style="color: #888; border-top: 1px solid #333;">Toggle OOS</div>
     </div>
 
@@ -139,8 +151,6 @@
         const gauge = document.getElementById('gas-gauge');
         const ctxMenu = document.getElementById('context-menu');
         let selectedUnit = null;
-
-        // Map State
         let scale = 1, posX = 0, posY = 0;
 
         function setView(mode) {
@@ -152,22 +162,13 @@
             else if (mode === 'timer') { mapContainer.classList.add('hidden'); timerSec.classList.add('maximized'); }
         }
 
-        // --- CENTERED ZOOM LOGIC ---
         mapContainer.onwheel = e => {
             e.preventDefault();
             const rect = mapContainer.getBoundingClientRect();
-            
-            // Zoom toward mouse position
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
-            const zoomSpeed = 0.1;
+            const mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top;
             const delta = -Math.sign(e.deltaY);
-            const zoomFactor = 1 + (delta * zoomSpeed);
-
+            const zoomFactor = 1 + (delta * 0.1);
             const newScale = scale * zoomFactor;
-            
-            // Prevent zooming too far out or in
             if (newScale > 0.3 && newScale < 5) {
                 posX = mouseX - (mouseX - posX) * zoomFactor;
                 posY = mouseY - (mouseY - posY) * zoomFactor;
@@ -176,31 +177,41 @@
             }
         };
 
-        // --- MAP PANNING (SHIFT + DRAG) ---
         mapContainer.onmousedown = e => {
-            if (e.shiftKey || e.button === 1) { // Middle click or Shift
-                let startX = e.clientX - posX;
-                let startY = e.clientY - posY;
-
-                document.onmousemove = ev => {
-                    posX = ev.clientX - startX;
-                    posY = ev.clientY - startY;
-                    updateTransform();
-                };
+            if (e.shiftKey || e.button === 1) {
+                let startX = e.clientX - posX, startY = e.clientY - posY;
+                document.onmousemove = ev => { posX = ev.clientX - startX; posY = ev.clientY - startY; updateTransform(); };
                 document.onmouseup = () => document.onmousemove = null;
             }
         };
 
-        function updateTransform() {
-            mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-
+        function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
         function resetZoom() { scale = 1; posX = 0; posY = 0; updateTransform(); }
 
-        function updateGauge() {
-            const avail = document.querySelectorAll('#unit-list-container .ambulance-icon:not(.oos):not(.on-call)').length;
-            gauge.innerText = avail;
-            gauge.style.color = avail <= 2 ? "#ff3b3b" : avail <= 5 ? "#ffcc00" : "#00ff41";
+        function updateStatus() {
+            unitList.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                
+                // Reset states
+                el.classList.remove('state-avail', 'state-map', 'state-dest');
+                
+                const hasTimer = document.querySelectorAll(`.timer-card[data-unit="${id}"]`).length > 0;
+                const isOnMap = el.parentElement.id === 'map-content';
+                const isManualCall = localStorage.getItem(`call-${id}`) === 'true';
+
+                if (hasTimer) {
+                    el.classList.add('state-dest'); // Orange
+                } else if (isOnMap || isManualCall) {
+                    el.classList.add('state-map'); // Red
+                } else {
+                    el.classList.add('state-avail'); // Neon Green
+                }
+            });
+
+            const availCount = document.querySelectorAll('#unit-list-container .ambulance-icon.state-avail:not(.oos)').length;
+            gauge.innerText = availCount;
+            gauge.style.color = availCount <= 2 ? "#ff3b3b" : availCount <= 5 ? "#ffcc00" : var(--neon-green);
         }
 
         function init() {
@@ -210,11 +221,10 @@
                 document.getElementById('unit-list-container').appendChild(slot);
                 const div = document.createElement('div');
                 div.className = 'ambulance-icon'; div.id = id;
-                div.innerHTML = `<span style="font-size:20px">🚑</span><span class="unit-label" style="color:var(--accent)">${id}</span>`;
+                div.innerHTML = `<span style="font-size:20px">🚑</span><span class="unit-label">${id}</span>`;
                 
                 div.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
                     selectedUnit = id;
                     document.getElementById('menu-id').innerText = id;
                     ctxMenu.style.display = 'block';
@@ -226,8 +236,6 @@
                 };
 
                 if (localStorage.getItem(`oos-${id}`) === 'true') div.classList.add('oos');
-                if (localStorage.getItem(`call-${id}`) === 'true') div.classList.add('on-call');
-
                 const savedPos = localStorage.getItem(`pos-${id}`);
                 if (savedPos) {
                     const pos = JSON.parse(savedPos);
@@ -238,90 +246,68 @@
                 }
                 makeDraggable(div);
             });
-            updateGauge();
+            updateStatus();
         }
 
-        function toggleCallState() {
-            const el = document.getElementById(selectedUnit);
-            el.classList.toggle('on-call');
-            localStorage.setItem(`call-${selectedUnit}`, el.classList.contains('on-call'));
+        function toggleManualCall() {
+            const current = localStorage.getItem(`call-${selectedUnit}`) === 'true';
+            localStorage.setItem(`call-${selectedUnit}`, !current);
             ctxMenu.style.display = 'none';
-            updateGauge();
+            updateStatus();
         }
 
         function toggleOOS() {
             const el = document.getElementById(selectedUnit);
-            el.classList.toggle('oos');
-            localStorage.setItem(`oos-${selectedUnit}`, el.classList.contains('oos'));
+            const isOOS = el.classList.toggle('oos');
+            localStorage.setItem(`oos-${selectedUnit}`, isOOS);
             ctxMenu.style.display = 'none';
-            updateGauge();
+            updateStatus();
         }
 
-        function startTimer(min, hospitalName, type) {
+        function startTimer(min, hospital) {
             const unitId = selectedUnit;
-            const unitEl = document.getElementById(unitId);
             const timerId = Date.now();
-            
-            if (!unitEl.classList.contains('on-call')) {
-                unitEl.classList.add('on-call');
-                localStorage.setItem(`call-${unitId}`, 'true');
-            }
-
             const card = document.createElement('div');
-            card.className = `timer-card type-${type}`;
+            card.className = `timer-card`;
             card.id = `card-${timerId}`;
             card.dataset.unit = unitId;
             card.innerHTML = `
                 <div style="font-weight:bold; font-size:18px;">${unitId}</div>
-                <div style="font-size:11px; color:#888; font-weight:bold; margin-bottom:5px;">${hospitalName}</div>
+                <div style="font-size:11px; color:#888; font-weight:bold; margin-bottom:5px;">${hospital}</div>
                 <div class="timer-display" id="time-${timerId}">--:--</div>
-                <button onclick="dismissTimer('${timerId}', '${unitId}')" style="width:100%; font-size:10px; background:#444; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">DISMISS</button>
+                <button onclick="dismissTimer('${timerId}', '${unitId}')" style="width:100%; font-size:10px; background:#444; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button>
             `;
             timerGrid.appendChild(card);
             ctxMenu.style.display = 'none';
-            updateGauge();
+            updateStatus();
 
             let sec = min * 60;
             const run = setInterval(() => {
                 const el = document.getElementById(`time-${timerId}`);
                 if(!el) { clearInterval(run); return; }
                 sec--;
-                const a = Math.abs(sec);
-                const m = Math.floor(a / 60).toString().padStart(2, '0');
-                const s = (a % 60).toString().padStart(2, '0');
+                const a = Math.abs(sec), m = Math.floor(a / 60).toString().padStart(2, '0'), s = (a % 60).toString().padStart(2, '0');
                 el.innerText = (sec < 0 ? "-" : "") + `${m}:${s}`;
-                if(sec < 0) {
-                    card.classList.add('expired');
-                    unitEl.classList.add('expired-alarm');
-                }
+                if(sec < 0) { card.classList.add('expired'); document.getElementById(unitId).classList.add('expired-alarm'); }
             }, 1000);
         }
 
         function dismissTimer(tId, uId) {
-            const card = document.getElementById(`card-${tId}`);
-            if(card) card.remove();
-            const otherTimers = document.querySelectorAll(`.timer-card[data-unit="${uId}"]`);
-            if (otherTimers.length === 0) {
-                const unitEl = document.getElementById(uId);
-                unitEl.classList.remove('on-call', 'expired-alarm');
-                localStorage.setItem(`call-${uId}`, 'false');
+            document.getElementById(`card-${tId}`).remove();
+            if (document.querySelectorAll(`.timer-card[data-unit="${uId}"]`).length === 0) {
+                document.getElementById(uId).classList.remove('expired-alarm');
             }
-            updateGauge();
+            updateStatus();
         }
 
         function makeDraggable(el) {
             let ox = 0, oy = 0;
             el.onmousedown = (e) => {
-                if(e.button !== 0 || e.shiftKey) return; // Ignore if panning
-                e.stopPropagation();
+                if(e.button !== 0 || e.shiftKey) return;
+                e.stopPropagation(); e.preventDefault();
                 const r = el.getBoundingClientRect();
-                ox = (e.clientX - r.left) / scale;
-                oy = (e.clientY - r.top) / scale;
-                
-                if (el.parentElement.classList.contains('unit-slot')) {
-                    el.style.position = 'absolute';
-                    mapContent.appendChild(el);
-                }
+                ox = (e.clientX - r.left) / scale; oy = (e.clientY - r.top) / scale;
+                if (el.parentElement.classList.contains('unit-slot')) { el.style.position = 'absolute'; mapContent.appendChild(el); }
                 document.onmousemove = (ev) => {
                     const c = mapContent.getBoundingClientRect();
                     el.style.left = ((ev.clientX - c.left) / scale - ox) + "px";
@@ -336,7 +322,7 @@
                     } else {
                         localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
                     }
-                    updateGauge();
+                    updateStatus();
                 };
             };
         }
