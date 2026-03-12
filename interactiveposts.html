@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console</title>
+    <title>Priority Dispatch | Command Console v10</title>
     <style>
         :root {
             --accent: #ff3b3b;
@@ -26,12 +26,30 @@
 
         /* Workspace */
         #workspace { flex-grow: 1; display: flex; flex-direction: column; position: relative; height: 100vh; }
-        #map-container { flex: 1; position: relative; overflow: auto; background: #000; transition: all 0.4s ease-in-out; border-bottom: 2px solid #333; min-height: 0; }
+        
+        /* Map Container & Zoom */
+        #map-container { 
+            flex: 1; 
+            position: relative; 
+            overflow: hidden; /* Changed to hidden for zoom logic */
+            background: #000; 
+            transition: flex 0.4s ease-in-out; 
+            border-bottom: 2px solid #333; 
+            cursor: crosshair;
+        }
         #map-container.hidden { flex: 0 !important; height: 0 !important; border: none !important; }
-        #background-map { display: block; min-width: 100%; }
+
+        /* The actual map layer that moves and zooms */
+        #map-content {
+            position: absolute;
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        #background-map { display: block; pointer-events: none; }
 
         /* Timer Section */
-        #timer-section { height: 280px; background: #111; display: flex; flex-direction: column; transition: all 0.4s ease-in-out; flex-shrink: 0; }
+        #timer-section { height: 280px; background: #111; display: flex; flex-direction: column; transition: all 0.4s ease-in-out; flex-shrink: 0; z-index: 10; }
         #timer-section.maximized { height: 100% !important; flex: 1 !important; }
         #timer-header { padding: 10px 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         #timer-grid { flex-grow: 1; display: flex; gap: 15px; padding: 15px; overflow-x: auto; align-items: flex-start; }
@@ -44,6 +62,18 @@
         .ambulance-icon { width: 45px; cursor: grab; display: flex; flex-direction: column; align-items: center; z-index: 50; }
         .ambulance-icon.oos { filter: grayscale(1) brightness(0.4) !important; }
         .ambulance-icon.on-call { filter: sepia(1) hue-rotate(10deg) saturate(3) !important; } 
+        
+        /* Flashing Alarm for Map Icons */
+        .ambulance-icon.expired-alarm {
+            animation: mapFlash 0.8s infinite;
+            z-index: 1000;
+        }
+        @keyframes mapFlash {
+            0% { transform: scale(1); filter: drop-shadow(0 0 0px red); }
+            50% { transform: scale(1.3); filter: drop-shadow(0 0 15px red) invert(1); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 0px red); }
+        }
+
         .unit-label { font-size: 10px; font-weight: bold; background: #000; padding: 1px 4px; border-radius: 2px; }
 
         /* Context Menu */
@@ -51,7 +81,6 @@
         .menu-item { padding: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: var(--accent); color: white; }
 
-        /* Timer Cards */
         .timer-card { min-width: 180px; background: #222; border-top: 4px solid var(--accent); padding: 12px; border-radius: 4px; position: relative; }
         .timer-card.type-logistics { border-top-color: #888; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 32px; margin: 5px 0; color: white; }
@@ -72,7 +101,9 @@
 
     <div id="workspace">
         <div id="map-container">
-            <img src="map.jpeg" id="background-map">
+            <div id="map-content">
+                <img src="map.jpeg" id="background-map">
+            </div>
         </div>
 
         <div id="timer-section">
@@ -81,6 +112,7 @@
                     <button class="view-btn" onclick="setView('map')">Map View</button>
                     <button class="view-btn" onclick="setView('split')">Split View</button>
                     <button class="view-btn" onclick="setView('timer')">Timer View</button>
+                    <button class="view-btn" onclick="resetZoom()" style="margin-left:10px; background:#222;">Reset Zoom</button>
                 </div>
                 <div style="font-size: 11px; color: #555; letter-spacing: 2px; font-weight: bold;">SYSTEM STATUS PANEL</div>
             </div>
@@ -102,21 +134,43 @@
 
     <script>
         const unitList = ["Med-0", "Med-1", "Med-2", "Med-3", "Med-4", "Med-5", "Med-6", "Med-7", "Med-8", "Med-9", "Med-12", "Med-13", "Med-14", "Med-15", "Med-16", "Med-17", "Med-18"];
-        const mapBox = document.getElementById('map-container');
+        const mapContainer = document.getElementById('map-container');
+        const mapContent = document.getElementById('map-content');
         const timerSec = document.getElementById('timer-section');
         const timerGrid = document.getElementById('timer-grid');
         const gauge = document.getElementById('gas-gauge');
         const ctxMenu = document.getElementById('context-menu');
         let selectedUnit = null;
 
+        // Zoom/Pan State
+        let scale = 1, posX = 0, posY = 0;
+
         function setView(mode) {
-            mapBox.classList.remove('hidden');
+            mapContainer.classList.remove('hidden');
             timerSec.classList.remove('maximized');
             timerSec.style.height = ""; 
             if (mode === 'map') timerSec.style.height = "45px";
             else if (mode === 'split') timerSec.style.height = "280px";
-            else if (mode === 'timer') { mapBox.classList.add('hidden'); timerSec.classList.add('maximized'); }
+            else if (mode === 'timer') { mapContainer.classList.add('hidden'); timerSec.classList.add('maximized'); }
         }
+
+        // --- ZOOM LOGIC ---
+        mapContainer.onwheel = e => {
+            e.preventDefault();
+            const xs = (e.clientX - mapContainer.getBoundingClientRect().left - posX) / scale;
+            const ys = (e.clientY - mapContainer.getBoundingClientRect().top - posY) / scale;
+            const delta = -e.deltaY;
+            (delta > 0) ? (scale *= 1.1) : (scale /= 1.1);
+            posX = (e.clientX - mapContainer.getBoundingClientRect().left) - xs * scale;
+            posY = (e.clientY - mapContainer.getBoundingClientRect().top) - ys * scale;
+            updateTransform();
+        };
+
+        function updateTransform() {
+            mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+
+        function resetZoom() { scale = 1; posX = 0; posY = 0; updateTransform(); }
 
         function updateGauge() {
             const avail = document.querySelectorAll('#unit-list-container .ambulance-icon:not(.oos):not(.on-call)').length;
@@ -152,7 +206,7 @@
                 if (savedPos) {
                     const pos = JSON.parse(savedPos);
                     div.style.position = 'absolute'; div.style.left = pos.left; div.style.top = pos.top;
-                    mapBox.appendChild(div);
+                    mapContent.appendChild(div);
                 } else {
                     div.style.position = "relative"; slot.appendChild(div);
                 }
@@ -178,25 +232,25 @@
         }
 
         function startTimer(min, hospitalName, type) {
-            const unitEl = document.getElementById(selectedUnit);
+            const unitId = selectedUnit;
+            const unitEl = document.getElementById(unitId);
             const timerId = Date.now();
             
-            // Auto-set On Call status when hospital timer starts
             if (!unitEl.classList.contains('on-call')) {
                 unitEl.classList.add('on-call');
-                localStorage.setItem(`call-${selectedUnit}`, 'true');
+                localStorage.setItem(`call-${unitId}`, 'true');
             }
 
             const card = document.createElement('div');
             card.className = `timer-card type-${type}`;
             card.id = `card-${timerId}`;
-            card.dataset.unit = selectedUnit; // Link card to unit
+            card.dataset.unit = unitId;
             
             card.innerHTML = `
-                <div style="font-weight:bold; font-size:18px;">${selectedUnit}</div>
+                <div style="font-weight:bold; font-size:18px;">${unitId}</div>
                 <div style="font-size:11px; color:#888; font-weight:bold; margin-bottom:5px;">${hospitalName}</div>
                 <div class="timer-display" id="time-${timerId}">--:--</div>
-                <button onclick="dismissTimer('${timerId}', '${selectedUnit}')" style="width:100%; font-size:10px; background:#444; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">DISMISS</button>
+                <button onclick="dismissTimer('${timerId}', '${unitId}')" style="width:100%; font-size:10px; background:#444; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">DISMISS</button>
             `;
             timerGrid.appendChild(card);
             ctxMenu.style.display = 'none';
@@ -211,7 +265,11 @@
                 const m = Math.floor(a / 60).toString().padStart(2, '0');
                 const s = (a % 60).toString().padStart(2, '0');
                 el.innerText = (sec < 0 ? "-" : "") + `${m}:${s}`;
-                if(sec < 0) card.classList.add('expired');
+                
+                if(sec < 0) {
+                    card.classList.add('expired');
+                    unitEl.classList.add('expired-alarm'); // FLASH ON MAP
+                }
             }, 1000);
         }
 
@@ -219,11 +277,11 @@
             const card = document.getElementById(`card-${tId}`);
             if(card) card.remove();
             
-            // Check if this unit has any OTHER timers active before clearing On Call
             const otherTimers = document.querySelectorAll(`.timer-card[data-unit="${uId}"]`);
             if (otherTimers.length === 0) {
                 const unitEl = document.getElementById(uId);
                 unitEl.classList.remove('on-call');
+                unitEl.classList.remove('expired-alarm');
                 localStorage.setItem(`call-${uId}`, 'false');
             }
             updateGauge();
@@ -234,14 +292,17 @@
             el.onmousedown = (e) => {
                 if(e.button !== 0) return;
                 const r = el.getBoundingClientRect();
-                ox = e.clientX - r.left; oy = e.clientY - r.top;
+                ox = (e.clientX - r.left) / scale;
+                oy = (e.clientY - r.top) / scale;
+                
                 if (el.parentElement.classList.contains('unit-slot')) {
-                    el.style.position = 'absolute'; mapBox.appendChild(el);
+                    el.style.position = 'absolute';
+                    mapContent.appendChild(el);
                 }
                 document.onmousemove = (ev) => {
-                    const c = mapBox.getBoundingClientRect();
-                    el.style.left = (ev.clientX - c.left - ox) + "px";
-                    el.style.top = (ev.clientY - c.top - oy) + "px";
+                    const c = mapContent.getBoundingClientRect();
+                    el.style.left = ((ev.clientX - c.left) / scale - ox) + "px";
+                    el.style.top = ((ev.clientY - c.top) / scale - oy) + "px";
                 };
                 document.onmouseup = (ev) => {
                     document.onmousemove = null;
