@@ -577,7 +577,7 @@ textarea{
 /* -----------------------------
    EMAIL SETTINGS
 ------------------------------ */
-const SEND_TO_EMAILS = "asanders@medshore.com; gwilliams@medshore.com; hshore1@medshore.com; isettle@medshore.com; jhoward@medshore.com; jstrickland@medshore.com; rbrooks@medshore.com; rhuff@medshore.com";
+const SEND_TO_EMAILS = "";
 
 /* -----------------------------
    LOCAL STORAGE (PAGE DRAFT)
@@ -832,7 +832,7 @@ async function sendEmail(){
     new FormData(document.getElementById("shiftForm")).entries()
   );
 
-  const subject = `Shift Report - ${d.name || ""} - ${d.date || ""}`;
+  const subject = `${d.date || ""} - Shift Report `;
   const body = buildEmailBody(d);
 
   const copied = await copyToClipboard(body);
