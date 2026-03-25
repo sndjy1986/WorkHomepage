@@ -832,7 +832,7 @@ async function sendEmail(){
     new FormData(document.getElementById("shiftForm")).entries()
   );
 
-  const subject = `${d.date || ""} - Shift Report `;
+  const subject = `C-Shift Shift Report`;
   const body = buildEmailBody(d);
 
   const copied = await copyToClipboard(body);
