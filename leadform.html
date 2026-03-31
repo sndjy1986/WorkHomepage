@@ -575,9 +575,20 @@ textarea{
 
 <script>
 /* -----------------------------
-   EMAIL SETTINGS
+   EMAIL SETTINGS & MAPPING
 ------------------------------ */
-const SEND_TO_EMAILS = "";
+// 1. Enter the main emails that always receive reports (separated by commas)
+const BASE_REPORT_EMAILS = "office@company.com, records@company.com";
+
+// 2. Map the MEDSUP names exactly as they appear in the <select> options
+const MEDSUP_EMAIL_MAP = {
+  "Hunter Shore": "hshore@company.com",
+  "Jeff Patterson": "jpatterson@company.com",
+  "James Howard": "jhoward@company.com",
+  "Robert Huff": "rhuff@company.com",
+  "David Howard": "dhoward@company.com",
+  "Matthew Dean": "mdean@company.com"
+};
 
 /* -----------------------------
    LOCAL STORAGE (PAGE DRAFT)
@@ -827,12 +838,24 @@ function buildEmailBody(d){
   return lines.join("\r\n");
 }
 
+/* -----------------------------
+   SEND EMAIL (DYNAMIC RECIPIENTS)
+------------------------------ */
 async function sendEmail(){
-  const d = Object.fromEntries(
-    new FormData(document.getElementById("shiftForm")).entries()
-  );
+  const form = document.getElementById("shiftForm");
+  const d = Object.fromEntries(new FormData(form).entries());
 
-  const subject = `C-Shift Shift Report`;
+  // Determine dynamic recipients
+  let recipients = BASE_REPORT_EMAILS;
+  const selectedMedSup = d.medsup;
+
+  // If a supervisor is selected and we have an email for them, add it to the list
+  if (selectedMedSup && MEDSUP_EMAIL_MAP[selectedMedSup]) {
+    const supEmail = MEDSUP_EMAIL_MAP[selectedMedSup];
+    recipients = recipients ? `${recipients}, ${supEmail}` : supEmail;
+  }
+
+  const subject = `C-Shift Shift Report - ${d.date || ''}`;
   const body = buildEmailBody(d);
 
   const copied = await copyToClipboard(body);
@@ -842,7 +865,7 @@ async function sendEmail(){
   );
 
   window.location.href =
-    `mailto:${encodeURIComponent(SEND_TO_EMAILS)}` +
+    `mailto:${encodeURIComponent(recipients)}` +
     `?subject=${encodeURIComponent(subject)}` +
     `&body=${encodeURIComponent(body)}`;
 }
@@ -862,7 +885,3 @@ function initAutosave(){
 }
 
 initAutosave();
-</script>
-
-</body>
-</html>
