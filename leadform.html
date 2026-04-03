@@ -580,9 +580,7 @@ textarea{
 /* -----------------------------
    EMAIL SETTINGS & MAPPING
 ------------------------------ */
-// Recipients in the "TO" line
 const BASE_REPORT_EMAILS = "gwilliams@medshore.com, rbrooks@medshore.com";
-// Recipient in the "CC" line
 const CC_EMAIL = "asanders@medshore.com";
 
 const MEDSUP_EMAIL_MAP = {
@@ -603,7 +601,6 @@ let __saveTimer = null;
 function updateSaveStatus(dateObj){
   const el = document.getElementById("saveStatus");
   if(!el) return;
-
   const d = dateObj || new Date();
   const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   el.textContent = "Locally auto saved at " + time;
@@ -630,9 +627,7 @@ function saveDraftNow(){
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     updateSaveStatus(new Date());
-  }catch(e){
-    console.warn("localStorage save failed:", e);
-  }
+  }catch(e){ console.warn("localStorage save failed:", e); }
 }
 
 function restoreDraft(){
@@ -658,25 +653,16 @@ function restoreDraft(){
 }
 
 function clearSavedData(){
-  const ok = confirm("Clear saved data for THIS page?\n\nThis wipes the locally stored draft and resets the form.");
-  if(!ok) return;
+  if(!confirm("Clear saved data?")) return;
   try{ localStorage.removeItem(STORAGE_KEY); }catch{}
-  const form = document.getElementById("shiftForm");
-  form.reset();
-  const pNH = document.getElementById("pasteNotes");
-  const pPV = document.getElementById("pastePreview");
-  const pMT = document.getElementById("pasteModalText");
-  if(pNH) pNH.value = "";
-  if(pPV) pPV.value = "";
-  if(pMT) pMT.value = "";
-  toggleDrawer(false);
-  document.getElementById("pasteModalBackdrop").style.display = "none";
+  document.getElementById("shiftForm").reset();
+  document.getElementById("pasteNotes").value = "";
+  document.getElementById("pastePreview").value = "";
   document.getElementById("saveStatus").textContent = "Not saved yet";
-  showToast("Saved draft cleared + form reset.");
 }
 
 /* -----------------------------
-   EXISTING UI BEHAVIOR
+   UI BEHAVIOR
 ------------------------------ */
 const issues = document.querySelector(".issues");
 issues.addEventListener("input", ()=>{
@@ -705,7 +691,6 @@ const pasteModalBackdrop = document.getElementById("pasteModalBackdrop");
 const pasteModalText = document.getElementById("pasteModalText");
 
 pastePreview.addEventListener("click", openPasteModal);
-pastePreview.addEventListener("focus", openPasteModal);
 
 function openPasteModal(){
   pasteModalText.value = pasteNotesHidden.value || "";
@@ -717,8 +702,7 @@ function refreshPastePreview(){
   const val = pasteNotesHidden.value || "";
   const lines = val.split(/\r?\n/);
   const previewLines = lines.slice(0, 10).join("\n");
-  const preview = previewLines.length > 600 ? previewLines.slice(0, 600) + "…" : previewLines;
-  pastePreview.value = preview || "";
+  pastePreview.value = previewLines.length > 600 ? previewLines.slice(0, 600) + "…" : previewLines;
 }
 
 function closePasteModal(save){
@@ -730,31 +714,22 @@ function closePasteModal(save){
   pasteModalBackdrop.style.display = "none";
 }
 
-document.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape"){
-    toggleDrawer(false);
-    if(pasteModalBackdrop.style.display === "flex") closePasteModal(true);
-  }
-});
-
 async function copyToClipboard(text){
   try{ await navigator.clipboard.writeText(text); return true; }
   catch{ return false; }
 }
 
 /* -----------------------------
-   EMAIL BODY (INDENTED)
+   EMAIL BODY BUILDER
 ------------------------------ */
 function buildEmailBody(d){
   var DIV = "───────────────";
   var indent = "    ";
-  function rtrim(s){ s = (s == null) ? "" : String(s); return s.replace(/\s+$/g, ""); }
   function indentBlock(text){
-    var t = rtrim(text);
+    var t = (text || "").trim();
     if(!t) return "";
     return indent + t.replace(/\r?\n/g, "\r\n" + indent);
   }
-  var pasted = rtrim(d.pasteNotes || "");
   var lines = [
     "SHIFT INFO", DIV,
     "-Name: " + (d.name || ""),
@@ -777,66 +752,55 @@ function buildEmailBody(d){
     "", "Out of Chute Times", DIV, indentBlock(d.outOfChute),
     "", "Issues / Other Notes", DIV, indentBlock(d.issues)
   ];
-  if(pasted){
-    lines.push("", DIV, "PASTED NOTES", DIV, indentBlock(pasted));
+  if(d.pasteNotes){
+    lines.push("", DIV, "PASTED NOTES", DIV, indentBlock(d.pasteNotes));
   }
   return lines.join("\r\n");
 }
 
 /* -----------------------------
-   SEND EMAIL (FIXED)
+   SEND EMAIL (SUBJECT FIX)
 ------------------------------ */
 async function sendEmail(){
   const form = document.getElementById("shiftForm");
   const d = Object.fromEntries(new FormData(form).entries());
 
-  // 1. Build FULL report and copy to clipboard
   const fullBody = buildEmailBody(d);
   const copied = await copyToClipboard(fullBody);
 
-  // 2. Build SHORT summary for the mailto link to prevent crashes
   const shortBody = `*** FULL REPORT COPIED TO CLIPBOARD ***\r\n\r\n` +
-                    `Basic Info:\r\n` +
-                    `- Shift Report For: ${d.name || 'Not Set'}\r\n` +
-                    `- Date: ${d.date || 'Not Set'}\r\n\r\n` +
-                    `INSTRUCTIONS:\r\n` +
-                    `The report was too long to send automatically. \r\n` +
-                    `1. Click inside this email body.\r\n` +
-                    `2. Press Ctrl+V (or Paste) to insert the full report.`;
+                    `Click inside this email and press Ctrl+V to paste the full report.`;
 
-  // 3. Recipients (The "To" line)
+  // TO line
   let recipients = BASE_REPORT_EMAILS;
   
-  // 4. CC List (Starts with asanders, adds MEDSUP if found)
+  // CC line (hardcoded asanders + medsup map)
   let ccList = CC_EMAIL;
   if (d.medsup && MEDSUP_EMAIL_MAP[d.medsup]) {
     ccList += `, ${MEDSUP_EMAIL_MAP[d.medsup]}`;
   }
 
-  // UPDATED SUBJECT: Date comes first now
-  const subject = `${d.date || ''} C-Shift Shift Report`;
+  // --- SUBJECT LINE FIX ---
+  // If date is 2026-04-03, subject becomes: 2026-04-03 C-Shift Shift Report
+  const reportDate = d.date ? d.date : "NO-DATE";
+  const subjectLine = `${reportDate} C-Shift Shift Report`;
 
   showToast(copied 
     ? "COPIED! Now just PASTE (Ctrl+V) into the email." 
-    : "Error copying. Try reducing text size."
+    : "Report created. Clipboard error."
   );
 
-  // 5. Trigger the email
   window.location.href =
     `mailto:${encodeURIComponent(recipients)}` +
     `?cc=${encodeURIComponent(ccList)}` +
-    `&subject=${encodeURIComponent(subject)}` +
+    `&subject=${encodeURIComponent(subjectLine)}` +
     `&body=${encodeURIComponent(shortBody)}`;
 }
 
-/* -----------------------------
-   AUTOSAVE HOOKS
------------------------------- */
 function initAutosave(){
   const form = document.getElementById("shiftForm");
   restoreDraft();
   form.addEventListener("input", scheduleSave);
-  form.addEventListener("change", scheduleSave);
   window.addEventListener("beforeunload", saveDraftNow);
 }
 
