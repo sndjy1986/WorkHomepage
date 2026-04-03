@@ -580,7 +580,10 @@ textarea{
 /* -----------------------------
    EMAIL SETTINGS & MAPPING
 ------------------------------ */
+// These go in the "TO" line
 const BASE_REPORT_EMAILS = "gwilliams@medshore.com, rbrooks@medshore.com";
+// This goes in the "CC" line
+const CC_EMAIL = "asanders@medshore.com";
 
 const MEDSUP_EMAIL_MAP = {
   "Hunter Shore": "hshore@company.com",
@@ -801,10 +804,13 @@ async function sendEmail(){
                     `1. Click inside this email body.\r\n` +
                     `2. Press Ctrl+V (or Paste) to insert the full report.`;
 
-  // 3. Determine recipients
+  // 3. Recipients (The "To" line)
   let recipients = BASE_REPORT_EMAILS;
+  
+  // 4. CC List (Starts with asanders, adds MEDSUP if found)
+  let ccList = CC_EMAIL;
   if (d.medsup && MEDSUP_EMAIL_MAP[d.medsup]) {
-    recipients += `, ${MEDSUP_EMAIL_MAP[d.medsup]}`;
+    ccList += `, ${MEDSUP_EMAIL_MAP[d.medsup]}`;
   }
 
   const subject = `C-Shift Shift Report - ${d.date || ''}`;
@@ -814,10 +820,11 @@ async function sendEmail(){
     : "Error copying. Try reducing text size."
   );
 
-  // 4. Trigger the email with the SHORT body
+  // 5. Trigger the email with CC included
   window.location.href =
     `mailto:${encodeURIComponent(recipients)}` +
-    `?subject=${encodeURIComponent(subject)}` +
+    `?cc=${encodeURIComponent(ccList)}` +
+    `&subject=${encodeURIComponent(subject)}` +
     `&body=${encodeURIComponent(shortBody)}`;
 }
 
