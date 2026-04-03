@@ -580,9 +580,9 @@ textarea{
 /* -----------------------------
    EMAIL SETTINGS & MAPPING
 ------------------------------ */
-// These go in the "TO" line
+// Recipients in the "TO" line
 const BASE_REPORT_EMAILS = "gwilliams@medshore.com, rbrooks@medshore.com";
-// This goes in the "CC" line
+// Recipient in the "CC" line
 const CC_EMAIL = "asanders@medshore.com";
 
 const MEDSUP_EMAIL_MAP = {
@@ -813,14 +813,15 @@ async function sendEmail(){
     ccList += `, ${MEDSUP_EMAIL_MAP[d.medsup]}`;
   }
 
-  const subject = `C-Shift Shift Report - ${d.date || ''}`;
+  // UPDATED SUBJECT: Date comes first now
+  const subject = `${d.date || ''} C-Shift Shift Report`;
 
   showToast(copied 
     ? "COPIED! Now just PASTE (Ctrl+V) into the email." 
     : "Error copying. Try reducing text size."
   );
 
-  // 5. Trigger the email with CC included
+  // 5. Trigger the email
   window.location.href =
     `mailto:${encodeURIComponent(recipients)}` +
     `?cc=${encodeURIComponent(ccList)}` +
