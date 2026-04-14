@@ -13,6 +13,9 @@
       padding: 1.5rem;
       background: #0b0c10;
       color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     h1 { margin-bottom: 0.5rem; }
@@ -56,6 +59,13 @@
       transition: 0.15s;
     }
     button:hover { background: #1f6ad4; }
+    
+    /* DISABLED STATE */
+    button:disabled {
+      background: #444 !important;
+      color: #888 !important;
+      cursor: not-allowed;
+    }
 
     .status {
       margin-top: 0.75rem;
@@ -105,6 +115,26 @@
       border-radius: 0.75rem;
     }
 
+    footer {
+      margin-top: auto;
+      padding: 2rem 0;
+      text-align: center;
+      border-top: 1px solid #333;
+    }
+    .counter-box {
+      display: inline-block;
+      background: #1c1f2b;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #2c82ff;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    #api-usage-count {
+      color: #2c82ff;
+      font-weight: bold;
+    }
+
     #overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -126,13 +156,22 @@
   </style>
 </head>
 <body>
+
+  <div id="overlay">
+    <div class="popup">
+      <h2>Efficiency Mode Active</h2>
+      <p>Using Mapbox Matrix API. Batching unit requests to maintain free-tier access.</p>
+      <button onclick="closePopup()">Proceed</button>
+    </div>
+  </div>
+
   <h1>Unit Distance Checker</h1>
   <div class="subtitle">Driving distance and ETA from all EMS units.</div>
 
   <div class="card">
     <form id="address-form">
       <input id="address-input" type="text" placeholder="5531 Airport Rd. Anderson, SC 29625" />
-      <button type="submit">Check Distances</button>
+      <button id="search-button" type="submit">Check Distances</button>
     </form>
     <div id="status" class="status"></div>
 
@@ -164,14 +203,19 @@
     <div id="map"></div>
   </div>
 
+  <footer>
+    <div class="counter-box">
+      Total API Elements Used: <span id="api-usage-count">Loading...</span>
+    </div>
+  </footer>
+
 <script>
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnluNTlhajAzdTcyc3BvZnA2dHFlc2IifQ.i12KqohChX4CmRWYY3rrqA';
 mapboxgl.accessToken = MAPBOX_TOKEN;
-// Using URL Blocking to only accept requests from this address
+const API_LIMIT = 10000;
+
 function closePopup() { document.getElementById('overlay').style.display = 'none'; }
 
-// INSTRUCTIONS: For best performance, replace these addresses with [longitude, latitude] 
-// e.g., lng: -82.637, lat: 34.520. If left as strings, they use extra Geocoding credits.
 const TRANSPORT_UNITS = [
   { name: "Med-0", addr: "1009 N Fant St. Anderson, SC 29625" },
   { name: "Med-1", addr: "1009 N Fant St. Anderson, SC 29625" },
@@ -215,12 +259,68 @@ const QRV_UNITS = [
 
 let map, marker;
 
-// Helper to geocode an address string
+// Check if it is the 1st day of the month
+function isFirstDayOfMonth() {
+  return new Date().getDate() === 1;
+}
+
+// Logic to check usage and disable search if needed
+function checkUsageLimits(currentCount) {
+  const btn = document.getElementById('search-button');
+  
+  // If it's the 1st of the month, we ignore the limit (assuming backend resets it)
+  if (isFirstDayOfMonth()) {
+    btn.disabled = false;
+    btn.textContent = "Check Distances";
+    return;
+  }
+
+  if (currentCount >= API_LIMIT) {
+    btn.disabled = true;
+    btn.textContent = "Monthly Limit Reached";
+    document.getElementById('status').textContent = "API usage limit (10,000) reached for this month. Service resets on the 1st.";
+  } else {
+    btn.disabled = false;
+    btn.textContent = "Check Distances";
+  }
+}
+
+async function fetchCurrentCount() {
+  try {
+    const res = await fetch("https://api.sndjy.us/api/increment", { mode: "cors" });
+    const data = await res.json();
+    const count = data.count || 0;
+    document.getElementById('api-usage-count').textContent = count;
+    checkUsageLimits(count);
+  } catch (err) {
+    document.getElementById('api-usage-count').textContent = "Error";
+  }
+}
+fetchCurrentCount();
+
+async function incrementApiCounter(amount = 1) {
+  try {
+    const res = await fetch("https://api.sndjy.us/api/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ incrementBy: amount }),
+      mode: "cors",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('api-usage-count').textContent = data.count;
+      checkUsageLimits(data.count);
+    }
+  } catch (err) {
+    console.error("Counter Error:", err);
+  }
+}
+
 async function geocode(address) {
   const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`);
   const data = await res.json();
   if (!data.features || data.features.length === 0) throw new Error("Location not found");
-  return data.features[0].center; // [lng, lat]
+  return data.features[0].center;
 }
 
 document.getElementById("address-form").addEventListener("submit", async e => {
@@ -233,14 +333,15 @@ document.getElementById("address-form").addEventListener("submit", async e => {
 
   try {
     const destCoords = await geocode(address);
-
     status.textContent = "Calculating unit distances...";
 
-    // Batch process the units
     await Promise.all([
       processUnitGroup(TRANSPORT_UNITS, destCoords, "results-transport"),
       processUnitGroup(QRV_UNITS, destCoords, "results-qrv")
     ]);
+
+    const totalElementsUsed = 1 + TRANSPORT_UNITS.length + QRV_UNITS.length;
+    incrementApiCounter(totalElementsUsed);
 
     status.textContent = "Updates complete.";
     updateMap(destCoords);
@@ -251,9 +352,7 @@ document.getElementById("address-form").addEventListener("submit", async e => {
 });
 
 async function processUnitGroup(units, dest, tableId) {
-  // Convert unit addresses to coordinates if not already provided as [lng, lat]
   const unitCoords = await Promise.all(units.map(async u => {
-    if (u.lng && u.lat) return [u.lng, u.lat];
     return await geocode(u.addr);
   }));
 
@@ -268,8 +367,8 @@ async function processUnitGroup(units, dest, tableId) {
   const results = units.map((u, i) => ({
     name: u.name,
     addr: u.addr,
-    distance: (data.distances[0][i+1] * 0.000621371).toFixed(2), // to miles
-    duration: Math.round(data.durations[0][i+1] / 60) // to minutes
+    distance: (data.distances[0][i+1] * 0.000621371).toFixed(2),
+    duration: Math.round(data.durations[0][i+1] / 60)
   })).sort((a, b) => a.distance - b.distance);
 
   renderTable(results, tableId);
@@ -302,7 +401,6 @@ function updateMap(coords) {
   map.flyTo({ center: coords, zoom: 12 });
 }
 
-// UI Toggle Logic
 const btnList = document.getElementById("btn-list");
 const btnMap = document.getElementById("btn-map");
 btnList.onclick = () => { 
