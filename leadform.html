@@ -580,7 +580,7 @@ textarea{
 /* -----------------------------
    EMAIL SETTINGS & MAPPING
 ------------------------------ */
-const BASE_REPORT_EMAILS = "gwilliams@medshore.com, rbrooks@medshore.com";
+const BASE_REPORT_EMAILS_RAW = "gwilliams@medshore.com, rbrooks@medshore.com";
 const CC_EMAIL = "asanders@medshore.com";
 
 const MEDSUP_EMAIL_MAP = {
@@ -593,11 +593,11 @@ const MEDSUP_EMAIL_MAP = {
 };
 
 
-const outlookRecipientString = BASE_REPORT_EMAILS.replaceAll(',', ';');
-const totalOutlookRecipients = `${outlookRecipientString}; ${CC_EMAIL}`;
+const BASE_REPORT_EMAILS = BASE_REPORT_EMAILS_RAW.replace(/,/g, ';');
 
-console.log("Original:", BASE_REPORT_EMAILS);
-console.log("For Outlook:", totalOutlookRecipients);
+const FINAL_OUTLOOK_LIST = `${BASE_REPORT_EMAILS}; ${CC_EMAIL}`;
+
+console.log("Outlook Format:", FINAL_OUTLOOK_LIST);
 
 
 /* -----------------------------
