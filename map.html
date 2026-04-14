@@ -126,15 +126,6 @@
   </style>
 </head>
 <body>
-
-  <div id="overlay">
-    <div class="popup">
-      <h2>API Efficiency Active</h2>
-      <p>Using Mapbox Matrix API. All units are checked in two batch requests to save quota.</p>
-      <button onclick="closePopup()">Proceed</button>
-    </div>
-  </div>
-
   <h1>Unit Distance Checker</h1>
   <div class="subtitle">Driving distance and ETA from all EMS units.</div>
 
@@ -174,9 +165,9 @@
   </div>
 
 <script>
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnltZTczZjAzbzcycXB1MGh3bDlidnkifQ.cIry8aHOrGSwx-2pZeA09Q';
+const MAPBOX_TOKEN = 'sk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnlteDJiNTAzbnQyd3E0a3cyejYzeDcifQ.jFIm1m1HGBOs-lrGCB0Dyw';
 mapboxgl.accessToken = MAPBOX_TOKEN;
-
+// Using URL Blocking to only accept requests from this address
 function closePopup() { document.getElementById('overlay').style.display = 'none'; }
 
 // INSTRUCTIONS: For best performance, replace these addresses with [longitude, latitude] 
