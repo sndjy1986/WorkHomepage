@@ -592,6 +592,14 @@ const MEDSUP_EMAIL_MAP = {
   "Matthew Dean": "mdean@company.com"
 };
 
+
+const outlookRecipientString = BASE_REPORT_EMAILS.replaceAll(',', ';');
+const totalOutlookRecipients = `${outlookRecipientString}; ${CC_EMAIL}`;
+
+console.log("Original:", BASE_REPORT_EMAILS);
+console.log("For Outlook:", totalOutlookRecipients);
+
+
 /* -----------------------------
    LOCAL STORAGE (PAGE DRAFT)
 ------------------------------ */
