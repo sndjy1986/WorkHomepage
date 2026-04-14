@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Unit Distance Checker + Map Routes</title>
+  <title>Unit Distance Checker + Mapbox</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -42,7 +44,6 @@
       background: #0e1017;
       color: #f5f5f5;
     }
-    input::placeholder { color: #777; }
 
     button {
       padding: 0.6rem 1.1rem;
@@ -61,7 +62,6 @@
       min-height: 1.2rem;
     }
 
-    /* VIEW TOGGLE */
     .view-toggle {
       margin: 1rem 0;
       background: #11131b;
@@ -105,23 +105,6 @@
       border-radius: 0.75rem;
     }
 
-    .layer-toggle {
-      margin: 0.5rem 0 0.75rem;
-      font-size: 0.85rem;
-      color: #ccc;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem 1.5rem;
-    }
-    .layer-toggle label {
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      user-select: none;
-    }
-
-    /* POPUP STYLES */
     #overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -138,27 +121,22 @@
       max-width: 400px;
       text-align: center;
       border: 1px solid #2c82ff;
-      box-shadow: 0 0 20px rgba(44, 130, 255, 0.3);
     }
-    .popup h2 { color: #2c82ff; margin-top: 0; }
-    .popup p { line-height: 1.5; color: #ddd; }
     .popup button { margin-top: 1rem; width: 100%; }
   </style>
 </head>
-
 <body>
 
   <div id="overlay">
     <div class="popup">
-      <h2>API Usage Notice</h2>
-      <p>Everytime you click search, it completed 35 different searches, We only get so many free per month. Please use sparingly. I am in the process of getting it restored.</p>
-      <p><strong>Thank You</strong></p>
-      <button onclick="closePopup()">I Understand</button>
+      <h2>API Efficiency Active</h2>
+      <p>Using Mapbox Matrix API. All units are checked in two batch requests to save quota.</p>
+      <button onclick="closePopup()">Proceed</button>
     </div>
   </div>
 
   <h1>Unit Distance Checker</h1>
-  <div class="subtitle">Driving distance, ETA, and map routes from all EMS units.</div>
+  <div class="subtitle">Driving distance and ETA from all EMS units.</div>
 
   <div class="card">
     <form id="address-form">
@@ -177,7 +155,7 @@
     <div class="card" style="flex:1;">
       <h2>Transport Trucks</h2>
       <table id="results-transport" style="display:none;">
-        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
+        <thead><tr><th>Unit</th><th>Address</th><th>Distance</th><th>ETA</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -185,222 +163,125 @@
     <div class="card" style="flex:1;">
       <h2>QRV Paramedics</h2>
       <table id="results-qrv" style="display:none;">
-        <thead><tr><th>Unit</th><th>Post</th><th>Distance</th><th>ETA</th></tr></thead>
+        <thead><tr><th>Unit</th><th>Address</th><th>Distance</th><th>ETA</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
   </div>
 
   <div id="map-view" class="card">
-    <h2>Map View</h2>
-    <p style="color:#aaa;font-size:0.85rem;">Call location + units + routes + EMS layers</p>
-
-    <div class="layer-toggle">
-      <label><input type="checkbox" id="toggle-paramedic-areas" checked /> Paramedic Areas</label>
-      <label><input type="checkbox" id="toggle-posting-locations" checked /> Posting Locations</label>
-      <label><input type="checkbox" id="toggle-transport-trucks" checked /> Transport Trucks</label>
-      <label><input type="checkbox" id="toggle-transport-areas" checked /> Transport Areas</label>
-      <label><input type="checkbox" id="toggle-medshore-qrv" checked /> Medshore QRV</label>
-      <label><input type="checkbox" id="toggle-als-trucks" checked /> ALS Trucks</label>
-      <label><input type="checkbox" id="toggle-fire-departments" /> Fire Departments</label>
-    </div>
-
     <div id="map"></div>
   </div>
 
 <script>
-/* POPUP CONTROL */
-function closePopup() {
-  document.getElementById('overlay').style.display = 'none';
-}
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnltZTczZjAzbzcycXB1MGh3bDlidnkifQ.cIry8aHOrGSwx-2pZeA09Q';
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
-/* API Counter Code - UPDATED TO TRACK ELEMENTS */
-async function incrementApiCounter(amount = 1) {
-  try {
-    const res = await fetch("https://api.sndjy.us/api/increment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ incrementBy: amount }), // Tell your backend to add the specific amount
-      mode: "cors",
-    });
-    if (!res.ok) {
-      console.error("API counter increment failed");
-      return;
-    }
-    const data = await res.json();
-    console.log("Total API Elements used:", data.count);
-  } catch (err) {
-    console.error("Error calling /api/increment:", err);
-  }
-}
+function closePopup() { document.getElementById('overlay').style.display = 'none'; }
 
-const MAPDATA_URL = "https://raw.githubusercontent.com/sndjy1986/WorkHomepage/refs/heads/main/mapdata.json";
-
-const FOLDER_TITLE_TO_LAYER = {
-  "Paramedic Area's": "paramedicAreas",
-  "Posting Locations": "postingLocations",
-  "Transport Trucks": "transportTrucks",
-  "Transport Area's": "transportAreas",
-  "Medshore QRV": "medshoreQRV",
-  "ALS Trucks": "alsTrucks",
-  "Fire Departments": "fireDepartments",
-};
-
+// INSTRUCTIONS: For best performance, replace these addresses with [longitude, latitude] 
+// e.g., lng: -82.637, lat: 34.520. If left as strings, they use extra Geocoding credits.
 const TRANSPORT_UNITS = [
-  { name: "Med-0", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-1", address: "1009 N Fant St. Anderson, SC 29625" },
-  { name: "Med-2", address: "135 HWY 413, Belton SC 29627" },
-  { name: "Med-3", address: "3228 S Main St, Anderson, SC 29624" },
-  { name: "Med-4", address: "902 Anderson Dr. Williamston SC 29697" },
-  { name: "Med-5", address: "2850 Concord Rd Anderson SC 29621" },
-  { name: "Med-6", address: "9711 SC-81, Iva SC 29655" },
-  { name: "Med-7", address: "108 N Depot St Pendleton SC 29670" },
-  { name: "Med-8", address: "8508 SC-24 Townville SC 29689" },
-  { name: "Med-9", address: "103 Construction Way Anderson SC 29625" },
-  { name: "Med-10", address: "1009 N Fant St Anderson SC 29625" },
-  { name: "Med-11", address: "1009 N Fant St Anderson SC 29625" },
-  { name: "Med-12", address: "1009 N Fant St Anderson SC 29625" },
-  { name: "Med-13", address: "6 Gaines Rd Honea Path SC 29654" },
-  { name: "Med-14", address: "10600 Anderson Rd Easley SC 29642" },
-  { name: "Med-15", address: "2209 SC-86 Piedmont SC 29673" },
-  { name: "Med-16", address: "1009 N Fant St Anderson SC 29625" },
-  { name: "Med-17", address: "1009 N Fant St Anderson SC 29625" },
-  { name: "Med-18", address: "1009 N Fant St Anderson SC 29625" },
-  { name: "Med-19", address: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-0", addr: "1009 N Fant St. Anderson, SC 29625" },
+  { name: "Med-1", addr: "1009 N Fant St. Anderson, SC 29625" },
+  { name: "Med-2", addr: "135 HWY 413, Belton SC 29627" },
+  { name: "Med-3", addr: "3228 S Main St, Anderson, SC 29624" },
+  { name: "Med-4", addr: "902 Anderson Dr. Williamston SC 29697" },
+  { name: "Med-5", addr: "2850 Concord Rd Anderson SC 29621" },
+  { name: "Med-6", addr: "9711 SC-81, Iva SC 29655" },
+  { name: "Med-7", addr: "108 N Depot St Pendleton SC 29670" },
+  { name: "Med-8", addr: "8508 SC-24 Townville SC 29689" },
+  { name: "Med-9", addr: "103 Construction Way Anderson SC 29625" },
+  { name: "Med-10", addr: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-11", addr: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-12", addr: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-13", addr: "6 Gaines Rd Honea Path SC 29654" },
+  { name: "Med-14", addr: "10600 Anderson Rd Easley SC 29642" },
+  { name: "Med-15", addr: "2209 SC-86 Piedmont SC 29673" },
+  { name: "Med-16", addr: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-17", addr: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-18", addr: "1009 N Fant St Anderson SC 29625" },
+  { name: "Med-19", addr: "1009 N Fant St Anderson SC 29625" }
 ];
 
 const QRV_UNITS = [
-  { name: "A-5",  address: "103 Construction Way Anderson SC 29625" },
-  { name: "A-8",  address: "1009 N Fant St Anderson SC 29625" },
-  { name: "ALS-2", address: "5321 US-76 Pendleton SC 29670" },
-  { name: "ALS-3", address: "3228 S Main St Anderson SC 29624" },
-  { name: "ALS-4", address: "7715 SC-81 Starr SC 29684" },
-  { name: "ALS-6", address: "101 Main St Pelzer SC 29669" },
-  { name: "ALS-7", address: "10600 Anderson Rd Easley SC 29642" },
-  { name: "ALS-11", address: "5125 Dobbins Bridge Rd Anderson SC 29626" },
-  { name: "ALS-12", address: "1 Holmes St Belton SC 29627" },
-  { name: "ALS-17", address: "316 Hattons Ford Rd Townville SC 29689" },
-  { name: "ALS-19", address: "1058 Martin Rd Anderson SC 29621" },
-  { name: "ALS-21", address: "1118 Trail Rd Honea Path SC 29654" },
-  { name: "ALS-23", address: "1416 Due West Hwy Anderson SC 29621" },
-  { name: "ALS-24", address: "2209 SC-86 Piedmont SC 29673" },
-  { name: "ALS-27", address: "3738 SC-187 Anderson SC 29626" }
+  { name: "A-5",  addr: "103 Construction Way Anderson SC 29625" },
+  { name: "A-8",  addr: "1009 N Fant St Anderson SC 29625" },
+  { name: "ALS-2", addr: "5321 US-76 Pendleton SC 29670" },
+  { name: "ALS-3", addr: "3228 S Main St Anderson SC 29624" },
+  { name: "ALS-4", addr: "7715 SC-81 Starr SC 29684" },
+  { name: "ALS-6", addr: "101 Main St Pelzer SC 29669" },
+  { name: "ALS-7", addr: "10600 Anderson Rd Easley SC 29642" },
+  { name: "ALS-11", addr: "5125 Dobbins Bridge Rd Anderson SC 29626" },
+  { name: "ALS-12", addr: "1 Holmes St Belton SC 29627" },
+  { name: "ALS-17", addr: "316 Hattons Ford Rd Townville SC 29689" },
+  { name: "ALS-19", addr: "1058 Martin Rd Anderson SC 29621" },
+  { name: "ALS-21", addr: "1118 Trail Rd Honea Path SC 29654" },
+  { name: "ALS-23", addr: "1416 Due West Hwy Anderson SC 29621" },
+  { name: "ALS-24", addr: "2209 SC-86 Piedmont SC 29673" },
+  { name: "ALS-27", addr: "3738 SC-187 Anderson SC 29626" }
 ];
 
-let geocoder;
-let distanceMatrix;
-let map;
-let markers = [];
-let directionsRenderers = [];
-let lastDestination = null;
-let transportResults = [];
-let qrvResults = [];
+let map, marker;
 
-let rawFeatures = [];
-let folderById = {};
-let layerSourceFeatures = {
-  paramedicAreas: [], postingLocations: [], transportTrucks: [],
-  transportAreas: [], medshoreQRV: [], alsTrucks: [], fireDepartments: []
-};
-
-let layerObjects = {
-  paramedicAreas: [], postingLocations: [], transportTrucks: [],
-  transportAreas: [], medshoreQRV: [], alsTrucks: [], fireDepartments: []
-};
-
-let layerEnabled = {
-  paramedicAreas: true, postingLocations: true, transportTrucks: true,
-  transportAreas: true, medshoreQRV: true, alsTrucks: true, fireDepartments: false
-};
-
-function initMapsServices() {
-  geocoder = new google.maps.Geocoder();
-  distanceMatrix = new google.maps.DistanceMatrixService();
+// Helper to geocode an address string
+async function geocode(address) {
+  const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`);
+  const data = await res.json();
+  if (!data.features || data.features.length === 0) throw new Error("Location not found");
+  return data.features[0].center; // [lng, lat]
 }
 
-fetch(MAPDATA_URL)
-  .then(r => r.json())
-  .then(data => {
-    if (!data || !Array.isArray(data.features)) return;
-    rawFeatures = data.features;
-    rawFeatures.forEach(f => {
-      if (f.properties && f.properties.class === "Folder") folderById[f.id] = f.properties.title;
-    });
-    rawFeatures.forEach(f => {
-      if (!f.geometry) return;
-      const key = FOLDER_TITLE_TO_LAYER[folderById[f.properties.folderId]];
-      if (key) layerSourceFeatures[key].push(f);
-    });
-    initializeLayersIfReady();
-  });
-
-const btnList = document.getElementById("btn-list");
-const btnMap = document.getElementById("btn-map");
-const listView = document.getElementById("list-view");
-const mapView = document.getElementById("map-view");
-
-btnList.onclick = () => {
-  listView.style.display = "flex";
-  mapView.style.display = "none";
-  btnList.classList.add("active");
-  btnMap.classList.remove("active");
-};
-
-btnMap.onclick = () => {
-  listView.style.display = "none";
-  mapView.style.display = "block";
-  btnMap.classList.add("active");
-  btnList.classList.remove("active");
-  setTimeout(() => initOrUpdateMap(), 50);
-};
-
-/* ADDRESS SEARCH */
-document.getElementById("address-form").addEventListener("submit", e => {
+document.getElementById("address-form").addEventListener("submit", async e => {
   e.preventDefault();
   const address = document.getElementById("address-input").value.trim();
   const status = document.getElementById("status");
-
   if (!address) return;
-  status.textContent = "Locating address...";
 
-  geocoder.geocode({ address }, (results, code) => {
-    if (code !== "OK") { status.textContent = "Error."; return; }
-    lastDestination = results[0].geometry.location;
+  status.textContent = "Locating call address...";
 
-    // UPDATE COUNTER: 1 Geocode + 20 Transports + 15 QRVs = 36 items
-    incrementApiCounter(36);
+  try {
+    const destCoords = await geocode(address);
 
-    transportResults = [];
-    qrvResults = [];
-    calculateGroup(TRANSPORT_UNITS, "results-transport", transportResults);
-    calculateGroup(QRV_UNITS, "results-qrv", qrvResults);
-    status.textContent = "Closest units highlighted.";
-  });
+    status.textContent = "Calculating unit distances...";
+
+    // Batch process the units
+    await Promise.all([
+      processUnitGroup(TRANSPORT_UNITS, destCoords, "results-transport"),
+      processUnitGroup(QRV_UNITS, destCoords, "results-qrv")
+    ]);
+
+    status.textContent = "Updates complete.";
+    updateMap(destCoords);
+
+  } catch (err) {
+    status.textContent = "Error: " + err.message;
+  }
 });
 
-function calculateGroup(units, tableId, store) {
-  distanceMatrix.getDistanceMatrix({
-    origins: units.map(u => u.address),
-    destinations: [lastDestination],
-    travelMode: google.maps.TravelMode.DRIVING,
-    unitSystem: google.maps.UnitSystem.IMPERIAL
-  }, (res, status) => {
-    if (status !== "OK") return;
-    const rows = res.rows;
-    const results = [];
-    for (let i = 0; i < rows.length; i++) {
-      const el = rows[i].elements[0];
-      results.push({
-        unit: units[i],
-        distanceText: el.status === "OK" ? el.distance.text : "N/A",
-        durationText: el.status === "OK" ? el.duration.text : "N/A",
-        distanceValue: el.status === "OK" ? el.distance.value : Infinity
-      });
-    }
-    results.sort((a, b) => a.distanceValue - b.distanceValue);
-    store.push(...results);
-    renderTable(results, tableId);
-  });
+async function processUnitGroup(units, dest, tableId) {
+  // Convert unit addresses to coordinates if not already provided as [lng, lat]
+  const unitCoords = await Promise.all(units.map(async u => {
+    if (u.lng && u.lat) return [u.lng, u.lat];
+    return await geocode(u.addr);
+  }));
+
+  const coordString = [dest.join(','), ...unitCoords.map(c => c.join(','))].join(';');
+  const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordString}?sources=0&annotations=distance,duration&access_token=${MAPBOX_TOKEN}`;
+  
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data.code !== 'Ok') throw new Error("Matrix calculation failed");
+
+  const results = units.map((u, i) => ({
+    name: u.name,
+    addr: u.addr,
+    distance: (data.distances[0][i+1] * 0.000621371).toFixed(2), // to miles
+    duration: Math.round(data.durations[0][i+1] / 60) // to minutes
+  })).sort((a, b) => a.distance - b.distance);
+
+  renderTable(results, tableId);
 }
 
 function renderTable(results, tableId) {
@@ -410,27 +291,40 @@ function renderTable(results, tableId) {
   results.forEach((r, i) => {
     const row = document.createElement("tr");
     if (i === 0) row.classList.add("highlight");
-    row.innerHTML = `<td>${r.unit.name}</td><td>${r.unit.address}</td><td>${r.distanceText}</td><td>${r.durationText}</td>`;
+    row.innerHTML = `<td>${r.name}</td><td>${r.addr}</td><td>${r.distance} mi</td><td>${r.duration} mins</td>`;
     tbody.appendChild(row);
   });
   table.style.display = "table";
 }
 
-function initOrUpdateMap() {
-  if (!lastDestination) return;
-  map = new google.maps.Map(document.getElementById("map"), { center: lastDestination, zoom: 11 });
-  new google.maps.Marker({ position: lastDestination, map, title: "Call" });
-  initializeLayersIfReady();
+function updateMap(coords) {
+  if (!map) {
+    map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v11',
+      center: coords,
+      zoom: 11
+    });
+  }
+  if (marker) marker.remove();
+  marker = new mapboxgl.Marker({ color: '#2c82ff' }).setLngLat(coords).addTo(map);
+  map.flyTo({ center: coords, zoom: 12 });
 }
 
-function initializeLayersIfReady() { if (map && rawFeatures.length) refreshAllLayers(); }
-function refreshAllLayers() { /* (Internal Layer Logic) */ }
-function setLayerVisibility(key, enabled) { /* (Internal Toggle Logic) */ }
-
-</script>
-
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMapsServices">
+// UI Toggle Logic
+const btnList = document.getElementById("btn-list");
+const btnMap = document.getElementById("btn-map");
+btnList.onclick = () => { 
+  document.getElementById("list-view").style.display = "flex"; 
+  document.getElementById("map-view").style.display = "none"; 
+  btnList.classList.add("active"); btnMap.classList.remove("active"); 
+};
+btnMap.onclick = () => { 
+  document.getElementById("list-view").style.display = "none"; 
+  document.getElementById("map-view").style.display = "block"; 
+  btnMap.classList.add("active"); btnList.classList.remove("active"); 
+  if(map) map.resize(); 
+};
 </script>
 
 </body>
