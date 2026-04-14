@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Unit Distance Checker + Mapbox</title>
+  <title>Unit Distance Checker | Mapbox Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -19,7 +21,11 @@
     }
 
     h1 { margin-bottom: 0.5rem; }
-    .subtitle { margin-bottom: 1.5rem; color: #c7c7c7; font-size: 0.95rem; }
+    .subtitle {
+      margin-bottom: 1.5rem;
+      color: #c7c7c7;
+      font-size: 0.95rem;
+    }
 
     .card {
       background: #151821;
@@ -29,7 +35,12 @@
       margin-bottom: 1.25rem;
     }
 
-    form { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    form {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
     input[type="text"] {
       flex: 1;
       padding: 0.6rem 0.8rem;
@@ -38,6 +49,7 @@
       background: #0e1017;
       color: #f5f5f5;
     }
+    input::placeholder { color: #777; }
 
     button {
       padding: 0.6rem 1.1rem;
@@ -58,8 +70,13 @@
       border: 1px solid #444;
     }
 
-    .status { margin-top: 0.75rem; min-height: 1.2rem; }
+    .status {
+      margin-top: 0.75rem;
+      min-height: 1.2rem;
+      font-size: 0.9rem;
+    }
 
+    /* VIEW TOGGLE */
     .view-toggle {
       margin: 1rem 0;
       background: #11131b;
@@ -80,30 +97,30 @@
     #list-view { display: flex; gap: 1.25rem; flex-wrap: wrap; }
     #map-view { display: none; }
 
-    table { width: 100%; margin-top: 0.75rem; border-collapse: collapse; font-size: 0.9rem; }
-    th { text-align: left; padding-bottom: 0.4rem; border-bottom: 1px solid #333; font-size: 0.75rem; text-transform: uppercase; color: #c7c7c7; }
+    table {
+      width: 100%;
+      margin-top: 0.75rem;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th {
+      text-align: left;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #333;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #c7c7c7;
+    }
     td { padding: 0.45rem 0.25rem; }
     tr.highlight td { background: rgba(44,130,255,0.15); }
 
-    #map { width: 100%; height: 450px; border-radius: 0.75rem; }
-
-    footer {
-      margin-top: auto;
-      padding: 2rem 0;
-      text-align: center;
-      border-top: 1px solid #333;
+    #map {
+      width: 100%;
+      height: 450px;
+      border-radius: 0.75rem;
     }
-    .counter-box {
-      display: inline-block;
-      background: #1c1f2b;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid #2c82ff;
-      font-family: monospace;
-      font-size: 0.9rem;
-    }
-    #api-usage-count { color: #2c82ff; font-weight: bold; }
 
+    /* POPUP STYLES */
     #overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -120,22 +137,47 @@
       max-width: 400px;
       text-align: center;
       border: 1px solid #2c82ff;
+      box-shadow: 0 0 20px rgba(44, 130, 255, 0.3);
     }
+    .popup h2 { color: #2c82ff; margin-top: 0; }
+    .popup p { line-height: 1.5; color: #ddd; }
     .popup button { margin-top: 1rem; width: 100%; }
+
+    /* FOOTER COUNTER */
+    footer {
+      margin-top: auto;
+      padding: 2rem 0;
+      text-align: center;
+      border-top: 1px solid #333;
+    }
+    .counter-box {
+      display: inline-block;
+      background: #1c1f2b;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #2c82ff;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    #api-usage-count {
+      color: #2c82ff;
+      font-weight: bold;
+    }
   </style>
 </head>
+
 <body>
 
   <div id="overlay">
     <div class="popup">
-      <h2>System Initialization</h2>
-      <p>Usage is tracked by total API elements. Monthly limit: 10,000.</p>
-      <button onclick="closePopup()">Enter Dashboard</button>
+      <h2>Global Usage Notice</h2>
+      <p>Usage is tracked centrally across all dispatch terminals. The monthly limit is 10,000 elements, resetting on the 1st of each month.</p>
+      <button onclick="closePopup()">Acknowledge</button>
     </div>
   </div>
 
   <h1>Unit Distance Checker</h1>
-  <div class="subtitle">Driving distance and ETA from all EMS units.</div>
+  <div class="subtitle">Driving distance, ETA, and map routes from all EMS units.</div>
 
   <div class="card">
     <form id="address-form">
@@ -174,16 +216,20 @@
 
   <footer>
     <div class="counter-box">
-      Monthly Consumption: <span id="api-usage-count">...</span> / 10,000
+      Global Monthly Usage: <span id="api-usage-count">...</span> / 10,000
     </div>
   </footer>
 
 <script>
+/* CONFIGURATION */
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnluNTlhajAzdTcyc3BvZnA2dHFlc2IifQ.i12KqohChX4CmRWYY3rrqA';
 mapboxgl.accessToken = MAPBOX_TOKEN;
 const API_LIMIT = 10000;
+const COUNTER_API = "https://api.sndjy.us/api/increment";
 
-function closePopup() { document.getElementById('overlay').style.display = 'none'; }
+function closePopup() {
+  document.getElementById('overlay').style.display = 'none';
+}
 
 const TRANSPORT_UNITS = [
   { name: "Med-0", addr: "1009 N Fant St. Anderson, SC 29625" },
@@ -228,6 +274,7 @@ const QRV_UNITS = [
 
 let map, marker;
 
+/* KILL SWITCH & COUNTER LOGIC */
 function updateUIUsage(currentCount) {
   const btn = document.getElementById('search-button');
   const countSpan = document.getElementById('api-usage-count');
@@ -236,32 +283,30 @@ function updateUIUsage(currentCount) {
   const isFirstDay = new Date().getDate() === 1;
   if (currentCount >= API_LIMIT && !isFirstDay) {
     btn.disabled = true;
-    btn.textContent = "Limit Reached";
+    btn.textContent = "Global Limit Reached";
+    document.getElementById('status').innerHTML = "<b style='color:#ff4d4d;'>Monthly budget exhausted. Service resumes on the 1st.</b>";
   } else {
     btn.disabled = false;
     btn.textContent = "Check Distances";
   }
 }
 
-// FETCH: Uses GET so it doesn't trigger an increment on refresh
-async function fetchCount() {
+// FETCH: Uses GET to read data without triggering increment on refresh
+async function fetchCurrentUsage() {
   try {
-    const res = await fetch("https://api.sndjy.us/api/increment", { 
-        method: "GET", 
-        mode: "cors" 
-    });
+    const res = await fetch(COUNTER_API, { method: "GET", mode: "cors" });
     const data = await res.json();
     updateUIUsage(data.count || 0);
   } catch (err) {
-    console.error("Read failed");
+    console.error("Counter Read Failed:", err);
+    document.getElementById('api-usage-count').textContent = "Error";
   }
 }
-fetchCount();
 
-// INCREMENT: Uses POST to actually add the cost
+// INCREMENT: Uses POST to add specific usage amounts to the database
 async function incrementUsage(amount) {
   try {
-    const res = await fetch("https://api.sndjy.us/api/increment", {
+    const res = await fetch(COUNTER_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ incrementBy: amount }),
@@ -270,15 +315,17 @@ async function incrementUsage(amount) {
     const data = await res.json();
     updateUIUsage(data.count);
   } catch (err) {
-    console.error("Write failed");
+    console.error("Counter Update Failed:", err);
   }
 }
 
+/* MAPPING & SEARCH LOGIC */
 async function geocode(address) {
-  const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`);
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`;
+  const res = await fetch(url);
   const data = await res.json();
-  if (!data.features?.length) throw new Error("Location not found");
-  return data.features[0].center;
+  if (!data.features || data.features.length === 0) throw new Error("Location not found");
+  return data.features[0].center; // [lng, lat]
 }
 
 document.getElementById("address-form").addEventListener("submit", async e => {
@@ -287,21 +334,23 @@ document.getElementById("address-form").addEventListener("submit", async e => {
   const status = document.getElementById("status");
   if (!address) return;
 
-  status.textContent = "Calculating...";
+  status.textContent = "Locating destination...";
 
   try {
     const destCoords = await geocode(address);
-    
+    status.textContent = "Calculating routes...";
+
+    // Run Matrix for both groups
     await Promise.all([
       processUnitGroup(TRANSPORT_UNITS, destCoords, "results-transport"),
       processUnitGroup(QRV_UNITS, destCoords, "results-qrv")
     ]);
 
-    // COST: 1 Geocode + 35 Matrix Elements = 36
-    const callCost = 1 + TRANSPORT_UNITS.length + QRV_UNITS.length;
-    incrementUsage(callCost);
+    // COST CALCULATION: 1 Destination Geocode + 35 Units = 36 total elements
+    const totalCost = 1 + TRANSPORT_UNITS.length + QRV_UNITS.length;
+    incrementUsage(totalCost);
 
-    status.textContent = "Success.";
+    status.textContent = "Closest units identified.";
     updateMap(destCoords);
 
   } catch (err) {
@@ -310,18 +359,26 @@ document.getElementById("address-form").addEventListener("submit", async e => {
 });
 
 async function processUnitGroup(units, dest, tableId) {
+  // Geocode all unit addresses for coordinates
   const unitCoords = await Promise.all(units.map(u => geocode(u.addr)));
-  const coords = [dest.join(','), ...unitCoords.map(c => c.join(','))].join(';');
-  const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coords}?sources=0&annotations=distance,duration&access_token=${MAPBOX_TOKEN}`;
+  
+  // Format coordinate string: destination;unit1;unit2...
+  const coordString = [dest.join(','), ...unitCoords.map(c => c.join(','))].join(';');
+  
+  // Call Mapbox Matrix API (driving profile)
+  const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordString}?sources=0&annotations=distance,duration&access_token=${MAPBOX_TOKEN}`;
   
   const res = await fetch(url);
   const data = await res.json();
 
+  if (data.code !== 'Ok') throw new Error("Calculation failure");
+
+  // Map results back to unit objects and sort by distance
   const results = units.map((u, i) => ({
     name: u.name,
     addr: u.addr,
-    distance: (data.distances[0][i+1] * 0.000621371).toFixed(2),
-    duration: Math.round(data.durations[0][i+1] / 60)
+    distance: (data.distances[0][i+1] * 0.000621371).toFixed(2), // meters to miles
+    duration: Math.round(data.durations[0][i+1] / 60) // seconds to minutes
   })).sort((a, b) => a.distance - b.distance);
 
   renderTable(results, tableId);
@@ -354,6 +411,7 @@ function updateMap(coords) {
   map.flyTo({ center: coords, zoom: 12 });
 }
 
+/* UI INTERACTION */
 const btnList = document.getElementById("btn-list");
 const btnMap = document.getElementById("btn-map");
 btnList.onclick = () => { 
@@ -367,6 +425,10 @@ btnMap.onclick = () => {
   btnMap.classList.add("active"); btnList.classList.remove("active"); 
   if(map) map.resize(); 
 };
+
+// Initial state load
+fetchCurrentUsage();
 </script>
+
 </body>
 </html>
