@@ -19,11 +19,7 @@
     }
 
     h1 { margin-bottom: 0.5rem; }
-    .subtitle {
-      margin-bottom: 1.5rem;
-      color: #c7c7c7;
-      font-size: 0.95rem;
-    }
+    .subtitle { margin-bottom: 1.5rem; color: #c7c7c7; font-size: 0.95rem; }
 
     .card {
       background: #151821;
@@ -33,12 +29,7 @@
       margin-bottom: 1.25rem;
     }
 
-    form {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-
+    form { display: flex; gap: 0.75rem; flex-wrap: wrap; }
     input[type="text"] {
       flex: 1;
       padding: 0.6rem 0.8rem;
@@ -60,17 +51,14 @@
     }
     button:hover { background: #1f6ad4; }
     
-    /* DISABLED STATE */
     button:disabled {
-      background: #444 !important;
-      color: #888 !important;
+      background: #333 !important;
+      color: #666 !important;
       cursor: not-allowed;
+      border: 1px solid #444;
     }
 
-    .status {
-      margin-top: 0.75rem;
-      min-height: 1.2rem;
-    }
+    .status { margin-top: 0.75rem; min-height: 1.2rem; }
 
     .view-toggle {
       margin: 1rem 0;
@@ -92,28 +80,12 @@
     #list-view { display: flex; gap: 1.25rem; flex-wrap: wrap; }
     #map-view { display: none; }
 
-    table {
-      width: 100%;
-      margin-top: 0.75rem;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-    th {
-      text-align: left;
-      padding-bottom: 0.4rem;
-      border-bottom: 1px solid #333;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      color: #c7c7c7;
-    }
+    table { width: 100%; margin-top: 0.75rem; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding-bottom: 0.4rem; border-bottom: 1px solid #333; font-size: 0.75rem; text-transform: uppercase; color: #c7c7c7; }
     td { padding: 0.45rem 0.25rem; }
     tr.highlight td { background: rgba(44,130,255,0.15); }
 
-    #map {
-      width: 100%;
-      height: 450px;
-      border-radius: 0.75rem;
-    }
+    #map { width: 100%; height: 450px; border-radius: 0.75rem; }
 
     footer {
       margin-top: auto;
@@ -130,10 +102,7 @@
       font-family: monospace;
       font-size: 0.9rem;
     }
-    #api-usage-count {
-      color: #2c82ff;
-      font-weight: bold;
-    }
+    #api-usage-count { color: #2c82ff; font-weight: bold; }
 
     #overlay {
       position: fixed;
@@ -159,9 +128,9 @@
 
   <div id="overlay">
     <div class="popup">
-      <h2>Efficiency Mode Active</h2>
-      <p>We are only allowed a set number of "Free" searches a month. Each time you hit "Search", it looks up the address and EACH truck. That is 35+ searches each time you hit search. Please, use sparingly. It will lock you out when the limit is reached.</p>
-      <button onclick="closePopup()">Proceed</button>
+      <h2>System Initialization</h2>
+      <p>Usage is tracked by total API elements. Monthly limit: 10,000.</p>
+      <button onclick="closePopup()">Enter Dashboard</button>
     </div>
   </div>
 
@@ -205,7 +174,7 @@
 
   <footer>
     <div class="counter-box">
-      Total API Elements Used: <span id="api-usage-count">Loading...</span>
+      Monthly Consumption: <span id="api-usage-count">...</span> / 10,000
     </div>
   </footer>
 
@@ -259,46 +228,38 @@ const QRV_UNITS = [
 
 let map, marker;
 
-// Check if it is the 1st day of the month
-function isFirstDayOfMonth() {
-  return new Date().getDate() === 1;
-}
-
-// Logic to check usage and disable search if needed
-function checkUsageLimits(currentCount) {
+function updateUIUsage(currentCount) {
   const btn = document.getElementById('search-button');
-  
-  // If it's the 1st of the month, we ignore the limit (assuming backend resets it)
-  if (isFirstDayOfMonth()) {
-    btn.disabled = false;
-    btn.textContent = "Check Distances";
-    return;
-  }
+  const countSpan = document.getElementById('api-usage-count');
+  countSpan.textContent = currentCount.toLocaleString();
 
-  if (currentCount >= API_LIMIT) {
+  const isFirstDay = new Date().getDate() === 1;
+  if (currentCount >= API_LIMIT && !isFirstDay) {
     btn.disabled = true;
-    btn.textContent = "Monthly Limit Reached";
-    document.getElementById('status').textContent = "API usage limit (10,000) reached for this month. Service resets on the 1st.";
+    btn.textContent = "Limit Reached";
   } else {
     btn.disabled = false;
     btn.textContent = "Check Distances";
   }
 }
 
-async function fetchCurrentCount() {
+// FETCH: Uses GET so it doesn't trigger an increment on refresh
+async function fetchCount() {
   try {
-    const res = await fetch("https://api.sndjy.us/api/increment", { mode: "cors" });
+    const res = await fetch("https://api.sndjy.us/api/increment", { 
+        method: "GET", 
+        mode: "cors" 
+    });
     const data = await res.json();
-    const count = data.count || 0;
-    document.getElementById('api-usage-count').textContent = count;
-    checkUsageLimits(count);
+    updateUIUsage(data.count || 0);
   } catch (err) {
-    document.getElementById('api-usage-count').textContent = "Error";
+    console.error("Read failed");
   }
 }
-fetchCurrentCount();
+fetchCount();
 
-async function incrementApiCounter(amount = 1) {
+// INCREMENT: Uses POST to actually add the cost
+async function incrementUsage(amount) {
   try {
     const res = await fetch("https://api.sndjy.us/api/increment", {
       method: "POST",
@@ -306,20 +267,17 @@ async function incrementApiCounter(amount = 1) {
       body: JSON.stringify({ incrementBy: amount }),
       mode: "cors",
     });
-    if (res.ok) {
-      const data = await res.json();
-      document.getElementById('api-usage-count').textContent = data.count;
-      checkUsageLimits(data.count);
-    }
+    const data = await res.json();
+    updateUIUsage(data.count);
   } catch (err) {
-    console.error("Counter Error:", err);
+    console.error("Write failed");
   }
 }
 
 async function geocode(address) {
   const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_TOKEN}`);
   const data = await res.json();
-  if (!data.features || data.features.length === 0) throw new Error("Location not found");
+  if (!data.features?.length) throw new Error("Location not found");
   return data.features[0].center;
 }
 
@@ -329,21 +287,21 @@ document.getElementById("address-form").addEventListener("submit", async e => {
   const status = document.getElementById("status");
   if (!address) return;
 
-  status.textContent = "Locating call address...";
+  status.textContent = "Calculating...";
 
   try {
     const destCoords = await geocode(address);
-    status.textContent = "Calculating unit distances...";
-
+    
     await Promise.all([
       processUnitGroup(TRANSPORT_UNITS, destCoords, "results-transport"),
       processUnitGroup(QRV_UNITS, destCoords, "results-qrv")
     ]);
 
-    const totalElementsUsed = 1 + TRANSPORT_UNITS.length + QRV_UNITS.length;
-    incrementApiCounter(totalElementsUsed);
+    // COST: 1 Geocode + 35 Matrix Elements = 36
+    const callCost = 1 + TRANSPORT_UNITS.length + QRV_UNITS.length;
+    incrementUsage(callCost);
 
-    status.textContent = "Updates complete.";
+    status.textContent = "Success.";
     updateMap(destCoords);
 
   } catch (err) {
@@ -352,17 +310,12 @@ document.getElementById("address-form").addEventListener("submit", async e => {
 });
 
 async function processUnitGroup(units, dest, tableId) {
-  const unitCoords = await Promise.all(units.map(async u => {
-    return await geocode(u.addr);
-  }));
-
-  const coordString = [dest.join(','), ...unitCoords.map(c => c.join(','))].join(';');
-  const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordString}?sources=0&annotations=distance,duration&access_token=${MAPBOX_TOKEN}`;
+  const unitCoords = await Promise.all(units.map(u => geocode(u.addr)));
+  const coords = [dest.join(','), ...unitCoords.map(c => c.join(','))].join(';');
+  const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coords}?sources=0&annotations=distance,duration&access_token=${MAPBOX_TOKEN}`;
   
   const res = await fetch(url);
   const data = await res.json();
-
-  if (data.code !== 'Ok') throw new Error("Matrix calculation failed");
 
   const results = units.map((u, i) => ({
     name: u.name,
@@ -415,6 +368,5 @@ btnMap.onclick = () => {
   if(map) map.resize(); 
 };
 </script>
-
 </body>
 </html>
