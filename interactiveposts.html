@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v32</title>
+    <title>Priority Dispatch | Command Console v33</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -21,18 +21,18 @@
 
         #main-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
 
-        /* PANELS */
+        /* ADJUSTABLE PANELS */
         #left-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #000; }
         #center-workspace { flex-grow: 1; display: flex; flex-direction: column; min-width: 400px; height: 100%; position: relative; }
         #right-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; border-left: 1px solid #000; }
 
-        /* RESIZERS */
+        /* GUTTERS */
         .gutter-v { width: 6px; background: var(--gutter-color); cursor: col-resize; flex-shrink: 0; z-index: 100; }
         .gutter-v:hover { background: var(--gutter-hover); }
         .gutter-h { height: 6px; background: var(--gutter-color); cursor: row-resize; flex-shrink: 0; z-index: 100; }
         .gutter-h:hover { background: var(--gutter-hover); }
 
-        /* SYSTEM COMPONENTS */
+        /* UI ELEMENTS */
         #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid #333; }
         #gas-gauge { font-size: 52px; font-weight: 900; line-height: 1; margin: 5px 0; color: var(--neon-green); }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
@@ -41,15 +41,16 @@
         .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
         #available-list, #recommendation-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
 
-        /* MAP ENGINE */
+        /* MAP AREA */
         #map-container { flex-grow: 1; position: relative; overflow: hidden; background: #000; cursor: grab; }
         #map-content { position: absolute; transform-origin: center center; will-change: transform; transition: transform 0.05s linear; }
         #background-map { display: block; pointer-events: none; }
 
+        /* TIMERS */
         #timer-section { height: 240px; min-height: 100px; background: #111; display: flex; flex-direction: column; overflow: hidden; }
         #timer-grid { flex-grow: 1; display: flex; gap: 12px; padding: 12px; overflow-x: auto; align-items: flex-start; }
 
-        /* UNIT CARDS */
+        /* TRUCK CARDS */
         .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
         .ambulance-icon { padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; position: relative; z-index: 50; }
         .unit-label { font-size: 14px; font-weight: 900; }
@@ -61,13 +62,13 @@
         .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border: 1px dashed #f00 !important; }
         .hidden-unit { display: none !important; }
 
-        /* UI OVERLAYS */
+        /* MODALS & MENUS */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: #333; }
         .menu-header { padding: 10px; font-size: 11px; background: #000; color: #888; font-weight: bold; text-align: center; }
 
-        .timer-card { min-width: 180px; background: #1a1a1a; padding: 12px; border-radius: 4px; border: 1px solid #333; border-top: 4px solid #444; }
+        .timer-card { min-width: 180px; background: #1a1a1a; padding: 12px; border-radius: 4px; border: 1px solid #333; border-top: 4px solid #444; flex-shrink: 0; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; }
         
         .type-call { border-top-color: var(--bright-red); }
@@ -97,15 +98,11 @@
 
         <div id="center-workspace">
             <div id="map-container">
-                <div id="map-content">
-                    <img src="map.jpeg" id="background-map">
-                </div>
+                <div id="map-content"><img src="map.jpeg" id="background-map"></div>
             </div>
-            
             <div class="gutter-h" id="resizer-timers"></div>
-            
             <div id="timer-section">
-                <div class="list-header">Active Timers & Dispatch</div>
+                <div class="list-header">Active Dispatch Timers</div>
                 <div id="timer-grid"></div>
             </div>
         </div>
@@ -178,50 +175,29 @@
         
         let selectedUnitId = null, scale = 1, posX = 0, posY = 0, unitStates = {};
 
-        // --- MAP AUTO-CENTER ENGINE ---
-        function updateTransform() {
-            mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        }
-
+        // --- MAP ENGINE ---
+        function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
         function centerMap() {
-            const containerWidth = mapContainer.offsetWidth;
-            const containerHeight = mapContainer.offsetHeight;
-            const imgWidth = mapContent.offsetWidth || 3000;
-            const imgHeight = mapContent.offsetHeight || 3000;
-
-            // Align center of content with center of container
-            posX = (containerWidth / 2) - (imgWidth / 2);
-            posY = (containerHeight / 2) - (imgHeight / 2);
+            posX = (mapContainer.offsetWidth / 2) - (mapContent.offsetWidth / 2);
+            posY = (mapContainer.offsetHeight / 2) - (mapContent.offsetHeight / 2);
             updateTransform();
         }
 
-        // --- RESIZER INTEGRATION ---
+        // --- RESIZERS ---
         function initResizers() {
             const leftSide = document.getElementById('left-sidebar');
             const rightSide = document.getElementById('right-sidebar');
             const timerSec = document.getElementById('timer-section');
-            
             document.getElementById('resizer-left').onmousedown = e => {
-                document.onmousemove = ev => {
-                    leftSide.style.width = ev.clientX + 'px';
-                    centerMap();
-                };
+                document.onmousemove = ev => { leftSide.style.width = ev.clientX + 'px'; centerMap(); };
                 document.onmouseup = () => document.onmousemove = null;
             };
-
             document.getElementById('resizer-right').onmousedown = e => {
-                document.onmousemove = ev => {
-                    rightSide.style.width = (window.innerWidth - ev.clientX) + 'px';
-                    centerMap();
-                };
+                document.onmousemove = ev => { rightSide.style.width = (window.innerWidth - ev.clientX) + 'px'; centerMap(); };
                 document.onmouseup = () => document.onmousemove = null;
             };
-
             document.getElementById('resizer-timers').onmousedown = e => {
-                document.onmousemove = ev => {
-                    timerSec.style.height = (window.innerHeight - ev.clientY) + 'px';
-                    centerMap();
-                };
+                document.onmousemove = ev => { timerSec.style.height = (window.innerHeight - ev.clientY) + 'px'; centerMap(); };
                 document.onmouseup = () => document.onmousemove = null;
             };
         }
@@ -231,6 +207,7 @@
             let readyCount = 0, criticalGaps = [], flexibleUnits = [];
             let m3B = false, m6B = false;
 
+            // Pass 1: Global Status Check
             units.forEach(u => {
                 const el = document.getElementById(u.id);
                 if (!el || localStorage.getItem(`inactive-${u.id}`) === 'true') return;
@@ -239,9 +216,24 @@
                 if (u.id === 'Med-6' && busy) m6B = true;
             });
 
+            // Pass 2: Rendering & Logic
             units.forEach(u => {
                 const el = document.getElementById(u.id);
-                if (!el || localStorage.getItem(`inactive-${u.id}`) === 'true') return;
+                const slot = document.getElementById(`slot-${u.id}`);
+                if (!el || !slot) return;
+
+                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
+                
+                // FIXED: Explicitly handle visibility for deactivated units
+                if (isInactive) {
+                    el.classList.add('hidden-unit');
+                    slot.classList.add('hidden-unit');
+                    return; 
+                } else {
+                    el.classList.remove('hidden-unit');
+                    slot.classList.remove('hidden-unit');
+                }
+
                 el.classList.remove('state-call', 'state-dest', 'state-logs', 'state-map');
                 const busy = !!unitStates[u.id] || el.classList.contains('oos');
                 const label = el.querySelector('.unit-status-text');
@@ -286,7 +278,7 @@
             localStorage.removeItem(`pos-${uId}`);
             localStorage.removeItem(`staged-${uId}`);
             document.getElementById(`slot-${uId}`).appendChild(el);
-            el.style.position = "relative"; el.style.left = "0"; el.style.top = "0";
+            el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
             renderTimerCards(); updateStatus();
         }
 
@@ -304,7 +296,7 @@
                 card.innerHTML = `<div style="font-weight:bold;">${uId}</div><div class="timer-display" id="display-${uId}">0:00</div>
                     <div style="display:flex; gap:5px; margin-top:10px;">
                         ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); padding:5px; border:none; border-radius:3px; font-weight:bold; cursor:pointer;">ARRIVED</button>` : ''}
-                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; border:none; padding:5px; cursor:pointer;">CLEAR</button>
+                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button>
                     </div>`;
                 timerGrid.appendChild(card);
             });
@@ -326,6 +318,7 @@
             });
         }, 1000);
 
+        // --- DRAG LOGIC ---
         function makeDraggable(el) {
             let ox = 0, oy = 0;
             el.addEventListener('dragstart', (e) => e.preventDefault());
@@ -335,10 +328,12 @@
                 ox = (e.clientX - r.left) / scale; oy = (e.clientY - r.top) / scale;
                 el.style.position = 'fixed'; el.style.width = '180px'; el.style.zIndex = '1000';
                 document.body.appendChild(el);
+                
                 const move = (ev) => {
                     el.style.left = (ev.clientX - (ox * scale)) + "px";
                     el.style.top = (ev.clientY - (oy * scale)) + "px";
                 };
+                
                 const up = (ev) => {
                     document.removeEventListener('mousemove', move);
                     document.removeEventListener('mouseup', up);
@@ -358,7 +353,7 @@
             };
         }
 
-        // --- MAP CONTROLS ---
+        // --- MAP NAVIGATION ---
         mapContainer.onwheel = e => {
             e.preventDefault();
             const zoom = 1 + (-Math.sign(e.deltaY) * 0.1);
@@ -377,8 +372,7 @@
         };
 
         function init() {
-            initResizers();
-            renderStagingMenu();
+            initResizers(); renderStagingMenu();
             units.forEach(u => {
                 const slot = document.createElement('div');
                 slot.className = 'unit-slot'; slot.id = `slot-${u.id}`;
@@ -400,8 +394,7 @@
                 } else { slot.appendChild(div); }
                 makeDraggable(div);
             });
-            centerMap();
-            updateStatus();
+            centerMap(); updateStatus();
         }
 
         function toggleOOS() {
@@ -425,11 +418,20 @@
                 units.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric:true})).forEach(u => {
                     const act = localStorage.getItem(`inactive-${u.id}`) !== 'true';
                     c.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #222; align-items:center;">
-                        <b>${u.id}</b> <button onclick="localStorage.setItem('inactive-${u.id}', ${act}); toggleConfig(true); updateStatus();" 
-                        style="background:${act?'var(--neon-green)':'#333'}; padding:8px; border:none; cursor:pointer; min-width:80px; font-weight:bold;">${act?'ON':'OFF'}</button></div>`;
+                        <b>${u.id}</b> <button onclick="toggleUnitActive('${u.id}')" 
+                        style="background:${act?'var(--neon-green)':'#333'}; padding:8px; border:none; cursor:pointer; min-width:80px; font-weight:bold; color:black;">${act?'ACTIVE':'OFF'}</button></div>`;
                 });
             }
             document.getElementById('config-modal').style.display = s ? 'flex' : 'none'; 
+        }
+
+        function toggleUnitActive(uId) {
+            const current = localStorage.getItem(`inactive-${uId}`) === 'true';
+            const next = !current;
+            localStorage.setItem(`inactive-${uId}`, next);
+            if (next) forceReady(uId); // Snap back and clear if deactivating
+            toggleConfig(true); // Refresh list
+            updateStatus();
         }
 
         function recallAllUnits() { units.forEach(u => { if (document.getElementById(u.id).parentElement.id === 'map-content') forceReady(u.id); }); }
