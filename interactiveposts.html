@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v27</title>
+    <title>Priority Dispatch | Command Console v28</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -15,6 +15,7 @@
             --sidebar-w: 260px;
         }
 
+        /* PREVENT NATIVE SELECTION */
         * { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; outline: none; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; display: flex; }
 
@@ -24,8 +25,9 @@
         #gas-gauge { font-size: 52px; font-weight: 900; line-height: 1; margin: 5px 0; color: var(--neon-green); }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
         .recall-btn { margin-top: 10px; padding: 8px; font-size: 9px; background: #222; border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; width: 100%; font-weight: bold; }
+        .recall-btn:hover { background: #333; color: var(--neon-green); border-color: var(--neon-green); }
 
-        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; }
         #available-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
 
         /* CENTER WORKSPACE */
@@ -49,10 +51,11 @@
         /* UNIT CARDS */
         .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
         .ambulance-icon { padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; position: relative; }
+        .ambulance-icon:active { cursor: grabbing; }
         .unit-label { font-size: 14px; font-weight: 900; }
         .unit-status-text { font-size: 9px; color: #999; margin-top: 3px; text-transform: uppercase; font-weight: bold; }
 
-        /* DYNAMIC STATES */
+        /* STATES */
         .state-call .unit-label { color: var(--bright-red); }
         .state-dest .unit-label { color: var(--hosp-orange); }
         .state-logs .unit-label { color: var(--logistics-blue); }
@@ -64,10 +67,8 @@
 
         /* CONFIG MODAL */
         #system-gear { position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-size: 22px; cursor: pointer; background: #000; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #333; color: #666; }
-        #system-gear:hover { color: white; border-color: #666; }
-
         #config-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; }
-        #config-panel { background: #1a1a1a; width: 500px; max-height: 85vh; border-radius: 8px; border: 1px solid #444; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        #config-panel { background: #1a1a1a; width: 500px; max-height: 85vh; border-radius: 8px; border: 1px solid #444; display: flex; flex-direction: column; padding: 20px; }
         .config-list { flex-grow: 1; overflow-y: auto; margin: 15px 0; border-top: 1px solid #222; }
         .config-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; }
         
@@ -123,21 +124,20 @@
 
     <div id="config-modal">
         <div id="config-panel">
-            <h2 style="margin:0 0 5px 0;">Fleet Configuration</h2>
-            <p style="font-size:11px; color:#777; margin-bottom:15px;">Deactivated trucks will be hidden and excluded from system status.</p>
+            <h2 style="margin:0;">Fleet Configuration</h2>
             <div class="config-list" id="config-list-content"></div>
             <div style="display:flex; gap:10px; margin-top:10px;">
-                <button onclick="toggleConfig(false)" style="flex:1; padding:12px; background:var(--logistics-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">CLOSE SETTINGS</button>
-                <button onclick="if(confirm('Clear all data and restart?')) { localStorage.clear(); location.reload(); }" style="padding:12px; background:#400; color:white; border:none; border-radius:4px; cursor:pointer; font-size:11px;">HARD RESET</button>
+                <button onclick="toggleConfig(false)" style="flex:1; padding:12px; background:var(--logistics-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">CLOSE</button>
+                <button onclick="if(confirm('Wipe everything?')) { localStorage.clear(); location.reload(); }" style="padding:12px; background:#400; color:white; border:none; border-radius:4px; font-size:11px;">HARD RESET</button>
             </div>
         </div>
     </div>
 
     <div id="context-menu">
         <div id="menu-id" class="menu-header">UNIT</div>
-        <div id="opt-call" class="menu-item" onclick="startStatusTimer('CALL')">Assign: ON A CALL (Count Up)</div>
-        <div id="opt-dest" class="menu-item" onclick="startStatusTimer('DEST')" style="color:var(--hosp-orange);">Mark: AT DESTINATION (20m)</div>
-        <div id="opt-logs" class="menu-item" onclick="startStatusTimer('LOGS')" style="color:var(--logistics-blue);">Mark: LOGISTICS (10m)</div>
+        <div class="menu-item" onclick="startStatusTimer('CALL')">Assign: ON A CALL</div>
+        <div class="menu-item" onclick="startStatusTimer('DEST')" style="color:var(--hosp-orange);">Mark: AT DESTINATION (20m)</div>
+        <div class="menu-item" onclick="startStatusTimer('LOGS')" style="color:var(--logistics-blue);">Mark: LOGISTICS (10m)</div>
         <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); border-top:1px solid #333;">Toggle OOS</div>
         <div class="menu-item" onclick="forceReady(selectedUnitId)" style="color:var(--neon-green); font-weight:bold;">CLEAR / RETURN TO BASE</div>
         <div class="menu-header" style="border-top:1px solid #333;">STAGING</div>
@@ -196,7 +196,6 @@
                 const el = document.getElementById(u.id);
                 if (!el) return;
 
-                // CHECK CONFIG DEACTIVATION
                 const isDeactivated = localStorage.getItem(`inactive-${u.id}`) === 'true';
                 if (isDeactivated) {
                     el.classList.add('hidden-unit');
@@ -208,7 +207,6 @@
                 }
 
                 el.classList.remove('state-call', 'state-dest', 'state-logs', 'state-map');
-                
                 const stateObj = unitStates[u.id];
                 const isOOS = el.classList.contains('oos');
                 const isOnMap = el.parentElement.id === 'map-content';
@@ -250,7 +248,21 @@
             });
         }
 
-        // TIMER CORE
+        function forceReady(uId) {
+            delete unitStates[uId];
+            const el = document.getElementById(uId);
+            if (!el) return;
+            el.classList.remove('oos');
+            localStorage.removeItem(`oos-${uId}`);
+            const slot = document.getElementById(`slot-${uId}`);
+            slot.appendChild(el);
+            el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
+            localStorage.removeItem(`pos-${uId}`);
+            localStorage.removeItem(`staged-${uId}`);
+            renderTimerCards();
+            updateStatus();
+        }
+
         function startStatusTimer(type) {
             unitStates[selectedUnitId] = { type: type, start: Date.now() };
             renderTimerCards();
@@ -266,7 +278,6 @@
                 card.className = `timer-card type-${s.type.toLowerCase()}`;
                 card.innerHTML = `
                     <div style="font-weight:bold; font-size:16px;">${uId}</div>
-                    <div style="font-size:9px; color:#888; margin-bottom:5px;">${s.type === 'CALL' ? 'COUNT UP' : 'COUNT DOWN'}</div>
                     <div class="timer-display" id="display-${uId}">0:00</div>
                     <div style="display:flex; gap:5px; margin-top:10px;">
                         ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); border:none; color:black; font-weight:bold; padding:5px; cursor:pointer; font-size:10px;">ARRIVED</button>` : ''}
@@ -305,27 +316,59 @@
             });
         }, 1000);
 
-        function forceReady(uId) {
-            delete unitStates[uId];
-            const el = document.getElementById(uId);
-            el.classList.remove('oos');
-            localStorage.removeItem(`oos-${uId}`);
-            const slot = document.getElementById(`slot-${uId}`);
-            slot.appendChild(el);
-            el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
-            localStorage.removeItem(`pos-${uId}`);
-            localStorage.removeItem(`staged-${uId}`);
-            renderTimerCards();
-            updateStatus();
-        }
-
         function recallAllUnits() {
             units.forEach(u => {
                 if (document.getElementById(u.id).parentElement.id === 'map-content') forceReady(u.id);
             });
         }
 
-        // CONFIG MODAL LOGIC
+        // FIXED DRAGGABLE LOGIC
+        function makeDraggable(el) {
+            let ox = 0, oy = 0;
+            
+            // PREVENT NATIVE BROWSER DRAG
+            el.addEventListener('dragstart', (e) => e.preventDefault());
+
+            el.onmousedown = (e) => {
+                if(e.button !== 0 || e.shiftKey) return;
+                e.preventDefault(); e.stopPropagation();
+                
+                const r = el.getBoundingClientRect();
+                ox = (e.clientX - r.left) / scale; oy = (e.clientY - r.top) / scale;
+                
+                el.style.position = 'fixed';
+                el.style.width = '180px';
+                el.style.zIndex = '1000';
+                document.body.appendChild(el);
+
+                const moveHandler = (ev) => {
+                    el.style.left = (ev.clientX - (ox * scale)) + "px";
+                    el.style.top = (ev.clientY - (oy * scale)) + "px";
+                };
+
+                const upHandler = (ev) => {
+                    document.removeEventListener('mousemove', moveHandler);
+                    document.removeEventListener('mouseup', upHandler);
+                    
+                    const mapR = mapContainer.getBoundingClientRect();
+                    if (ev.clientX > mapR.left && ev.clientX < mapR.right && ev.clientY < mapR.bottom) {
+                        const c = mapContent.getBoundingClientRect();
+                        el.style.position = 'absolute';
+                        el.style.left = ((ev.clientX - c.left) / scale - ox) + "px";
+                        el.style.top = ((ev.clientY - c.top) / scale - oy) + "px";
+                        mapContent.appendChild(el);
+                        localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
+                    } else {
+                        forceReady(el.id);
+                    }
+                    updateStatus();
+                };
+
+                document.addEventListener('mousemove', moveHandler);
+                document.addEventListener('mouseup', upHandler);
+            };
+        }
+
         function toggleConfig(show) { 
             if (show) renderConfigList();
             document.getElementById('config-modal').style.display = show ? 'flex' : 'none'; 
@@ -334,28 +377,18 @@
         function renderConfigList() {
             const container = document.getElementById('config-list-content');
             container.innerHTML = '';
-            units.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach(u => {
+            units.forEach(u => {
                 const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
                 const item = document.createElement('div');
                 item.className = 'config-item';
-                item.innerHTML = `
-                    <div>
-                        <div style="font-weight:bold;">${u.id}</div>
-                        <div style="font-size:10px; color:#666;">Home: ${u.home}</div>
-                    </div>
-                    <button class="toggle-btn ${isInactive ? 'toggle-inactive' : 'toggle-active'}" onclick="toggleUnitActive('${u.id}')">
-                        ${isInactive ? 'DEACTIVATED' : 'IN SERVICE'}
-                    </button>
-                `;
+                item.innerHTML = `<div><b>${u.id}</b></div><button class="toggle-btn ${isInactive ? 'toggle-inactive' : 'toggle-active'}" onclick="toggleUnitActive('${u.id}')">${isInactive ? 'OFF' : 'ON'}</button>`;
                 container.appendChild(item);
             });
         }
 
         function toggleUnitActive(uId) {
-            const current = localStorage.getItem(`inactive-${uId}`) === 'true';
-            localStorage.setItem(`inactive-${uId}`, !current);
-            renderConfigList();
-            updateStatus();
+            localStorage.setItem(`inactive-${uId}`, localStorage.getItem(`inactive-${uId}`) !== 'true');
+            renderConfigList(); updateStatus();
         }
 
         function init() {
@@ -387,36 +420,6 @@
                 makeDraggable(div);
             });
             updateStatus();
-        }
-
-        function makeDraggable(el) {
-            let ox = 0, oy = 0;
-            el.onmousedown = (e) => {
-                if(e.button !== 0 || e.shiftKey) return;
-                e.preventDefault(); e.stopPropagation();
-                const r = el.getBoundingClientRect();
-                ox = (e.clientX - r.left) / scale; oy = (e.clientY - r.top) / scale;
-                el.style.position = 'fixed'; el.style.width = '180px'; el.style.zIndex = '1000';
-                document.body.appendChild(el);
-                document.onmousemove = (ev) => {
-                    el.style.left = (ev.clientX - (ox * scale)) + "px";
-                    el.style.top = (ev.clientY - (oy * scale)) + "px";
-                };
-                document.onmouseup = (ev) => {
-                    document.onmousemove = null;
-                    const mapR = mapContainer.getBoundingClientRect();
-                    if (ev.clientX > mapR.left && ev.clientX < mapR.right && ev.clientY < mapR.bottom) {
-                        const c = mapContent.getBoundingClientRect();
-                        el.style.position = 'absolute'; el.style.left = ((ev.clientX - c.left) / scale - ox) + "px";
-                        el.style.top = ((ev.clientY - c.top) / scale - oy) + "px";
-                        mapContent.appendChild(el);
-                        localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
-                    } else {
-                        forceReady(el.id);
-                    }
-                    updateStatus();
-                };
-            };
         }
 
         function toggleOOS() {
