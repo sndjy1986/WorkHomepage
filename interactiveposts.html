@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v34</title>
+    <title>Priority Dispatch | Command Console v36</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -21,18 +21,18 @@
 
         #main-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
 
-        /* ADJUSTABLE PANELS */
+        /* PANELS */
         #left-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #000; }
         #center-workspace { flex-grow: 1; display: flex; flex-direction: column; min-width: 400px; height: 100%; position: relative; }
         #right-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; border-left: 1px solid #000; }
 
-        /* GUTTERS */
+        /* RESIZERS */
         .gutter-v { width: 6px; background: var(--gutter-color); cursor: col-resize; flex-shrink: 0; z-index: 100; transition: background 0.2s; }
         .gutter-v:hover { background: var(--gutter-hover); }
         .gutter-h { height: 6px; background: var(--gutter-color); cursor: row-resize; flex-shrink: 0; z-index: 100; }
         .gutter-h:hover { background: var(--gutter-hover); }
 
-        /* UI ELEMENTS */
+        /* HEADER & STATUS */
         #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid #333; }
         #gas-gauge { font-size: 52px; font-weight: 900; line-height: 1; margin: 5px 0; color: var(--neon-green); }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
@@ -50,12 +50,14 @@
         #timer-section { height: 240px; min-height: 100px; background: #111; display: flex; flex-direction: column; overflow: hidden; }
         #timer-grid { flex-grow: 1; display: flex; gap: 12px; padding: 12px; overflow-x: auto; align-items: flex-start; }
 
-        /* CARDS */
-        .rec-card { background: #1a1a1a; border-left: 4px solid var(--logistics-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; animation: pulse 2s infinite; border-top: 1px solid #333; }
-        @keyframes pulse { 0%, 100% { border-left-color: #004c5b; } 50% { border-left-color: var(--logistics-blue); } }
+        /* RECS */
+        .rec-card { background: #1a1a1a; border-left: 4px solid var(--logistics-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; animation: pulse-border 2s infinite; border-top: 1px solid #333; }
+        @keyframes pulse-border { 0%, 100% { border-left-color: #004c5b; } 50% { border-left-color: var(--logistics-blue); } }
         .rec-title { font-size: 9px; color: var(--logistics-blue); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
         .rec-instruction { font-size: 13px; font-weight: bold; color: #fff; line-height: 1.4; }
+        .rec-dist { font-size: 10px; color: #666; margin-top: 4px; }
 
+        /* UNITS */
         .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
         .ambulance-icon { padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; position: relative; z-index: 50; }
         .unit-label { font-size: 14px; font-weight: 900; }
@@ -67,7 +69,6 @@
         .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border: 1px dashed #f00 !important; }
         .hidden-unit { display: none !important; }
 
-        /* CONTEXT MENU */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: #333; }
@@ -75,10 +76,7 @@
 
         .timer-card { min-width: 180px; background: #1a1a1a; padding: 12px; border-radius: 4px; border: 1px solid #333; border-top: 4px solid #444; flex-shrink: 0; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; }
-        .type-call { border-top-color: var(--bright-red); }
-        .type-dest { border-top-color: var(--hosp-orange); }
-        .type-logs { border-top-color: var(--logistics-blue); }
-
+        
         #system-gear { position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-size: 22px; cursor: pointer; background: #000; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #333; }
         #config-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; }
         #config-panel { background: #1a1a1a; width: 500px; padding: 20px; border-radius: 8px; border: 1px solid #444; }
@@ -114,7 +112,7 @@
         <div class="gutter-v" id="resizer-right"></div>
 
         <div id="right-sidebar">
-            <div class="list-header" id="plan-level-header">Posting Plan Logic</div>
+            <div class="list-header" id="plan-level-header">Plan Level: 0</div>
             <div id="recommendation-list"></div>
         </div>
     </div>
@@ -137,57 +135,55 @@
         <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); border-top:1px solid #333;">Toggle OOS</div>
         <div class="menu-item" onclick="forceReady(selectedUnitId)" style="color:var(--neon-green); font-weight:bold;">CLEAR / RETURN TO BASE</div>
         <div class="menu-header" style="border-top:1px solid #333;">STAGING POSTS</div>
-        <div id="staging-list" style="max-height: 200px; overflow-y: auto;"></div>
+        <div id="staging-list" style="max-height: 200px; overflow-y: auto; background: #000;"></div>
     </div>
 
     <script>
-        // OFFICIAL POST DATA
         const postData = [
-            { id: 1, name: "Belton", home: "Med-2", lat: 34.49, lon: -82.52 },
-            { id: 2, name: "Homeland Park", home: "Med-3", lat: 34.46, lon: -82.65 },
-            { id: 3, name: "Honea Path", home: "Med-13", lat: 34.45, lon: -82.40 },
-            { id: 4, name: "Wren FD", home: "Med-15", lat: 34.71, lon: -82.50 },
-            { id: 5, name: "Iva City", home: "Med-6", lat: 34.30, lon: -82.66 },
-            { id: 6, name: "Williamston", home: "Med-4", lat: 34.61, lon: -82.49 },
-            { id: 7, name: "Pendleton", home: "Med-7", lat: 34.64, lon: -82.78 },
-            { id: 8, name: "Powdersville", home: "Med-14", lat: 34.77, lon: -82.48 },
-            { id: 9, name: "Townville", home: "Med-8", lat: 34.56, lon: -82.88 },
-            { id: 10, name: "Centerville", home: "Med-9", lat: 34.54, lon: -82.69 },
-            { id: 12, name: "Hopewell", home: "Med-5", lat: 34.59, lon: -82.62 },
-            { id: 11, name: "Medshore HQ", home: "City Fleet", lat: 34.51, lon: -82.64 },
-            { id: 21, name: "Liberty Hwy", home: "Med-2", lat: 34.57, lon: -82.71 },
-            { id: 22, name: "West Anderson", home: "Med-4", lat: 34.50, lon: -82.68 },
-            { id: 23, name: "White Plains", home: "Med-5", lat: 34.66, lon: -82.51 },
-            { id: 24, name: "SC-28 & Welpine Rd", home: "Staging", lat: 34.58, lon: -82.71 },
-            { id: 25, name: "Westgate", home: "Staging", lat: 34.51, lon: -82.75 },
-            { id: 26, name: "Redi Mart (81 & Fred Dean)", home: "Staging", lat: 34.40, lon: -82.68 }
+            { id: 1, name: "Rock Springs", lat: 34.497, lon: -82.523 },
+            { id: 2, name: "Homeland Park", lat: 34.467, lon: -82.655 },
+            { id: 3, name: "Honea Path", lat: 34.454, lon: -82.405 },
+            { id: 4, name: "Wren FD", lat: 34.711, lon: -82.508 },
+            { id: 5, name: "Iva City", lat: 34.302, lon: -82.665 },
+            { id: 6, name: "Williamston", lat: 34.616, lon: -82.490 },
+            { id: 7, name: "Pendleton", lat: 34.649, lon: -82.780 },
+            { id: 8, name: "Powdersville", lat: 34.774, lon: -82.487 },
+            { id: 9, name: "Townville", lat: 34.565, lon: -82.889 },
+            { id: 10, name: "Centerville", lat: 34.545, lon: -82.695 },
+            { id: 11, name: "Medshore HQ", lat: 34.513, lon: -82.648 },
+            { id: 12, name: "Hopewell", lat: 34.596, lon: -82.627 },
+            { id: 21, name: "Liberty Hwy", lat: 34.579, lon: -82.713 },
+            { id: 22, name: "West Anderson", lat: 34.502, lon: -82.683 },
+            { id: 23, name: "White Plains", lat: 34.667, lon: -82.515 },
+            { id: 24, name: "SC-28 & Welpine Rd", lat: 34.580, lon: -82.715 },
+            { id: 25, name: "Westgate", lat: 34.511, lon: -82.756 },
+            { id: 26, name: "Redi Mart (81 & Fred Dean)", lat: 34.400, lon: -82.687 }
         ];
 
-        // DYNAMIC POSTING PLAN LEVELS (FROM PDF)
         const postingPlan = {
             1: ["Medshore HQ"],
-            2: ["Anderson FD Sta 1", "Liberty Hwy"],
+            2: ["Centerville", "Liberty Hwy"],
             3: ["Rock Springs", "West Anderson", "White Plains"],
             4: ["Rock Springs", "West Anderson", "White Plains", "SC-28 & Welpine Rd"],
             5: ["Rock Springs", "White Plains", "SC-28 & Welpine Rd", "Westgate", "Redi Mart (81 & Fred Dean)"],
-            6: ["Rock Springs", "White Plains", "Whitefield", "Westgate", "Redi Mart (81 & Fred Dean)", "Liberty Hwy"],
-            7: ["Rock Springs", "White Plains", "SC-28 & Welpine Rd", "Westgate", "Redi Mart (81 & Fred Dean)", "Medshore HQ", "Whitefield"],
+            6: ["Rock Springs", "White Plains", "West Anderson", "Westgate", "Redi Mart (81 & Fred Dean)", "Liberty Hwy"],
+            7: ["Rock Springs", "White Plains", "SC-28 & Welpine Rd", "Westgate", "Redi Mart (81 & Fred Dean)", "Medshore HQ", "Centerville"],
             8: ["Rock Springs", "Homeland Park", "Honea Path", "Wren FD", "Iva City", "Westgate", "Williamston", "Pendleton"],
             9: ["Rock Springs", "Homeland Park", "Honea Path", "Wren FD", "Iva City", "Westgate", "Williamston", "Pendleton", "Powdersville"],
             10: ["Rock Springs", "Homeland Park", "Honea Path", "Wren FD", "Iva City", "Centerville", "Williamston", "Pendleton", "Powdersville", "Townville"]
         };
 
         const units = [
-            { id: "Med-0", home: "City", pId: 11 }, { id: "Med-1", home: "City", pId: 11 },
-            { id: "Med-2", home: "Belton", pId: 1 }, { id: "Med-3", home: "Homeland", pId: 2 },
-            { id: "Med-4", home: "Williamston", pId: 6 }, { id: "Med-5", home: "Hopewell", pId: 12 },
-            { id: "Med-6", home: "Iva", pId: 5 }, { id: "Med-7", home: "Pendleton", pId: 7 },
-            { id: "Med-8", home: "Townville", pId: 9 }, { id: "Med-9", home: "Centerville", pId: 10 },
-            { id: "Med-10", home: "Night", pId: 11 }, { id: "Med-11", home: "Night", pId: 11 },
-            { id: "Med-12", home: "City", pId: 11 }, { id: "Med-13", home: "Honea Path", pId: 3 },
-            { id: "Med-14", home: "Powdersville", pId: 8 }, { id: "Med-15", home: "Wren", pId: 4 },
-            { id: "Med-16", home: "City", pId: 11 }, { id: "Med-17", home: "City", pId: 11 },
-            { id: "Med-18", home: "City", pId: 11 }, { id: "Med-19", home: "City", pId: 11 }
+            { id: "Med-0", home: "Medshore HQ" }, { id: "Med-1", home: "Medshore HQ" },
+            { id: "Med-2", home: "Rock Springs" }, { id: "Med-3", home: "Homeland Park" },
+            { id: "Med-4", home: "Williamston" }, { id: "Med-5", home: "Hopewell" },
+            { id: "Med-6", home: "Iva City" }, { id: "Med-7", home: "Pendleton" },
+            { id: "Med-8", home: "Townville" }, { id: "Med-9", home: "Centerville" },
+            { id: "Med-10", home: "Medshore HQ" }, { id: "Med-11", home: "Medshore HQ" },
+            { id: "Med-12", home: "Medshore HQ" }, { id: "Med-13", home: "Honea Path" },
+            { id: "Med-14", home: "Powdersville" }, { id: "Med-15", home: "Wren FD" },
+            { id: "Med-16", home: "Medshore HQ" }, { id: "Med-17", home: "Medshore HQ" },
+            { id: "Med-18", home: "Medshore HQ" }, { id: "Med-19", home: "Medshore HQ" }
         ];
 
         const mapContainer = document.getElementById('map-container');
@@ -200,33 +196,37 @@
         
         let selectedUnitId = null, scale = 1, posX = 0, posY = 0, unitStates = {};
 
-        // --- CORE STATUS ENGINE ---
+        function getDist(lat1, lon1, lat2, lon2) {
+            const R = 3958.8; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // --- STATUS ENGINE v36 ---
         function updateStatus() {
             let readyCount = 0;
+            let availableUnits = [];
             let coveredPosts = [];
-            let unassignedUnits = [];
-            let med3Busy = false, med6Busy = false;
+            let m3B = false, m6B = false;
 
-            // 1. Identify unit statuses
             units.forEach(u => {
                 const el = document.getElementById(u.id);
-                const slot = document.getElementById(`slot-${u.id}`);
-                if (!el || !slot) return;
-
-                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
-                if (isInactive) { el.classList.add('hidden-unit'); slot.classList.add('hidden-unit'); return; }
-                else { el.classList.remove('hidden-unit'); slot.classList.remove('hidden-unit'); }
-
+                if (!el || localStorage.getItem(`inactive-${u.id}`) === 'true') return;
+                
                 const isBusy = !!unitStates[u.id] || el.classList.contains('oos');
                 const label = el.querySelector('.unit-status-text');
-                const isOnMap = el.parentElement.id === 'map-content';
                 const stagedAt = localStorage.getItem(`staged-${u.id}`);
+                const isOnMap = el.parentElement.id === 'map-content';
+
+                el.classList.remove('state-call', 'state-dest', 'state-logs', 'state-map');
 
                 if (isBusy) {
                     el.classList.add(unitStates[u.id] ? 'state-' + unitStates[u.id].type.toLowerCase() : 'oos');
                     label.innerText = unitStates[u.id] ? unitStates[u.id].type : "OOS";
-                    if (u.id === 'Med-3') med3Busy = true;
-                    if (u.id === 'Med-6') med6Busy = true;
+                    if (u.id === 'Med-3') m3B = true;
+                    if (u.id === 'Med-6') m6B = true;
                 } else {
                     readyCount++;
                     if (isOnMap) {
@@ -235,113 +235,92 @@
                         if (stagedAt) coveredPosts.push(stagedAt);
                     } else {
                         label.innerText = u.home;
-                        coveredPosts.push(u.home); // Assume home post is covered if unit is at base
+                        coveredPosts.push(u.home);
                     }
-                    unassignedUnits.push(u.id);
+                    availableUnits.push({ id: u.id, home: u.home, staged: stagedAt });
                 }
             });
 
             gauge.innerText = readyCount;
-            document.getElementById('plan-level-header').innerText = `PLAN LEVEL: ${readyCount}`;
+            document.getElementById('plan-level-header').innerText = `Plan Level: ${readyCount}`;
 
-            // 2. Recommendations Logic
+            // RECOMMENDATION LOGIC
             recList.innerHTML = '';
-            const activePlan = postingPlan[readyCount] || (readyCount > 10 ? postingPlan[10] : []);
+
+            // CONSTRAINT: Silent until Level 10 or less
+            if (readyCount > 10) {
+                recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:20px;">Fleet Levels Normal.<br>Posting logic inactive above Level 10.</div>';
+                return;
+            }
+
+            const activePlan = postingPlan[readyCount] || [];
             
             activePlan.forEach(reqPost => {
-                // Is this required post covered?
                 if (!coveredPosts.includes(reqPost)) {
-                    // Special Rule: Homeland/Iva proximity
-                    if (reqPost === "Homeland Park" && med3Busy && !med6Busy) {
-                        recList.innerHTML += `<div class="rec-card"><div class="rec-title">GAP: HOMELAND PARK</div><div class="rec-instruction">Move <b>Med-6</b> to <b>Redi Mart (81 & Fred Dean)</b></div></div>`;
-                        unassignedUnits = unassignedUnits.filter(id => id !== 'Med-6');
+                    if (reqPost === "Homeland Park" && m3B && !m6B) {
+                        recList.innerHTML += `<div class="rec-card"><div class="rec-title">MUTUAL AID: HOMELAND PARK</div><div class="rec-instruction">Move <b>Med-6</b> to <b>Redi Mart (81 & Fred Dean)</b></div></div>`;
+                        availableUnits = availableUnits.filter(x => x.id !== 'Med-6');
                     } else {
-                        // General Rule: Pull closest unassigned truck
-                        const helper = unassignedUnits.shift();
-                        if (helper) {
-                            recList.innerHTML += `<div class="rec-card"><div class="rec-title">GAP: ${reqPost}</div><div class="rec-instruction">Move <b>${helper}</b> to cover</div></div>`;
+                        const postCoords = postData.find(p => p.name === reqPost);
+                        if (postCoords) {
+                            const candidates = availableUnits.map(unit => {
+                                const unitHomeCoords = postData.find(p => p.name === (unit.staged || unit.home)) || postData.find(p => p.name === "Medshore HQ");
+                                return { id: unit.id, dist: getDist(unitHomeCoords.lat, unitHomeCoords.lon, postCoords.lat, postCoords.lon) };
+                            }).sort((a,b) => a.dist - b.dist);
+
+                            const closest = candidates[0];
+                            if (closest) {
+                                recList.innerHTML += `<div class="rec-card"><div class="rec-title">GAP: ${reqPost}</div><div class="rec-instruction">Move <b>${closest.id}</b> to cover</div><div class="rec-dist">${closest.dist.toFixed(1)} miles away</div></div>`;
+                                availableUnits = availableUnits.filter(x => x.id !== closest.id);
+                            }
                         }
                     }
                 }
             });
 
-            if (!recList.innerHTML) recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:20px;">SYSTEM STATUS: BALANCED</div>';
+            if (!recList.innerHTML) recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:20px;">System Balanced.</div>';
         }
 
-        // --- MAP ENGINE ---
+        // --- MAP & RESIZERS ---
         function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
         function centerMap() {
             posX = (mapContainer.offsetWidth / 2) - (mapContent.offsetWidth / 2);
             posY = (mapContainer.offsetHeight / 2) - (mapContent.offsetHeight / 2);
             updateTransform();
         }
-
-        // --- RESIZERS ---
         function initResizers() {
-            const leftSide = document.getElementById('left-sidebar');
-            const rightSide = document.getElementById('right-sidebar');
-            const timerSec = document.getElementById('timer-section');
-            document.getElementById('resizer-left').onmousedown = e => {
-                document.onmousemove = ev => { leftSide.style.width = ev.clientX + 'px'; centerMap(); };
-                document.onmouseup = () => document.onmousemove = null;
-            };
-            document.getElementById('resizer-right').onmousedown = e => {
-                document.onmousemove = ev => { rightSide.style.width = (window.innerWidth - ev.clientX) + 'px'; centerMap(); };
-                document.onmouseup = () => document.onmousemove = null;
-            };
-            document.getElementById('resizer-timers').onmousedown = e => {
-                document.onmousemove = ev => { timerSec.style.height = (window.innerHeight - ev.clientY) + 'px'; centerMap(); };
-                document.onmouseup = () => document.onmousemove = null;
-            };
+            const left = document.getElementById('left-sidebar'), right = document.getElementById('right-sidebar'), timer = document.getElementById('timer-section');
+            document.getElementById('resizer-left').onmousedown = e => { document.onmousemove = ev => { left.style.width = ev.clientX + 'px'; centerMap(); }; document.onmouseup = () => document.onmousemove = null; };
+            document.getElementById('resizer-right').onmousedown = e => { document.onmousemove = ev => { right.style.width = (window.innerWidth - ev.clientX) + 'px'; centerMap(); }; document.onmouseup = () => document.onmousemove = null; };
+            document.getElementById('resizer-timers').onmousedown = e => { document.onmousemove = ev => { timer.style.height = (window.innerHeight - ev.clientY) + 'px'; centerMap(); }; document.onmouseup = () => document.onmousemove = null; };
         }
 
-        // --- CORE OPERATIONS ---
+        // --- OPERATIONS ---
         function forceReady(uId) {
-            delete unitStates[uId];
-            const el = document.getElementById(uId);
-            if (!el) return;
-            el.classList.remove('oos', 'state-call', 'state-dest', 'state-logs');
-            localStorage.removeItem(`oos-${uId}`);
-            localStorage.removeItem(`pos-${uId}`);
-            localStorage.removeItem(`staged-${uId}`);
+            delete unitStates[uId]; const el = document.getElementById(uId); if (!el) return;
+            el.classList.remove('oos','state-call','state-dest','state-logs');
+            localStorage.removeItem(`oos-${uId}`); localStorage.removeItem(`pos-${uId}`); localStorage.removeItem(`staged-${uId}`);
             document.getElementById(`slot-${uId}`).appendChild(el);
             el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
             renderTimerCards(); updateStatus();
         }
-
-        function startStatusTimer(type) {
-            unitStates[selectedUnitId] = { type: type, start: Date.now() };
-            renderTimerCards(); ctxMenu.style.display = 'none'; updateStatus();
-        }
-
+        function startStatusTimer(type) { unitStates[selectedUnitId] = { type: type, start: Date.now() }; renderTimerCards(); ctxMenu.style.display = 'none'; updateStatus(); }
         function renderTimerCards() {
             timerGrid.innerHTML = '';
             Object.keys(unitStates).forEach(uId => {
                 const s = unitStates[uId];
-                const card = document.createElement('div');
-                card.className = `timer-card type-${s.type.toLowerCase()}`;
-                card.innerHTML = `<div style="font-weight:bold;">${uId}</div><div class="timer-display" id="display-${uId}">0:00</div>
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); padding:5px; cursor:pointer; font-weight:bold; border:none; border-radius:3px;">ARRIVED</button>` : ''}
-                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button>
-                    </div>`;
+                const card = document.createElement('div'); card.className = `timer-card type-${s.type.toLowerCase()}`;
+                card.innerHTML = `<div style="font-weight:bold;">${uId}</div><div class="timer-display" id="display-${uId}">0:00</div><div style="display:flex; gap:5px; margin-top:10px;">${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); padding:5px; cursor:pointer; font-weight:bold; border:none; border-radius:3px;">ARRIVED</button>` : ''}<button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button></div>`;
                 timerGrid.appendChild(card);
             });
         }
-
         function transitionToDest(uId) { unitStates[uId] = { type: 'DEST', start: Date.now() }; renderTimerCards(); updateStatus(); }
-
         setInterval(() => {
             Object.keys(unitStates).forEach(uId => {
-                const s = unitStates[uId], d = document.getElementById(`display-${uId}`);
-                if (!d) return;
+                const s = unitStates[uId], el = document.getElementById(`display-${uId}`); if (!el) return;
                 const sec = Math.floor((Date.now() - s.start) / 1000);
-                if (s.type === 'CALL') {
-                    d.innerText = `${Math.floor(sec/60)}:${(sec%60).toString().padStart(2,'0')}`;
-                } else {
-                    const rem = (s.type === 'DEST' ? 1200 : 600) - sec;
-                    d.innerText = (rem < 0 ? "-" : "") + `${Math.floor(Math.abs(rem)/60)}:${(Math.abs(rem)%60).toString().padStart(2,'0')}`;
-                }
+                if (s.type === 'CALL') el.innerText = `${Math.floor(sec/60)}:${(sec%60).toString().padStart(2,'0')}`;
+                else { const rem = (s.type === 'DEST' ? 1200 : 600) - sec; el.innerText = (rem < 0 ? "-" : "") + `${Math.floor(Math.abs(rem)/60)}:${(Math.abs(rem)%60).toString().padStart(2,'0')}`; }
             });
         }, 1000);
 
@@ -351,8 +330,7 @@
                 if(e.button !== 0) return;
                 const r = el.getBoundingClientRect();
                 let ox = (e.clientX - r.left) / scale; let oy = (e.clientY - r.top) / scale;
-                el.style.position = 'fixed'; el.style.width = '180px'; el.style.zIndex = '1000';
-                document.body.appendChild(el);
+                el.style.position = 'fixed'; el.style.width = '180px'; el.style.zIndex = '1000'; document.body.appendChild(el);
                 const move = (ev) => { el.style.left = (ev.clientX - (ox * scale)) + "px"; el.style.top = (ev.clientY - (oy * scale)) + "px"; };
                 const up = (ev) => {
                     document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
@@ -360,8 +338,7 @@
                     if (ev.clientX > mR.left && ev.clientX < mR.right && ev.clientY < mR.bottom) {
                         const c = mapContent.getBoundingClientRect();
                         el.style.position = 'absolute'; el.style.left = ((ev.clientX - c.left) / scale - ox) + "px"; el.style.top = ((ev.clientY - c.top) / scale - oy) + "px";
-                        mapContent.appendChild(el);
-                        localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
+                        mapContent.appendChild(el); localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
                     } else { forceReady(el.id); }
                     updateStatus();
                 };
@@ -369,85 +346,37 @@
             };
         }
 
-        // --- MAP CONTROLS ---
-        mapContainer.onwheel = e => {
-            e.preventDefault();
-            scale = Math.min(Math.max(scale * (1 + (-Math.sign(e.deltaY) * 0.1)), 0.1), 5);
-            updateTransform();
-        };
-
-        mapContainer.onmousedown = e => {
-            if (e.button === 0 && e.shiftKey || e.button === 1) {
-                let startX = e.clientX - posX, startY = e.clientY - posY;
-                const m = (ev) => { posX = ev.clientX - startX; posY = ev.clientY - startY; updateTransform(); };
-                const u = () => { document.removeEventListener('mousemove', m); document.removeEventListener('mouseup', u); };
-                document.addEventListener('mousemove', m); document.addEventListener('mouseup', u);
-            }
-        };
+        mapContainer.onwheel = e => { e.preventDefault(); scale = Math.min(Math.max(scale * (1 + (-Math.sign(e.deltaY) * 0.1)), 0.1), 5); updateTransform(); };
+        mapContainer.onmousedown = e => { if (e.button === 0 && e.shiftKey || e.button === 1) { let sX = e.clientX - posX, sY = e.clientY - posY; const m = (ev) => { posX = ev.clientX - sX; posY = ev.clientY - sY; updateTransform(); }; const u = () => { document.removeEventListener('mousemove', m); document.removeEventListener('mouseup', u); }; document.addEventListener('mousemove', m); document.addEventListener('mouseup', u); } };
 
         function init() {
             initResizers(); renderStagingMenu();
             units.forEach(u => {
-                const slot = document.createElement('div');
-                slot.className = 'unit-slot'; slot.id = `slot-${u.id}`;
-                availableList.appendChild(slot);
-                const div = document.createElement('div');
-                div.className = 'ambulance-icon'; div.id = u.id;
+                const slot = document.createElement('div'); slot.className = 'unit-slot'; slot.id = `slot-${u.id}`; availableList.appendChild(slot);
+                const div = document.createElement('div'); div.className = 'ambulance-icon'; div.id = u.id;
                 div.innerHTML = `<div class="unit-label">${u.id}</div><div class="unit-status-text"></div>`;
-                div.oncontextmenu = (e) => {
-                    e.preventDefault(); e.stopPropagation();
-                    selectedUnitId = u.id; document.getElementById('menu-id').innerText = u.id;
-                    ctxMenu.style.display = 'block'; ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px';
-                    ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 450) + 'px';
-                };
+                div.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); selectedUnitId = u.id; document.getElementById('menu-id').innerText = u.id; ctxMenu.style.display = 'block'; ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px'; ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 450) + 'px'; };
                 if (localStorage.getItem(`oos-${u.id}`) === 'true') div.classList.add('oos');
-                const saved = localStorage.getItem(`pos-${u.id}`);
-                if (saved) {
-                    const p = JSON.parse(saved); div.style.position = 'absolute'; div.style.left = p.left; div.style.top = p.top;
-                    mapContent.appendChild(div);
-                } else { slot.appendChild(div); }
+                const saved = localStorage.getItem(`pos-${u.id}`); if (saved) { const p = JSON.parse(saved); div.style.position = 'absolute'; div.style.left = p.left; div.style.top = p.top; mapContent.appendChild(div); } else { slot.appendChild(div); }
                 makeDraggable(div);
             });
             centerMap(); updateStatus();
         }
 
-        function toggleOOS() {
-            const isOOS = document.getElementById(selectedUnitId).classList.toggle('oos');
-            localStorage.setItem(`oos-${selectedUnitId}`, isOOS);
-            ctxMenu.style.display = 'none'; updateStatus();
-        }
-
-        function renderStagingMenu() {
-            const list = document.getElementById('staging-list');
-            list.innerHTML = '';
-            postData.forEach(p => {
-                const d = document.createElement('div'); d.className = 'menu-item'; d.innerText = p.name;
-                d.onmousedown = () => { localStorage.setItem(`staged-${selectedUnitId}`, p.name); ctxMenu.style.display = 'none'; updateStatus(); };
-                list.appendChild(d);
-            });
-        }
-
+        function toggleOOS() { const isOOS = document.getElementById(selectedUnitId).classList.toggle('oos'); localStorage.setItem(`oos-${selectedUnitId}`, isOOS); ctxMenu.style.display = 'none'; updateStatus(); }
+        function renderStagingMenu() { const list = document.getElementById('staging-list'); list.innerHTML = ''; postData.forEach(p => { const d = document.createElement('div'); d.className = 'menu-item'; d.innerText = p.name; d.onmousedown = () => { localStorage.setItem(`staged-${selectedUnitId}`, p.name); ctxMenu.style.display = 'none'; updateStatus(); }; list.appendChild(d); }); }
         function toggleConfig(s) { 
             if(s) {
                 const c = document.getElementById('config-list-content'); c.innerHTML = '';
                 units.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric:true})).forEach(u => {
                     const act = localStorage.getItem(`inactive-${u.id}`) !== 'true';
-                    c.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #222; align-items:center;">
-                        <b>${u.id}</b> <button onclick="toggleUnitActive('${u.id}')" 
-                        style="background:${act?'var(--neon-green)':'#333'}; padding:8px; border:none; cursor:pointer; min-width:80px; font-weight:bold; color:black;">${act?'ON':'OFF'}</button></div>`;
+                    c.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #222; align-items:center;"><b>${u.id}</b> <button onclick="toggleUnitActive('${u.id}')" style="background:${act?'var(--neon-green)':'#333'}; padding:8px; border:none; cursor:pointer; min-width:80px; font-weight:bold; color:black;">${act?'ACTIVE':'OFF'}</button></div>`;
                 });
             }
             document.getElementById('config-modal').style.display = s ? 'flex' : 'none'; 
         }
-
-        function toggleUnitActive(uId) {
-            localStorage.setItem(`inactive-${uId}`, localStorage.getItem(`inactive-${uId}`) !== 'true');
-            if (localStorage.getItem(`inactive-${uId}`) === 'true') forceReady(uId);
-            toggleConfig(true); updateStatus();
-        }
-
+        function toggleUnitActive(uId) { localStorage.setItem(`inactive-${uId}`, localStorage.getItem(`inactive-${uId}`) !== 'true'); if (localStorage.getItem(`inactive-${uId}`) === 'true') forceReady(uId); toggleConfig(true); updateStatus(); }
         function recallAllUnits() { units.forEach(u => { if (document.getElementById(u.id).parentElement.id === 'map-content') forceReady(u.id); }); }
-
         window.onmousedown = (e) => { if (!ctxMenu.contains(e.target)) ctxMenu.style.display = 'none'; };
         window.onload = init;
         window.onresize = centerMap;
