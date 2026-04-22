@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v33</title>
+    <title>Priority Dispatch | Command Console v34</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -27,7 +27,7 @@
         #right-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; border-left: 1px solid #000; }
 
         /* GUTTERS */
-        .gutter-v { width: 6px; background: var(--gutter-color); cursor: col-resize; flex-shrink: 0; z-index: 100; }
+        .gutter-v { width: 6px; background: var(--gutter-color); cursor: col-resize; flex-shrink: 0; z-index: 100; transition: background 0.2s; }
         .gutter-v:hover { background: var(--gutter-hover); }
         .gutter-h { height: 6px; background: var(--gutter-color); cursor: row-resize; flex-shrink: 0; z-index: 100; }
         .gutter-h:hover { background: var(--gutter-hover); }
@@ -50,7 +50,12 @@
         #timer-section { height: 240px; min-height: 100px; background: #111; display: flex; flex-direction: column; overflow: hidden; }
         #timer-grid { flex-grow: 1; display: flex; gap: 12px; padding: 12px; overflow-x: auto; align-items: flex-start; }
 
-        /* TRUCK CARDS */
+        /* CARDS */
+        .rec-card { background: #1a1a1a; border-left: 4px solid var(--logistics-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; animation: pulse 2s infinite; border-top: 1px solid #333; }
+        @keyframes pulse { 0%, 100% { border-left-color: #004c5b; } 50% { border-left-color: var(--logistics-blue); } }
+        .rec-title { font-size: 9px; color: var(--logistics-blue); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+        .rec-instruction { font-size: 13px; font-weight: bold; color: #fff; line-height: 1.4; }
+
         .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
         .ambulance-icon { padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; position: relative; z-index: 50; }
         .unit-label { font-size: 14px; font-weight: 900; }
@@ -62,7 +67,7 @@
         .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border: 1px dashed #f00 !important; }
         .hidden-unit { display: none !important; }
 
-        /* MODALS & MENUS */
+        /* CONTEXT MENU */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: #333; }
@@ -70,7 +75,6 @@
 
         .timer-card { min-width: 180px; background: #1a1a1a; padding: 12px; border-radius: 4px; border: 1px solid #333; border-top: 4px solid #444; flex-shrink: 0; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; }
-        
         .type-call { border-top-color: var(--bright-red); }
         .type-dest { border-top-color: var(--hosp-orange); }
         .type-logs { border-top-color: var(--logistics-blue); }
@@ -102,7 +106,7 @@
             </div>
             <div class="gutter-h" id="resizer-timers"></div>
             <div id="timer-section">
-                <div class="list-header">Active Dispatch Timers</div>
+                <div class="list-header">Active Timers & Dispatch</div>
                 <div id="timer-grid"></div>
             </div>
         </div>
@@ -110,7 +114,7 @@
         <div class="gutter-v" id="resizer-right"></div>
 
         <div id="right-sidebar">
-            <div class="list-header">Posting Plan Logic</div>
+            <div class="list-header" id="plan-level-header">Posting Plan Logic</div>
             <div id="recommendation-list"></div>
         </div>
     </div>
@@ -137,20 +141,41 @@
     </div>
 
     <script>
+        // OFFICIAL POST DATA
         const postData = [
-            { id: 1, name: "Belton", home: "Med-2", isPrimary: true },
-            { id: 2, name: "Homeland Park", home: "Med-3", isPrimary: true },
-            { id: 3, name: "Honea Path", home: "Med-13", isPrimary: true },
-            { id: 4, name: "Wren FD", home: "Med-15", isPrimary: true },
-            { id: 5, name: "Iva City", home: "Med-6", isPrimary: true },
-            { id: 6, name: "Williamston", home: "Med-4", isPrimary: true },
-            { id: 7, name: "Pendleton", home: "Med-7", isPrimary: true },
-            { id: 8, name: "Powdersville", home: "Med-14", isPrimary: true },
-            { id: 9, name: "Townville", home: "Med-8", isPrimary: true },
-            { id: 10, name: "Centerville", home: "Med-9", isPrimary: true },
-            { id: 12, name: "Hopewell", home: "Med-5", isPrimary: true },
-            { id: 11, name: "HQ Fleet", home: "City", isPrimary: false }
+            { id: 1, name: "Belton", home: "Med-2", lat: 34.49, lon: -82.52 },
+            { id: 2, name: "Homeland Park", home: "Med-3", lat: 34.46, lon: -82.65 },
+            { id: 3, name: "Honea Path", home: "Med-13", lat: 34.45, lon: -82.40 },
+            { id: 4, name: "Wren FD", home: "Med-15", lat: 34.71, lon: -82.50 },
+            { id: 5, name: "Iva City", home: "Med-6", lat: 34.30, lon: -82.66 },
+            { id: 6, name: "Williamston", home: "Med-4", lat: 34.61, lon: -82.49 },
+            { id: 7, name: "Pendleton", home: "Med-7", lat: 34.64, lon: -82.78 },
+            { id: 8, name: "Powdersville", home: "Med-14", lat: 34.77, lon: -82.48 },
+            { id: 9, name: "Townville", home: "Med-8", lat: 34.56, lon: -82.88 },
+            { id: 10, name: "Centerville", home: "Med-9", lat: 34.54, lon: -82.69 },
+            { id: 12, name: "Hopewell", home: "Med-5", lat: 34.59, lon: -82.62 },
+            { id: 11, name: "Medshore HQ", home: "City Fleet", lat: 34.51, lon: -82.64 },
+            { id: 21, name: "Liberty Hwy", home: "Med-2", lat: 34.57, lon: -82.71 },
+            { id: 22, name: "West Anderson", home: "Med-4", lat: 34.50, lon: -82.68 },
+            { id: 23, name: "White Plains", home: "Med-5", lat: 34.66, lon: -82.51 },
+            { id: 24, name: "SC-28 & Welpine Rd", home: "Staging", lat: 34.58, lon: -82.71 },
+            { id: 25, name: "Westgate", home: "Staging", lat: 34.51, lon: -82.75 },
+            { id: 26, name: "Redi Mart (81 & Fred Dean)", home: "Staging", lat: 34.40, lon: -82.68 }
         ];
+
+        // DYNAMIC POSTING PLAN LEVELS (FROM PDF)
+        const postingPlan = {
+            1: ["Medshore HQ"],
+            2: ["Anderson FD Sta 1", "Liberty Hwy"],
+            3: ["Rock Springs", "West Anderson", "White Plains"],
+            4: ["Rock Springs", "West Anderson", "White Plains", "SC-28 & Welpine Rd"],
+            5: ["Rock Springs", "White Plains", "SC-28 & Welpine Rd", "Westgate", "Redi Mart (81 & Fred Dean)"],
+            6: ["Rock Springs", "White Plains", "Whitefield", "Westgate", "Redi Mart (81 & Fred Dean)", "Liberty Hwy"],
+            7: ["Rock Springs", "White Plains", "SC-28 & Welpine Rd", "Westgate", "Redi Mart (81 & Fred Dean)", "Medshore HQ", "Whitefield"],
+            8: ["Rock Springs", "Homeland Park", "Honea Path", "Wren FD", "Iva City", "Westgate", "Williamston", "Pendleton"],
+            9: ["Rock Springs", "Homeland Park", "Honea Path", "Wren FD", "Iva City", "Westgate", "Williamston", "Pendleton", "Powdersville"],
+            10: ["Rock Springs", "Homeland Park", "Honea Path", "Wren FD", "Iva City", "Centerville", "Williamston", "Pendleton", "Powdersville", "Townville"]
+        };
 
         const units = [
             { id: "Med-0", home: "City", pId: 11 }, { id: "Med-1", home: "City", pId: 11 },
@@ -174,6 +199,74 @@
         const ctxMenu = document.getElementById('context-menu');
         
         let selectedUnitId = null, scale = 1, posX = 0, posY = 0, unitStates = {};
+
+        // --- CORE STATUS ENGINE ---
+        function updateStatus() {
+            let readyCount = 0;
+            let coveredPosts = [];
+            let unassignedUnits = [];
+            let med3Busy = false, med6Busy = false;
+
+            // 1. Identify unit statuses
+            units.forEach(u => {
+                const el = document.getElementById(u.id);
+                const slot = document.getElementById(`slot-${u.id}`);
+                if (!el || !slot) return;
+
+                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
+                if (isInactive) { el.classList.add('hidden-unit'); slot.classList.add('hidden-unit'); return; }
+                else { el.classList.remove('hidden-unit'); slot.classList.remove('hidden-unit'); }
+
+                const isBusy = !!unitStates[u.id] || el.classList.contains('oos');
+                const label = el.querySelector('.unit-status-text');
+                const isOnMap = el.parentElement.id === 'map-content';
+                const stagedAt = localStorage.getItem(`staged-${u.id}`);
+
+                if (isBusy) {
+                    el.classList.add(unitStates[u.id] ? 'state-' + unitStates[u.id].type.toLowerCase() : 'oos');
+                    label.innerText = unitStates[u.id] ? unitStates[u.id].type : "OOS";
+                    if (u.id === 'Med-3') med3Busy = true;
+                    if (u.id === 'Med-6') med6Busy = true;
+                } else {
+                    readyCount++;
+                    if (isOnMap) {
+                        el.classList.add('state-map');
+                        label.innerText = "POSTED: " + (stagedAt || "MAP");
+                        if (stagedAt) coveredPosts.push(stagedAt);
+                    } else {
+                        label.innerText = u.home;
+                        coveredPosts.push(u.home); // Assume home post is covered if unit is at base
+                    }
+                    unassignedUnits.push(u.id);
+                }
+            });
+
+            gauge.innerText = readyCount;
+            document.getElementById('plan-level-header').innerText = `PLAN LEVEL: ${readyCount}`;
+
+            // 2. Recommendations Logic
+            recList.innerHTML = '';
+            const activePlan = postingPlan[readyCount] || (readyCount > 10 ? postingPlan[10] : []);
+            
+            activePlan.forEach(reqPost => {
+                // Is this required post covered?
+                if (!coveredPosts.includes(reqPost)) {
+                    // Special Rule: Homeland/Iva proximity
+                    if (reqPost === "Homeland Park" && med3Busy && !med6Busy) {
+                        recList.innerHTML += `<div class="rec-card"><div class="rec-title">GAP: HOMELAND PARK</div><div class="rec-instruction">Move <b>Med-6</b> to <b>Redi Mart (81 & Fred Dean)</b></div></div>`;
+                        unassignedUnits = unassignedUnits.filter(id => id !== 'Med-6');
+                    } else {
+                        // General Rule: Pull closest unassigned truck
+                        const helper = unassignedUnits.shift();
+                        if (helper) {
+                            recList.innerHTML += `<div class="rec-card"><div class="rec-title">GAP: ${reqPost}</div><div class="rec-instruction">Move <b>${helper}</b> to cover</div></div>`;
+                        }
+                    }
+                }
+            });
+
+            if (!recList.innerHTML) recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:20px;">SYSTEM STATUS: BALANCED</div>';
+        }
 
         // --- MAP ENGINE ---
         function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
@@ -202,78 +295,12 @@
             };
         }
 
-        // --- STATUS & LOGIC ---
-        function updateStatus() {
-            let readyCount = 0, criticalGaps = [], flexibleUnits = [];
-            let m3B = false, m6B = false;
-
-            // Pass 1: Global Status Check
-            units.forEach(u => {
-                const el = document.getElementById(u.id);
-                if (!el || localStorage.getItem(`inactive-${u.id}`) === 'true') return;
-                const busy = !!unitStates[u.id] || el.classList.contains('oos');
-                if (u.id === 'Med-3' && busy) m3B = true;
-                if (u.id === 'Med-6' && busy) m6B = true;
-            });
-
-            // Pass 2: Rendering & Logic
-            units.forEach(u => {
-                const el = document.getElementById(u.id);
-                const slot = document.getElementById(`slot-${u.id}`);
-                if (!el || !slot) return;
-
-                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
-                
-                // FIXED: Explicitly handle visibility for deactivated units
-                if (isInactive) {
-                    el.classList.add('hidden-unit');
-                    slot.classList.add('hidden-unit');
-                    return; 
-                } else {
-                    el.classList.remove('hidden-unit');
-                    slot.classList.remove('hidden-unit');
-                }
-
-                el.classList.remove('state-call', 'state-dest', 'state-logs', 'state-map');
-                const busy = !!unitStates[u.id] || el.classList.contains('oos');
-                const label = el.querySelector('.unit-status-text');
-
-                if (busy) {
-                    el.classList.add(unitStates[u.id] ? 'state-' + unitStates[u.id].type.toLowerCase() : 'oos');
-                    label.innerText = unitStates[u.id] ? unitStates[u.id].type : "OOS";
-                    if (u.pId !== 11 && u.id !== 'Med-6') criticalGaps.push(postData.find(p => p.id === u.pId));
-                } else {
-                    readyCount++;
-                    if (el.parentElement.id === 'map-content') {
-                        el.classList.add('state-map');
-                        label.innerText = "POSTED: " + (localStorage.getItem(`staged-${u.id}`) || "");
-                    } else { label.innerText = u.home; }
-                    if (u.pId === 11 && el.parentElement.id !== 'map-content') flexibleUnits.push(u.id);
-                }
-            });
-
-            gauge.innerText = readyCount;
-            gauge.style.color = readyCount <= 3 ? "var(--bright-red)" : "var(--neon-green)";
-
-            recList.innerHTML = '';
-            criticalGaps.forEach(gap => {
-                let html = "";
-                if (gap.id === 2 && !m6B) {
-                    html = `<div class="rec-card"><div class="rec-title">GAP: ${gap.name}</div><div class="rec-instruction">Move <b>Med-6</b> to <b>81 & Fred Dean</b></div></div>`;
-                } else {
-                    const h = flexibleUnits.shift();
-                    if (h) html = `<div class="rec-card"><div class="rec-title">GAP: ${gap.name}</div><div class="rec-instruction">Move <b>${h}</b> to cover</div></div>`;
-                }
-                recList.innerHTML += html;
-            });
-        }
-
         // --- CORE OPERATIONS ---
         function forceReady(uId) {
             delete unitStates[uId];
             const el = document.getElementById(uId);
             if (!el) return;
-            el.classList.remove('oos');
+            el.classList.remove('oos', 'state-call', 'state-dest', 'state-logs');
             localStorage.removeItem(`oos-${uId}`);
             localStorage.removeItem(`pos-${uId}`);
             localStorage.removeItem(`staged-${uId}`);
@@ -295,8 +322,8 @@
                 card.className = `timer-card type-${s.type.toLowerCase()}`;
                 card.innerHTML = `<div style="font-weight:bold;">${uId}</div><div class="timer-display" id="display-${uId}">0:00</div>
                     <div style="display:flex; gap:5px; margin-top:10px;">
-                        ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); padding:5px; border:none; border-radius:3px; font-weight:bold; cursor:pointer;">ARRIVED</button>` : ''}
-                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; border:none; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button>
+                        ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); padding:5px; cursor:pointer; font-weight:bold; border:none; border-radius:3px;">ARRIVED</button>` : ''}
+                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; padding:5px; cursor:pointer; border-radius:3px;">CLEAR</button>
                     </div>`;
                 timerGrid.appendChild(card);
             });
@@ -318,56 +345,43 @@
             });
         }, 1000);
 
-        // --- DRAG LOGIC ---
         function makeDraggable(el) {
-            let ox = 0, oy = 0;
             el.addEventListener('dragstart', (e) => e.preventDefault());
             el.onmousedown = (e) => {
                 if(e.button !== 0) return;
                 const r = el.getBoundingClientRect();
-                ox = (e.clientX - r.left) / scale; oy = (e.clientY - r.top) / scale;
+                let ox = (e.clientX - r.left) / scale; let oy = (e.clientY - r.top) / scale;
                 el.style.position = 'fixed'; el.style.width = '180px'; el.style.zIndex = '1000';
                 document.body.appendChild(el);
-                
-                const move = (ev) => {
-                    el.style.left = (ev.clientX - (ox * scale)) + "px";
-                    el.style.top = (ev.clientY - (oy * scale)) + "px";
-                };
-                
+                const move = (ev) => { el.style.left = (ev.clientX - (ox * scale)) + "px"; el.style.top = (ev.clientY - (oy * scale)) + "px"; };
                 const up = (ev) => {
-                    document.removeEventListener('mousemove', move);
-                    document.removeEventListener('mouseup', up);
+                    document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
                     const mR = mapContainer.getBoundingClientRect();
                     if (ev.clientX > mR.left && ev.clientX < mR.right && ev.clientY < mR.bottom) {
                         const c = mapContent.getBoundingClientRect();
-                        el.style.position = 'absolute';
-                        el.style.left = ((ev.clientX - c.left) / scale - ox) + "px";
-                        el.style.top = ((ev.clientY - c.top) / scale - oy) + "px";
+                        el.style.position = 'absolute'; el.style.left = ((ev.clientX - c.left) / scale - ox) + "px"; el.style.top = ((ev.clientY - c.top) / scale - oy) + "px";
                         mapContent.appendChild(el);
                         localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
                     } else { forceReady(el.id); }
                     updateStatus();
                 };
-                document.addEventListener('mousemove', move);
-                document.addEventListener('mouseup', up);
+                document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
             };
         }
 
-        // --- MAP NAVIGATION ---
+        // --- MAP CONTROLS ---
         mapContainer.onwheel = e => {
             e.preventDefault();
-            const zoom = 1 + (-Math.sign(e.deltaY) * 0.1);
-            scale = Math.min(Math.max(scale * zoom, 0.1), 5);
+            scale = Math.min(Math.max(scale * (1 + (-Math.sign(e.deltaY) * 0.1)), 0.1), 5);
             updateTransform();
         };
 
         mapContainer.onmousedown = e => {
             if (e.button === 0 && e.shiftKey || e.button === 1) {
                 let startX = e.clientX - posX, startY = e.clientY - posY;
-                const move = (ev) => { posX = ev.clientX - startX; posY = ev.clientY - startY; updateTransform(); };
-                const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
-                document.addEventListener('mousemove', move);
-                document.addEventListener('mouseup', up);
+                const m = (ev) => { posX = ev.clientX - startX; posY = ev.clientY - startY; updateTransform(); };
+                const u = () => { document.removeEventListener('mousemove', m); document.removeEventListener('mouseup', u); };
+                document.addEventListener('mousemove', m); document.addEventListener('mouseup', u);
             }
         };
 
@@ -405,6 +419,7 @@
 
         function renderStagingMenu() {
             const list = document.getElementById('staging-list');
+            list.innerHTML = '';
             postData.forEach(p => {
                 const d = document.createElement('div'); d.className = 'menu-item'; d.innerText = p.name;
                 d.onmousedown = () => { localStorage.setItem(`staged-${selectedUnitId}`, p.name); ctxMenu.style.display = 'none'; updateStatus(); };
@@ -419,19 +434,16 @@
                     const act = localStorage.getItem(`inactive-${u.id}`) !== 'true';
                     c.innerHTML += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #222; align-items:center;">
                         <b>${u.id}</b> <button onclick="toggleUnitActive('${u.id}')" 
-                        style="background:${act?'var(--neon-green)':'#333'}; padding:8px; border:none; cursor:pointer; min-width:80px; font-weight:bold; color:black;">${act?'ACTIVE':'OFF'}</button></div>`;
+                        style="background:${act?'var(--neon-green)':'#333'}; padding:8px; border:none; cursor:pointer; min-width:80px; font-weight:bold; color:black;">${act?'ON':'OFF'}</button></div>`;
                 });
             }
             document.getElementById('config-modal').style.display = s ? 'flex' : 'none'; 
         }
 
         function toggleUnitActive(uId) {
-            const current = localStorage.getItem(`inactive-${uId}`) === 'true';
-            const next = !current;
-            localStorage.setItem(`inactive-${uId}`, next);
-            if (next) forceReady(uId); // Snap back and clear if deactivating
-            toggleConfig(true); // Refresh list
-            updateStatus();
+            localStorage.setItem(`inactive-${uId}`, localStorage.getItem(`inactive-${uId}`) !== 'true');
+            if (localStorage.getItem(`inactive-${uId}`) === 'true') forceReady(uId);
+            toggleConfig(true); updateStatus();
         }
 
         function recallAllUnits() { units.forEach(u => { if (document.getElementById(u.id).parentElement.id === 'map-content') forceReady(u.id); }); }
