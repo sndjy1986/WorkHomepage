@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v22</title>
+    <title>Priority Dispatch | Command Console v23</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -12,13 +12,12 @@
             --post-blue: #00d4ff;
             --bg-dark: #0a0a0a;
             --panel-bg: #161616;
-            --sidebar-w: 240px;
+            --sidebar-w: 260px;
         }
 
-        /* PREVENT SELECTION HIGHLIGHT */
         * { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; outline: none; box-sizing: border-box; }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; display: flex; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; display: flex; }
 
         /* LEFT SIDEBAR */
         #left-sidebar { width: var(--sidebar-w); background: var(--panel-bg); display: flex; flex-direction: column; border-right: 2px solid #222; flex-shrink: 0; }
@@ -48,56 +47,41 @@
             animation: pulse-border 2s infinite;
         }
         @keyframes pulse-border { 0% { border-left-color: #004c5b; } 50% { border-left-color: var(--post-blue); } 100% { border-left-color: #004c5b; } }
-        .rec-title { font-size: 10px; color: var(--post-blue); font-weight: bold; margin-bottom: 4px; }
-        .rec-instruction { font-size: 13px; font-weight: bold; color: #fff; }
+        .rec-title { font-size: 9px; color: var(--post-blue); font-weight: bold; margin-bottom: 4px; text-transform: uppercase; }
+        .rec-instruction { font-size: 13px; font-weight: bold; color: #fff; line-height: 1.3; }
+        .rec-dist { font-size: 10px; color: #666; margin-top: 4px; }
 
         /* UNIT CARDS */
         .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
         .ambulance-icon { 
             padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; 
-            background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; transition: opacity 0.3s;
+            background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%;
         }
         .unit-label { font-size: 14px; font-weight: 900; }
-        .unit-home-post { font-size: 9px; color: #999; margin-top: 3px; text-align: center; }
+        .unit-status-text { font-size: 9px; color: #999; margin-top: 3px; text-align: center; text-transform: uppercase; font-weight: bold; }
 
         /* STATES */
-        .state-map { width: 80px !important; border-color: var(--bright-red); border-width: 2px; box-shadow: 0 0 15px rgba(255,0,0,0.3); }
-        .state-map .unit-label { color: var(--bright-red); }
-        .state-dest .unit-label { color: var(--hosp-orange); border-bottom: 1px solid var(--hosp-orange); }
-        .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border-style: dashed; }
+        .state-map { width: 90px !important; border-color: var(--post-blue); border-width: 2px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2); }
+        .state-map .unit-label { color: var(--post-blue); }
+        .state-dest .unit-label { color: var(--hosp-orange); }
+        .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; }
         .hidden-unit { display: none !important; }
 
-        /* CONFIG MODAL & GEAR */
-        #system-gear { 
-            position: fixed; bottom: 20px; right: 20px; z-index: 1000; 
-            font-size: 24px; cursor: pointer; color: #555; background: #000; 
-            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; 
-            border-radius: 50%; border: 1px solid #333; transition: color 0.3s;
-        }
-        #system-gear:hover { color: #fff; border-color: #666; }
-
-        #config-modal { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); z-index: 2000; display: none; 
-            align-items: center; justify-content: center; 
-        }
-        #config-panel { 
-            background: #1a1a1a; width: 500px; max-height: 80vh; border-radius: 8px; 
-            border: 1px solid #444; display: flex; flex-direction: column; padding: 20px; 
-        }
-        .config-list { flex-grow: 1; overflow-y: auto; margin: 15px 0; border-top: 1px solid #333; }
-        .config-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px; border-bottom: 1px solid #222; 
-        }
-        .toggle-switch { cursor: pointer; padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        /* GEAR & CONFIG */
+        #system-gear { position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-size: 22px; cursor: pointer; background: #000; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #333; }
+        #config-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        #config-panel { background: #1a1a1a; width: 500px; max-height: 80vh; border-radius: 8px; border: 1px solid #444; display: flex; flex-direction: column; padding: 20px; }
+        .config-list { flex-grow: 1; overflow-y: auto; margin: 15px 0; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; }
+        .toggle-btn { cursor: pointer; padding: 6px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #333; color: #888; border: none; }
         .toggle-on { background: var(--neon-green); color: #000; }
-        .toggle-off { background: #333; color: #888; }
 
         /* CONTEXT MENU */
-        #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 200px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
+        #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: #333; }
+        .menu-header { padding: 10px; font-size: 11px; background: #000; color: #888; font-weight: bold; text-align: center; }
+        .submenu-container { max-height: 200px; overflow-y: auto; background: #111; }
 
         .timer-card { min-width: 170px; background: #1a1a1a; border-top: 4px solid var(--hosp-orange); padding: 12px; border-radius: 4px; border: 1px solid #333; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; }
@@ -109,7 +93,7 @@
         <div id="system-status-box">
             <div class="gauge-label">SYSTEM STATUS</div>
             <div id="gas-gauge">0</div>
-            <div class="gauge-label">UNITS READY</div>
+            <div class="gauge-label">READY UNITS</div>
         </div>
         <div class="list-header">Stationed Units</div>
         <div id="available-list"></div>
@@ -123,15 +107,15 @@
         </div>
         <div id="timer-section">
             <div class="list-header">
-                <span>Active Hospital Timers</span>
-                <button onclick="resetView()" style="font-size:9px; cursor:pointer; background:#333; color:white; border:none; padding:3px 8px; border-radius:3px;">RESET VIEW</button>
+                <span>Hospital / Call Timers</span>
+                <button onclick="resetView()" style="font-size:9px; cursor:pointer; background:#333; color:white; border:none; padding:3px 8px; border-radius:3px;">RESET MAP</button>
             </div>
             <div id="timer-grid"></div>
         </div>
     </div>
 
     <div id="right-sidebar">
-        <div class="list-header">Move-Up Recommendation</div>
+        <div class="list-header">Move-Up Logic (Geo-Stringent)</div>
         <div id="recommendation-list"></div>
     </div>
 
@@ -140,43 +124,54 @@
     <div id="config-modal">
         <div id="config-panel">
             <h2 style="margin-top:0;">Fleet Configuration</h2>
-            <div style="font-size: 12px; color: #888;">Deactivating a unit hides it from the console completely.</div>
             <div class="config-list" id="config-list-content"></div>
-            <button onclick="toggleConfig(false)" style="padding:10px; background:var(--post-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">CLOSE CONFIG</button>
+            <button onclick="toggleConfig(false)" style="padding:10px; background:var(--post-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">SAVE & CLOSE</button>
         </div>
     </div>
 
     <div id="context-menu">
-        <div id="menu-id" style="text-align:center; padding:10px; font-size:11px; color:#aaa; background:#000; font-weight:bold; border-bottom:1px solid #333;">UNIT</div>
-        <div class="menu-item" onclick="startTimer(20, 'GMH')">Mark On Call: GMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'AMH')">Mark On Call: AMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(25, 'SFCH')">Mark On Call: SFCH (25m)</div>
-        <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); font-weight:bold;">TOGGLE OUT OF SERVICE</div>
+        <div id="menu-id" class="menu-header">UNIT</div>
+        <div class="menu-item" onclick="startTimer(20, 'GMH')">On Call: GMH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'AMH')">On Call: AMH (20m)</div>
+        <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); font-weight:bold;">OUT OF SERVICE (OOS)</div>
+        <div id="staging-option" style="display:none;">
+            <div class="menu-header" style="border-top:1px solid #333;">STAGE AT POST</div>
+            <div class="submenu-container" id="staging-list"></div>
+        </div>
     </div>
 
     <script>
-        const posts = [
-            { id: 1, name: "Rock Springs", homeUnits: ["Med-2"], addr: "135 HWY 413", isPrimary: true },
-            { id: 2, name: "Homeland Park", homeUnits: ["Med-3"], addr: "3228 S Main St", isPrimary: true },
-            { id: 3, name: "Honea Path", homeUnits: ["Med-13"], addr: "6 Gaines Rd.", isPrimary: true },
-            { id: 4, name: "Wren", homeUnits: ["Med-15"], addr: "2209 SC-86", isPrimary: true },
-            { id: 5, name: "Iva", homeUnits: ["Med-6"], addr: "9711 SC-81", isPrimary: true },
-            { id: 6, name: "Williamston", homeUnits: ["Med-4"], addr: "902 Anderson Dr.", isPrimary: true },
-            { id: 7, name: "Pendleton", homeUnits: ["Med-7"], addr: "111 N Depot St", isPrimary: true },
-            { id: 8, name: "Powdersville", homeUnits: ["Med-14"], addr: "10600 Anderson Rd", isPrimary: true },
-            { id: 9, name: "Townville", homeUnits: ["Med-8"], addr: "8508 SC-24", isPrimary: true },
-            { id: 10, name: "Centerville", homeUnits: ["Med-9"], addr: "103 Construction Way", isPrimary: true },
-            { id: 12, name: "Hopewell", homeUnits: ["Med-5"], addr: "2850 Concord Rd", isPrimary: true },
-            { id: 11, name: "Headquarters", homeUnits: ["Med-0", "Med-1", "Med-10", "Med-11"], addr: "1009 N Fant St", isPrimary: false },
-            { id: 16, name: "Headquarters B", homeUnits: ["Med-12", "Med-16", "Med-17", "Med-18", "Med-19"], addr: "1009 N Fant St.", isPrimary: false }
+        // GEOGRAPHIC DATA FOR ALL POSTS
+        const postData = [
+            { id: 1, name: "Belton Station", home: "Med-2", lat: 34.4970557, long: -82.5237544, isPrimary: true },
+            { id: 2, name: "Homeland Park", home: "Med-3", lat: 34.46718628, long: -82.65578639, isPrimary: true },
+            { id: 3, name: "Honea Path", home: "Med-13", lat: 34.45442718, long: -82.40514863, isPrimary: true },
+            { id: 4, name: "Wren FD", home: "Med-15", lat: 34.7114341, long: -82.5089313, isPrimary: true },
+            { id: 5, name: "Iva City", home: "Med-6", lat: 34.3024749, long: -82.6655562, isPrimary: true },
+            { id: 6, name: "Williamston", home: "Med-4", lat: 34.6163175, long: -82.49073195, isPrimary: true },
+            { id: 7, name: "Pendleton", home: "Med-7", lat: 34.64900461, long: -82.78013693, isPrimary: true },
+            { id: 8, name: "Powdersville", home: "Med-14", lat: 34.7747891, long: -82.4877423, isPrimary: true },
+            { id: 9, name: "Townville", home: "Med-8", lat: 34.5651501, long: -82.8895488, isPrimary: true },
+            { id: 10, name: "Centerville", home: "Med-9", lat: 34.5457262, long: -82.695841, isPrimary: true },
+            { id: 11, name: "HQ A", home: "Med-0", lat: 34.5136613, long: -82.6486386, isPrimary: false },
+            { id: 112, name: "HQ B", home: "Med-1", lat: 34.5136613, long: -82.6486386, isPrimary: false },
+            { id: 12, name: "Hopewell", home: "Med-5", lat: 34.596524, long: -82.6278652, isPrimary: true },
+            { id: 16, name: "HQ (City)", home: "Med-12", lat: 34.5136613, long: -82.6486386, isPrimary: false }
         ];
 
-        let units = [];
-        posts.forEach(p => {
-            p.homeUnits.forEach(uId => {
-                units.push({ id: uId, homePost: p.name, addr: p.addr, isPrimary: p.isPrimary });
-            });
-        });
+        // Mapped Unit list including night/city trucks
+        const units = [
+            { id: "Med-0", home: "City Truck", pId: 11 }, { id: "Med-1", home: "City Truck", pId: 11 },
+            { id: "Med-2", home: "Belton", pId: 1 }, { id: "Med-3", home: "Homeland Park", pId: 2 },
+            { id: "Med-4", home: "Williamston", pId: 6 }, { id: "Med-5", home: "Hopewell", pId: 12 },
+            { id: "Med-6", home: "Iva", pId: 5 }, { id: "Med-7", home: "Pendleton", pId: 7 },
+            { id: "Med-8", home: "Townville", pId: 9 }, { id: "Med-9", home: "Centerville", pId: 10 },
+            { id: "Med-10", home: "City / Night", pId: 11 }, { id: "Med-11", home: "City / Night", pId: 11 },
+            { id: "Med-12", home: "City Truck", pId: 16 }, { id: "Med-13", home: "Honea Path", pId: 3 },
+            { id: "Med-14", home: "Powdersville", pId: 8 }, { id: "Med-15", home: "Wren", pId: 4 },
+            { id: "Med-16", home: "City Truck", pId: 16 }, { id: "Med-17", home: "City Truck", pId: 16 },
+            { id: "Med-18", home: "City Truck", pId: 16 }, { id: "Med-19", home: "City Truck", pId: 16 }
+        ];
 
         const mapContainer = document.getElementById('map-container');
         const mapContent = document.getElementById('map-content');
@@ -189,18 +184,29 @@
         let selectedUnitId = null;
         let scale = 1, posX = 0, posY = 0;
 
+        // GEOGRAPHIC DISTANCE CALCULATION (Haversine)
+        function getDist(lat1, lon1, lat2, lon2) {
+            const R = 3958.8; // Earth radius in Miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
         function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
         function resetView() { scale = 1; posX = 0; posY = 0; updateTransform(); }
 
-        // MOUSE/WHEEL MAP
+        // MAP NAVIGATION
         mapContainer.onwheel = e => {
             e.preventDefault();
             const rect = mapContainer.getBoundingClientRect();
-            const zoomFactor = 1 + (-Math.sign(e.deltaY) * 0.1);
-            const newScale = scale * zoomFactor;
+            const zoom = 1 + (-Math.sign(e.deltaY) * 0.1);
+            const newScale = scale * zoom;
             if (newScale > 0.1 && newScale < 5) {
-                posX = (e.clientX - rect.left) - ((e.clientX - rect.left) - posX) * zoomFactor;
-                posY = (e.clientY - rect.top) - ((e.clientY - rect.top) - posY) * zoomFactor;
+                posX = (e.clientX - rect.left) - ((e.clientX - rect.left) - posX) * zoom;
+                posY = (e.clientY - rect.top) - ((e.clientY - rect.top) - posY) * zoom;
                 scale = newScale; updateTransform();
             }
         };
@@ -213,7 +219,7 @@
             }
         };
 
-        // STATUS LOGIC
+        // CORE SYSTEM LOGIC
         function updateStatus() {
             let readyCount = 0;
             let criticalGaps = [];
@@ -223,7 +229,6 @@
                 const el = document.getElementById(u.id);
                 if (!el) return;
 
-                // Check Config Deactivation
                 const isDeactivated = localStorage.getItem(`inactive-${u.id}`) === 'true';
                 if (isDeactivated) {
                     el.classList.add('hidden-unit');
@@ -240,43 +245,62 @@
                 const isOnMap = el.parentElement.id === 'map-content';
                 const isStationed = el.parentElement.closest('#available-list');
 
-                if (hasTimer) {
+                const unitPostObj = postData.find(p => p.id === u.pId);
+                const statusLabel = el.querySelector('.unit-status-text');
+
+                if (hasTimer || isOOS) {
                     el.classList.add('state-dest');
-                    if (u.isPrimary) criticalGaps.push({ post: u.homePost, addr: u.addr });
-                } else if (isOOS) {
-                    // OOS units do not count toward system status and trigger gaps
-                    if (u.isPrimary) criticalGaps.push({ post: u.homePost, addr: u.addr });
+                    statusLabel.innerText = isOOS ? "OOS" : "ON CALL";
+                    if (unitPostObj && unitPostObj.isPrimary) criticalGaps.push(unitPostObj);
                 } else {
-                    // Ready for Service
                     readyCount++;
-                    if (isOnMap) el.classList.add('state-map');
-                    if (!u.isPrimary && isStationed) flexibleUnits.push(u.id);
+                    if (isOnMap) {
+                        el.classList.add('state-map');
+                        const stagedAt = localStorage.getItem(`staged-${u.id}`);
+                        statusLabel.innerText = stagedAt ? `POSTED: ${stagedAt}` : "POSTED";
+                    } else {
+                        statusLabel.innerText = u.home;
+                    }
+                    if (unitPostObj && !unitPostObj.isPrimary && isStationed) flexibleUnits.push(u);
                 }
             });
 
             gauge.innerText = readyCount;
             gauge.style.color = readyCount <= 3 ? "var(--bright-red)" : "var(--neon-green)";
 
-            // Recommendations
+            // STRINGENT MOVE-UP LOGIC
             recList.innerHTML = '';
             criticalGaps.forEach(gap => {
-                const helper = flexibleUnits.shift();
-                if (helper) {
+                // Find the closest flexible truck to this specific gap station
+                const candidates = flexibleUnits.map(fu => {
+                    const hq = postData.find(p => p.id === fu.pId);
+                    return { id: fu.id, dist: getDist(hq.lat, hq.long, gap.lat, gap.long) };
+                }).sort((a, b) => a.dist - b.dist);
+
+                const closest = candidates[0];
+                if (closest) {
+                    // Remove chosen truck from pool for next gap
+                    flexibleUnits = flexibleUnits.filter(f => f.id !== closest.id);
                     const card = document.createElement('div');
                     card.className = 'rec-card';
-                    card.innerHTML = `<div class="rec-title">COVERAGE ALERT: ${gap.post}</div><div class="rec-instruction">Move <b>${helper}</b> to cover <b>${gap.addr}</b></div>`;
+                    card.innerHTML = `
+                        <div class="rec-title">GAP: ${gap.name}</div>
+                        <div class="rec-instruction">Move <b>${closest.id}</b> to cover ${gap.name}</div>
+                        <div class="rec-dist">Approx. travel: ${closest.dist.toFixed(1)} miles</div>
+                    `;
                     recList.appendChild(card);
                 }
             });
 
             if (recList.innerHTML === '') {
-                recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:30px; padding:20px; border:1px dashed #222;">SYSTEM STABLE</div>';
+                recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:30px;">SYSTEM BALANCED</div>';
             }
         }
 
         // INITIALIZE
         function init() {
             renderConfigMenu();
+            renderStagingMenu();
             units.forEach(u => {
                 const slot = document.createElement('div');
                 slot.className = 'unit-slot'; slot.id = `slot-${u.id}`;
@@ -284,20 +308,22 @@
 
                 const div = document.createElement('div');
                 div.className = 'ambulance-icon'; div.id = u.id;
-                div.innerHTML = `<div class="unit-label">${u.id}</div><div class="unit-home-post">${u.homePost}</div>`;
+                div.innerHTML = `<div class="unit-label">${u.id}</div><div class="unit-status-text"></div>`;
                 
                 div.oncontextmenu = (e) => {
                     e.preventDefault(); e.stopPropagation();
                     selectedUnitId = u.id;
-                    document.getElementById('menu-id').innerText = u.id + " | " + u.homePost;
+                    document.getElementById('menu-id').innerText = u.id;
+                    const isOnMap = div.parentElement.id === 'map-content';
+                    document.getElementById('staging-option').style.display = isOnMap ? 'block' : 'none';
+                    
                     ctxMenu.style.display = 'block';
-                    ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 200) + 'px';
-                    ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 300) + 'px';
+                    ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px';
+                    ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 400) + 'px';
                 };
 
-                const savedPos = localStorage.getItem(`pos-${u.id}`);
                 if (localStorage.getItem(`oos-${u.id}`) === 'true') div.classList.add('oos');
-
+                const savedPos = localStorage.getItem(`pos-${u.id}`);
                 if (savedPos) {
                     const p = JSON.parse(savedPos);
                     div.style.position = 'absolute'; div.style.left = p.left; div.style.top = p.top;
@@ -310,7 +336,6 @@
             updateStatus();
         }
 
-        // DRAG AND DROP
         function makeDraggable(el) {
             let ox = 0, oy = 0;
             el.onmousedown = (e) => {
@@ -338,23 +363,18 @@
                         slot.appendChild(el);
                         el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
                         localStorage.removeItem(`pos-${el.id}`);
+                        localStorage.removeItem(`staged-${el.id}`);
                     }
                     updateStatus();
                 };
             };
         }
 
-        // TIMER / DISPATCH
         function startTimer(min, hosp) {
             const timerId = Date.now();
             const card = document.createElement('div');
             card.className = 'timer-card'; card.id = `card-${timerId}`; card.dataset.unit = selectedUnitId;
-            card.innerHTML = `
-                <div style="font-weight:bold; font-size:18px; color:var(--hosp-orange);">${selectedUnitId}</div>
-                <div style="font-size:10px; color:#aaa;">BUSY: ${hosp}</div>
-                <div class="timer-display" id="time-${timerId}">--:--</div>
-                <button onclick="dismissTimer('${timerId}')" style="width:100%; font-size:10px; background:#333; color:white; border:1px solid #444; padding:6px; cursor:pointer; border-radius:3px;">CLEAR UNIT</button>
-            `;
+            card.innerHTML = `<div style="font-weight:bold; font-size:18px; color:var(--hosp-orange);">${selectedUnitId}</div><div style="font-size:10px; color:#aaa;">DEST: ${hosp}</div><div class="timer-display" id="time-${timerId}">--:--</div><button onclick="dismissTimer('${timerId}')" style="width:100%; font-size:10px; background:#333; color:white; border:1px solid #444; padding:6px; cursor:pointer;">CLEAR CALL</button>`;
             timerGrid.appendChild(card);
             ctxMenu.style.display = 'none';
             updateStatus();
@@ -369,49 +389,48 @@
         }
 
         function dismissTimer(tId) { document.getElementById(`card-${tId}`).remove(); updateStatus(); }
-
         function toggleOOS() {
-            const el = document.getElementById(selectedUnitId);
-            const isOOS = el.classList.toggle('oos');
+            const isOOS = document.getElementById(selectedUnitId).classList.toggle('oos');
             localStorage.setItem(`oos-${selectedUnitId}`, isOOS);
-            ctxMenu.style.display = 'none'; 
-            updateStatus();
+            ctxMenu.style.display = 'none'; updateStatus();
         }
 
-        // CONFIG MENU LOGIC
-        function toggleConfig(show) { document.getElementById('config-modal').style.display = show ? 'flex' : 'none'; }
-
-        function renderConfigMenu() {
-            const container = document.getElementById('config-list-content');
-            container.innerHTML = '';
-            units.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach(u => {
-                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
-                const item = document.createElement('div');
-                item.className = 'config-item';
-                item.innerHTML = `
-                    <div>
-                        <div style="font-weight:bold;">${u.id}</div>
-                        <div style="font-size:10px; color:#666;">${u.homePost}</div>
-                    </div>
-                    <div id="btn-${u.id}" class="toggle-switch ${isInactive ? 'toggle-off' : 'toggle-on'}" onclick="toggleUnitActive('${u.id}')">
-                        ${isInactive ? 'DEACTIVATED' : 'IN SERVICE'}
-                    </div>
-                `;
-                container.appendChild(item);
+        // STAGING LOGIC
+        function renderStagingMenu() {
+            const list = document.getElementById('staging-list');
+            postData.filter(p => p.isPrimary).forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerText = p.name;
+                div.onclick = () => {
+                    localStorage.setItem(`staged-${selectedUnitId}`, p.name);
+                    ctxMenu.style.display = 'none';
+                    updateStatus();
+                };
+                list.appendChild(div);
             });
         }
 
+        // CONFIG MENU
+        function toggleConfig(show) { document.getElementById('config-modal').style.display = show ? 'flex' : 'none'; }
+        function renderConfigMenu() {
+            const container = document.getElementById('config-list-content');
+            container.innerHTML = '';
+            units.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric:true})).forEach(u => {
+                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
+                const item = document.createElement('div');
+                item.className = 'config-item';
+                item.innerHTML = `<div><b>${u.id}</b><br><small>${u.home}</small></div><button class="toggle-btn ${isInactive ? '' : 'toggle-on'}" onclick="toggleUnitActive('${u.id}')">${isInactive ? 'INACTIVE' : 'IN SERVICE'}</button>`;
+                container.appendChild(item);
+            });
+        }
         function toggleUnitActive(uId) {
             const current = localStorage.getItem(`inactive-${uId}`) === 'true';
             localStorage.setItem(`inactive-${uId}`, !current);
-            renderConfigMenu();
-            updateStatus();
+            renderConfigMenu(); updateStatus();
         }
 
-        window.onclick = (e) => {
-            if (e.target === document.getElementById('config-modal')) toggleConfig(false);
-            ctxMenu.style.display = 'none';
-        }
+        window.onclick = () => ctxMenu.style.display = 'none';
         window.onload = init;
     </script>
 </body>
