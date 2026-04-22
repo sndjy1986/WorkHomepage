@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v31</title>
+    <title>Priority Dispatch | Command Console v32</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -19,42 +19,39 @@
         * { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; outline: none; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; display: flex; }
 
-        /* RESIZABLE LAYOUT STRUCTURE */
         #main-container { display: flex; width: 100%; height: 100%; overflow: hidden; }
 
-        #left-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; }
-        
-        #center-workspace { flex-grow: 1; display: flex; flex-direction: column; min-width: 400px; height: 100%; }
-        
-        #right-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; }
+        /* PANELS */
+        #left-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #000; }
+        #center-workspace { flex-grow: 1; display: flex; flex-direction: column; min-width: 400px; height: 100%; position: relative; }
+        #right-sidebar { width: 260px; min-width: 180px; background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; border-left: 1px solid #000; }
 
-        /* GUTTERS (Resizers) */
-        .gutter-v { width: 6px; background: var(--gutter-color); cursor: col-resize; flex-shrink: 0; transition: background 0.2s; z-index: 100; }
+        /* RESIZERS */
+        .gutter-v { width: 6px; background: var(--gutter-color); cursor: col-resize; flex-shrink: 0; z-index: 100; }
         .gutter-v:hover { background: var(--gutter-hover); }
-        .gutter-h { height: 6px; background: var(--gutter-color); cursor: row-resize; flex-shrink: 0; transition: background 0.2s; z-index: 100; }
+        .gutter-h { height: 6px; background: var(--gutter-color); cursor: row-resize; flex-shrink: 0; z-index: 100; }
         .gutter-h:hover { background: var(--gutter-hover); }
 
-        /* INNER COMPONENTS */
+        /* SYSTEM COMPONENTS */
         #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid #333; }
         #gas-gauge { font-size: 52px; font-weight: 900; line-height: 1; margin: 5px 0; color: var(--neon-green); }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
         .recall-btn { margin-top: 10px; padding: 8px; font-size: 9px; background: #222; border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; width: 100%; font-weight: bold; }
 
-        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; }
+        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
         #available-list, #recommendation-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
 
+        /* MAP ENGINE */
         #map-container { flex-grow: 1; position: relative; overflow: hidden; background: #000; cursor: grab; }
-        #map-content { position: absolute; transform-origin: 0 0; will-change: transform; top: 0; left: 0; min-width: 3000px; min-height: 3000px; }
+        #map-content { position: absolute; transform-origin: center center; will-change: transform; transition: transform 0.05s linear; }
         #background-map { display: block; pointer-events: none; }
 
-        #timer-section { height: 260px; min-height: 100px; background: #111; display: flex; flex-direction: column; overflow: hidden; }
+        #timer-section { height: 240px; min-height: 100px; background: #111; display: flex; flex-direction: column; overflow: hidden; }
         #timer-grid { flex-grow: 1; display: flex; gap: 12px; padding: 12px; overflow-x: auto; align-items: flex-start; }
 
-        /* CARDS & ICONS */
-        .rec-card { background: #1a1a1a; border-left: 4px solid var(--logistics-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { border-left-color: #004c5b; } 50% { border-left-color: var(--logistics-blue); } }
+        /* UNIT CARDS */
         .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
-        .ambulance-icon { padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; }
+        .ambulance-icon { padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; position: relative; z-index: 50; }
         .unit-label { font-size: 14px; font-weight: 900; }
         .unit-status-text { font-size: 9px; color: #999; margin-top: 3px; text-transform: uppercase; font-weight: bold; }
 
@@ -64,15 +61,15 @@
         .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border: 1px dashed #f00 !important; }
         .hidden-unit { display: none !important; }
 
-        /* CONTEXT MENU */
+        /* UI OVERLAYS */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: #333; }
         .menu-header { padding: 10px; font-size: 11px; background: #000; color: #888; font-weight: bold; text-align: center; }
 
-        /* TIMERS */
-        .timer-card { min-width: 180px; background: #1a1a1a; padding: 12px; border-radius: 4px; border: 1px solid #333; border-top: 4px solid #444; flex-shrink: 0; }
+        .timer-card { min-width: 180px; background: #1a1a1a; padding: 12px; border-radius: 4px; border: 1px solid #333; border-top: 4px solid #444; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; }
+        
         .type-call { border-top-color: var(--bright-red); }
         .type-dest { border-top-color: var(--hosp-orange); }
         .type-logs { border-top-color: var(--logistics-blue); }
@@ -100,13 +97,15 @@
 
         <div id="center-workspace">
             <div id="map-container">
-                <div id="map-content"><img src="map.jpeg" id="background-map"></div>
+                <div id="map-content">
+                    <img src="map.jpeg" id="background-map">
+                </div>
             </div>
             
             <div class="gutter-h" id="resizer-timers"></div>
             
             <div id="timer-section">
-                <div class="list-header">Dispatch Timers</div>
+                <div class="list-header">Active Timers & Dispatch</div>
                 <div id="timer-grid"></div>
             </div>
         </div>
@@ -125,7 +124,7 @@
         <div id="config-panel">
             <h2 style="margin:0;">Fleet Configuration</h2>
             <div id="config-list-content" style="max-height: 400px; overflow-y: auto; margin: 15px 0;"></div>
-            <button onclick="toggleConfig(false)" style="width:100%; padding:12px; cursor:pointer; background:#333; color:white; border:none; border-radius:4px; font-weight:bold;">SAVE & CLOSE</button>
+            <button onclick="toggleConfig(false)" style="width:100%; padding:12px; background:#333; color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">CLOSE</button>
         </div>
     </div>
 
@@ -136,8 +135,8 @@
         <div class="menu-item" onclick="startStatusTimer('LOGS')" style="color:var(--logistics-blue);">Mark: LOGISTICS (10m)</div>
         <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); border-top:1px solid #333;">Toggle OOS</div>
         <div class="menu-item" onclick="forceReady(selectedUnitId)" style="color:var(--neon-green); font-weight:bold;">CLEAR / RETURN TO BASE</div>
-        <div class="menu-header" style="border-top:1px solid #333;">STAGING</div>
-        <div id="staging-list" style="max-height: 200px; overflow-y: auto; background: #000;"></div>
+        <div class="menu-header" style="border-top:1px solid #333;">STAGING POSTS</div>
+        <div id="staging-list" style="max-height: 200px; overflow-y: auto;"></div>
     </div>
 
     <script>
@@ -153,7 +152,7 @@
             { id: 9, name: "Townville", home: "Med-8", isPrimary: true },
             { id: 10, name: "Centerville", home: "Med-9", isPrimary: true },
             { id: 12, name: "Hopewell", home: "Med-5", isPrimary: true },
-            { id: 11, name: "HQ", home: "City Fleet", isPrimary: false }
+            { id: 11, name: "HQ Fleet", home: "City", isPrimary: false }
         ];
 
         const units = [
@@ -179,30 +178,55 @@
         
         let selectedUnitId = null, scale = 1, posX = 0, posY = 0, unitStates = {};
 
-        // --- RESIZER LOGIC ---
+        // --- MAP AUTO-CENTER ENGINE ---
+        function updateTransform() {
+            mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        }
+
+        function centerMap() {
+            const containerWidth = mapContainer.offsetWidth;
+            const containerHeight = mapContainer.offsetHeight;
+            const imgWidth = mapContent.offsetWidth || 3000;
+            const imgHeight = mapContent.offsetHeight || 3000;
+
+            // Align center of content with center of container
+            posX = (containerWidth / 2) - (imgWidth / 2);
+            posY = (containerHeight / 2) - (imgHeight / 2);
+            updateTransform();
+        }
+
+        // --- RESIZER INTEGRATION ---
         function initResizers() {
             const leftSide = document.getElementById('left-sidebar');
             const rightSide = document.getElementById('right-sidebar');
             const timerSec = document.getElementById('timer-section');
             
             document.getElementById('resizer-left').onmousedown = e => {
-                document.onmousemove = ev => leftSide.style.width = ev.clientX + 'px';
+                document.onmousemove = ev => {
+                    leftSide.style.width = ev.clientX + 'px';
+                    centerMap();
+                };
                 document.onmouseup = () => document.onmousemove = null;
             };
 
             document.getElementById('resizer-right').onmousedown = e => {
-                document.onmousemove = ev => rightSide.style.width = (window.innerWidth - ev.clientX) + 'px';
+                document.onmousemove = ev => {
+                    rightSide.style.width = (window.innerWidth - ev.clientX) + 'px';
+                    centerMap();
+                };
                 document.onmouseup = () => document.onmousemove = null;
             };
 
             document.getElementById('resizer-timers').onmousedown = e => {
-                document.onmousemove = ev => timerSec.style.height = (window.innerHeight - ev.clientY) + 'px';
+                document.onmousemove = ev => {
+                    timerSec.style.height = (window.innerHeight - ev.clientY) + 'px';
+                    centerMap();
+                };
                 document.onmouseup = () => document.onmousemove = null;
             };
         }
 
-        function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
-
+        // --- STATUS & LOGIC ---
         function updateStatus() {
             let readyCount = 0, criticalGaps = [], flexibleUnits = [];
             let m3B = false, m6B = false;
@@ -220,7 +244,6 @@
                 if (!el || localStorage.getItem(`inactive-${u.id}`) === 'true') return;
                 el.classList.remove('state-call', 'state-dest', 'state-logs', 'state-map');
                 const busy = !!unitStates[u.id] || el.classList.contains('oos');
-                const isOnMap = el.parentElement.id === 'map-content';
                 const label = el.querySelector('.unit-status-text');
 
                 if (busy) {
@@ -229,11 +252,11 @@
                     if (u.pId !== 11 && u.id !== 'Med-6') criticalGaps.push(postData.find(p => p.id === u.pId));
                 } else {
                     readyCount++;
-                    if (isOnMap) {
+                    if (el.parentElement.id === 'map-content') {
                         el.classList.add('state-map');
                         label.innerText = "POSTED: " + (localStorage.getItem(`staged-${u.id}`) || "");
                     } else { label.innerText = u.home; }
-                    if (u.pId === 11 && !isOnMap) flexibleUnits.push(u.id);
+                    if (u.pId === 11 && el.parentElement.id !== 'map-content') flexibleUnits.push(u.id);
                 }
             });
 
@@ -253,7 +276,7 @@
             });
         }
 
-        // --- CORE OPS ---
+        // --- CORE OPERATIONS ---
         function forceReady(uId) {
             delete unitStates[uId];
             const el = document.getElementById(uId);
@@ -280,8 +303,8 @@
                 card.className = `timer-card type-${s.type.toLowerCase()}`;
                 card.innerHTML = `<div style="font-weight:bold;">${uId}</div><div class="timer-display" id="display-${uId}">0:00</div>
                     <div style="display:flex; gap:5px; margin-top:10px;">
-                        ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); padding:5px; cursor:pointer; font-weight:bold; border:none; border-radius:3px;">ARRIVED</button>` : ''}
-                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; padding:5px; cursor:pointer; border:none;">CLEAR</button>
+                        ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); padding:5px; border:none; border-radius:3px; font-weight:bold; cursor:pointer;">ARRIVED</button>` : ''}
+                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; border:none; padding:5px; cursor:pointer;">CLEAR</button>
                     </div>`;
                 timerGrid.appendChild(card);
             });
@@ -312,25 +335,50 @@
                 ox = (e.clientX - r.left) / scale; oy = (e.clientY - r.top) / scale;
                 el.style.position = 'fixed'; el.style.width = '180px'; el.style.zIndex = '1000';
                 document.body.appendChild(el);
-                const move = (ev) => { el.style.left = (ev.clientX - (ox * scale)) + "px"; el.style.top = (ev.clientY - (oy * scale)) + "px"; };
+                const move = (ev) => {
+                    el.style.left = (ev.clientX - (ox * scale)) + "px";
+                    el.style.top = (ev.clientY - (oy * scale)) + "px";
+                };
                 const up = (ev) => {
-                    document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+                    document.removeEventListener('mousemove', move);
+                    document.removeEventListener('mouseup', up);
                     const mR = mapContainer.getBoundingClientRect();
                     if (ev.clientX > mR.left && ev.clientX < mR.right && ev.clientY < mR.bottom) {
                         const c = mapContent.getBoundingClientRect();
-                        el.style.position = 'absolute'; el.style.left = ((ev.clientX - c.left) / scale - ox) + "px";
+                        el.style.position = 'absolute';
+                        el.style.left = ((ev.clientX - c.left) / scale - ox) + "px";
                         el.style.top = ((ev.clientY - c.top) / scale - oy) + "px";
                         mapContent.appendChild(el);
                         localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
                     } else { forceReady(el.id); }
                     updateStatus();
                 };
-                document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+                document.addEventListener('mousemove', move);
+                document.addEventListener('mouseup', up);
             };
         }
 
+        // --- MAP CONTROLS ---
+        mapContainer.onwheel = e => {
+            e.preventDefault();
+            const zoom = 1 + (-Math.sign(e.deltaY) * 0.1);
+            scale = Math.min(Math.max(scale * zoom, 0.1), 5);
+            updateTransform();
+        };
+
+        mapContainer.onmousedown = e => {
+            if (e.button === 0 && e.shiftKey || e.button === 1) {
+                let startX = e.clientX - posX, startY = e.clientY - posY;
+                const move = (ev) => { posX = ev.clientX - startX; posY = ev.clientY - startY; updateTransform(); };
+                const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+                document.addEventListener('mousemove', move);
+                document.addEventListener('mouseup', up);
+            }
+        };
+
         function init() {
-            initResizers(); renderStagingMenu();
+            initResizers();
+            renderStagingMenu();
             units.forEach(u => {
                 const slot = document.createElement('div');
                 slot.className = 'unit-slot'; slot.id = `slot-${u.id}`;
@@ -352,6 +400,7 @@
                 } else { slot.appendChild(div); }
                 makeDraggable(div);
             });
+            centerMap();
             updateStatus();
         }
 
@@ -385,13 +434,9 @@
 
         function recallAllUnits() { units.forEach(u => { if (document.getElementById(u.id).parentElement.id === 'map-content') forceReady(u.id); }); }
 
-        mapContainer.onwheel = e => {
-            e.preventDefault(); const zoom = 1 + (-Math.sign(e.deltaY) * 0.1);
-            scale = Math.min(Math.max(scale * zoom, 0.1), 5); updateTransform();
-        };
-
         window.onmousedown = (e) => { if (!ctxMenu.contains(e.target)) ctxMenu.style.display = 'none'; };
         window.onload = init;
+        window.onresize = centerMap;
     </script>
 </body>
 </html>
