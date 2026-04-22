@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v25</title>
+    <title>Priority Dispatch | Command Console v26</title>
     <style>
         :root {
             --neon-green: #00ff41;
             --bright-red: #ff0000;
             --hosp-orange: #ff8c00;
-            --post-blue: #00d4ff;
+            --logistics-blue: #00d4ff;
             --bg-dark: #0a0a0a;
             --panel-bg: #161616;
             --sidebar-w: 260px;
         }
 
         * { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; outline: none; box-sizing: border-box; }
-
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg-dark); color: white; height: 100vh; overflow: hidden; display: flex; }
 
         /* LEFT SIDEBAR */
@@ -24,13 +23,7 @@
         #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid #333; }
         #gas-gauge { font-size: 52px; font-weight: 900; line-height: 1; margin: 5px 0; color: var(--neon-green); }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
-        
-        .recall-btn { 
-            margin-top: 10px; padding: 8px; font-size: 9px; background: #222; 
-            border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; 
-            width: 100%; font-weight: bold; text-transform: uppercase;
-        }
-        .recall-btn:hover { background: #333; color: var(--neon-green); border-color: var(--neon-green); }
+        .recall-btn { margin-top: 10px; padding: 8px; font-size: 9px; background: #222; border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; width: 100%; font-weight: bold; }
 
         .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; }
         #available-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
@@ -38,43 +31,42 @@
         /* CENTER WORKSPACE */
         #center-workspace { flex-grow: 1; display: flex; flex-direction: column; border-right: 2px solid #222; height: 100vh; position: relative; }
         #map-container { flex: 1; position: relative; overflow: hidden; background: #000; cursor: grab; }
-        #map-container:active { cursor: grabbing; }
         #map-content { position: absolute; transform-origin: 0 0; will-change: transform; top: 0; left: 0; min-width: 3000px; min-height: 3000px; }
         #background-map { display: block; pointer-events: none; }
 
-        #timer-section { height: 260px; background: #111; border-top: 2px solid #333; display: flex; flex-direction: column; z-index: 20; }
+        #timer-section { height: 240px; background: #111; border-top: 2px solid #333; display: flex; flex-direction: column; z-index: 20; }
         #timer-grid { flex-grow: 1; display: flex; gap: 12px; padding: 12px; overflow-x: auto; align-items: flex-start; }
 
         /* RIGHT SIDEBAR */
         #right-sidebar { width: var(--sidebar-w); background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; }
         #recommendation-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
         
-        .rec-card { background: #1a1a1a; border-left: 4px solid var(--post-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; animation: pulse-border 2s infinite; }
-        @keyframes pulse-border { 0%, 100% { border-left-color: #004c5b; } 50% { border-left-color: var(--post-blue); } }
-        .rec-title { font-size: 9px; color: var(--post-blue); font-weight: bold; margin-bottom: 4px; }
+        .rec-card { background: #1a1a1a; border-left: 4px solid var(--logistics-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; animation: pulse-border 2s infinite; }
+        @keyframes pulse-border { 0%, 100% { border-left-color: #004c5b; } 50% { border-left-color: var(--logistics-blue); } }
+        .rec-title { font-size: 9px; color: var(--logistics-blue); font-weight: bold; }
         .rec-instruction { font-size: 13px; font-weight: bold; color: #fff; }
 
         /* UNIT CARDS */
-        .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); position: relative; }
-        .ambulance-icon { 
-            padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; 
-            background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%;
-        }
+        .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
+        .ambulance-icon { padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%; position: relative; }
         .unit-label { font-size: 14px; font-weight: 900; }
-        .unit-status-text { font-size: 9px; color: #999; margin-top: 3px; text-align: center; text-transform: uppercase; font-weight: bold; }
+        .unit-status-text { font-size: 9px; color: #999; margin-top: 3px; text-transform: uppercase; font-weight: bold; }
 
-        /* STATES */
-        .state-map { width: 90px !important; border-color: var(--post-blue); border-width: 2px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2); }
+        /* DYNAMIC STATES */
+        .state-call { border-color: var(--bright-red) !important; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
+        .state-call .unit-label { color: var(--bright-red); }
+        
+        .state-dest { border-color: var(--hosp-orange) !important; }
         .state-dest .unit-label { color: var(--hosp-orange); }
+
+        .state-logs { border-color: var(--logistics-blue) !important; }
+        .state-logs .unit-label { color: var(--logistics-blue); }
+
+        .state-map { width: 95px !important; border-color: var(--logistics-blue); border-width: 2px; }
+        .state-map .unit-label { color: var(--logistics-blue); }
+        
         .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border: 1px dashed #f00 !important; }
         .hidden-unit { display: none !important; }
-
-        /* GEAR & CONFIG */
-        #system-gear { position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-size: 22px; cursor: pointer; background: #000; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #333; }
-        #config-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; align-items: center; justify-content: center; }
-        #config-panel { background: #1a1a1a; width: 500px; max-height: 80vh; border-radius: 8px; border: 1px solid #444; display: flex; flex-direction: column; padding: 20px; }
-        .config-list { flex-grow: 1; overflow-y: auto; margin: 15px 0; }
-        .config-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; }
 
         /* CONTEXT MENU */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
@@ -82,8 +74,14 @@
         .menu-item:hover { background: #333; }
         .menu-header { padding: 10px; font-size: 11px; background: #000; color: #888; font-weight: bold; text-align: center; }
 
-        .timer-card { min-width: 170px; background: #1a1a1a; border-top: 4px solid var(--hosp-orange); padding: 12px; border-radius: 4px; border: 1px solid #333; }
-        .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; }
+        /* TIMER CARDS */
+        .timer-card { min-width: 180px; background: #1a1a1a; padding: 12px; border-radius: 4px; border: 1px solid #333; border-top: 4px solid #444; }
+        .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; color: white; }
+        .type-call { border-top-color: var(--bright-red); }
+        .type-dest { border-top-color: var(--hosp-orange); }
+        .type-logs { border-top-color: var(--logistics-blue); }
+
+        #system-gear { position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-size: 22px; cursor: pointer; background: #000; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -106,7 +104,7 @@
             </div>
         </div>
         <div id="timer-section">
-            <div class="list-header">Active Call Timers</div>
+            <div class="list-header">Active Timers & Dispatch</div>
             <div id="timer-grid"></div>
         </div>
     </div>
@@ -116,22 +114,18 @@
         <div id="recommendation-list"></div>
     </div>
 
-    <div id="system-gear" onclick="toggleConfig(true)">⚙️</div>
-
-    <div id="config-modal">
-        <div id="config-panel">
-            <h2 style="margin-top:0;">Fleet Settings</h2>
-            <div class="config-list" id="config-list-content"></div>
-            <button onclick="localStorage.clear(); location.reload();" style="background:#400; color:white; border:none; padding:8px; margin-bottom:10px; cursor:pointer; border-radius:4px;">HARD RESET ALL DATA</button>
-            <button onclick="toggleConfig(false)" style="padding:10px; background:var(--post-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">CLOSE</button>
-        </div>
-    </div>
+    <div id="system-gear" onclick="localStorage.clear(); location.reload();" title="Hard Reset Logic">⚙️</div>
 
     <div id="context-menu">
         <div id="menu-id" class="menu-header">UNIT</div>
-        <div class="menu-item" onclick="startTimer(20, 'Hospital')">Assign Call (20m)</div>
-        <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red);">Toggle OOS</div>
-        <div class="menu-item" onclick="forceReady(selectedUnitId)" style="color:var(--neon-green); font-weight:bold; border-top:1px solid #333;">FORCE READY (RESET)</div>
+        
+        <div id="opt-call" class="menu-item" onclick="startStatusTimer('CALL')">Assign: ON A CALL</div>
+        <div id="opt-dest" class="menu-item" onclick="startStatusTimer('DEST')" style="color:var(--hosp-orange);">Mark: AT DESTINATION (20m)</div>
+        <div id="opt-logs" class="menu-item" onclick="startStatusTimer('LOGS')" style="color:var(--logistics-blue);">Mark: LOGISTICS (10m)</div>
+        
+        <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); border-top:1px solid #333;">Toggle OOS</div>
+        <div class="menu-item" onclick="forceReady(selectedUnitId)" style="color:var(--neon-green); font-weight:bold;">CLEAR / RETURN TO BASE</div>
+        
         <div class="menu-header" style="border-top:1px solid #333;">STAGING</div>
         <div id="staging-list"></div>
     </div>
@@ -175,6 +169,7 @@
         
         let selectedUnitId = null;
         let scale = 1, posX = 0, posY = 0;
+        let unitStates = {}; // Stores timer start times and types
 
         function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
@@ -187,25 +182,20 @@
                 const el = document.getElementById(u.id);
                 if (!el) return;
 
-                const isDeactivated = localStorage.getItem(`inactive-${u.id}`) === 'true';
-                if (isDeactivated) {
-                    el.classList.add('hidden-unit');
-                    document.getElementById(`slot-${u.id}`).classList.add('hidden-unit');
-                    return;
-                }
-
-                el.classList.remove('state-map', 'state-dest', 'hidden-unit');
-                document.getElementById(`slot-${u.id}`).classList.remove('hidden-unit');
-
-                const hasTimer = document.querySelectorAll(`.timer-card[data-unit="${u.id}"]`).length > 0;
+                el.classList.remove('state-call', 'state-dest', 'state-logs', 'state-map');
+                
+                const stateObj = unitStates[u.id];
                 const isOOS = el.classList.contains('oos');
                 const isOnMap = el.parentElement.id === 'map-content';
                 const isStationed = el.parentElement.closest('#available-list');
                 const statusLabel = el.querySelector('.unit-status-text');
 
-                if (hasTimer || isOOS) {
-                    el.classList.add('state-dest');
-                    statusLabel.innerText = isOOS ? "OOS" : "ON CALL";
+                if (stateObj) {
+                    el.classList.add('state-' + stateObj.type.toLowerCase());
+                    statusLabel.innerText = stateObj.type === 'CALL' ? "ON CALL" : (stateObj.type === 'DEST' ? "AT DEST" : "LOGISTICS");
+                    if (u.pId !== 11) criticalGaps.push(postData.find(p => p.id === u.pId));
+                } else if (isOOS) {
+                    statusLabel.innerText = "OOS";
                     if (u.pId !== 11) criticalGaps.push(postData.find(p => p.id === u.pId));
                 } else {
                     readyCount++;
@@ -235,50 +225,96 @@
             });
         }
 
-        // THE FIX: MASTER RESET FUNCTION
+        // TIMER CORE
+        function startStatusTimer(type) {
+            const now = Date.now();
+            unitStates[selectedUnitId] = { type: type, start: now };
+            renderTimerCards();
+            ctxMenu.style.display = 'none';
+            updateStatus();
+        }
+
+        function renderTimerCards() {
+            timerGrid.innerHTML = '';
+            Object.keys(unitStates).forEach(uId => {
+                const s = unitStates[uId];
+                const card = document.createElement('div');
+                card.className = `timer-card type-${s.type.toLowerCase()}`;
+                card.innerHTML = `
+                    <div style="font-weight:bold; font-size:16px;">${uId}</div>
+                    <div style="font-size:9px; color:#888; margin-bottom:5px;">${s.type === 'CALL' ? 'COUNT UP' : 'COUNT DOWN'}</div>
+                    <div class="timer-display" id="display-${uId}">0:00</div>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        ${s.type === 'CALL' ? `<button onclick="transitionToDest('${uId}')" style="flex:1; background:var(--hosp-orange); border:none; color:black; font-weight:bold; padding:5px; cursor:pointer; font-size:10px;">ARRIVED</button>` : ''}
+                        <button onclick="forceReady('${uId}')" style="flex:1; background:#333; color:white; border:none; padding:5px; cursor:pointer; font-size:10px;">CLEAR</button>
+                    </div>
+                `;
+                timerGrid.appendChild(card);
+            });
+        }
+
+        function transitionToDest(uId) {
+            unitStates[uId] = { type: 'DEST', start: Date.now() };
+            renderTimerCards();
+            updateStatus();
+        }
+
+        // GLOBAL TICKER
+        setInterval(() => {
+            Object.keys(unitStates).forEach(uId => {
+                const s = unitStates[uId];
+                const display = document.getElementById(`display-${uId}`);
+                if (!display) return;
+
+                const elapsedSec = Math.floor((Date.now() - s.start) / 1000);
+                
+                if (s.type === 'CALL') {
+                    // Count Up
+                    const m = Math.floor(elapsedSec / 60);
+                    const sec = elapsedSec % 60;
+                    display.innerText = `${m}:${sec < 10 ? '0' + sec : sec}`;
+                } else {
+                    // Count Down
+                    const limit = s.type === 'DEST' ? 1200 : 600; // 20m or 10m
+                    const remaining = limit - elapsedSec;
+                    const absRem = Math.abs(remaining);
+                    const m = Math.floor(absRem / 60);
+                    const sec = absRem % 60;
+                    display.innerText = (remaining < 0 ? "-" : "") + `${m}:${sec < 10 ? '0' + sec : sec}`;
+                    if (remaining < 0) display.style.color = 'var(--bright-red)';
+                }
+            });
+        }, 1000);
+
         function forceReady(uId) {
-            if (!uId) return;
+            delete unitStates[uId];
             const el = document.getElementById(uId);
-            
-            // 1. Remove OOS
             el.classList.remove('oos');
             localStorage.removeItem(`oos-${uId}`);
-
-            // 2. Remove Timers
-            document.querySelectorAll(`.timer-card[data-unit="${uId}"]`).forEach(card => card.remove());
-
-            // 3. Move back to Sidebar
             const slot = document.getElementById(`slot-${uId}`);
             slot.appendChild(el);
             el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
-            
-            // 4. Clear Storage
             localStorage.removeItem(`pos-${uId}`);
             localStorage.removeItem(`staged-${uId}`);
-
-            ctxMenu.style.display = 'none';
+            renderTimerCards();
             updateStatus();
         }
 
         function recallAllUnits() {
             units.forEach(u => {
-                const el = document.getElementById(u.id);
-                if (el.parentElement.id === 'map-content') forceReady(u.id);
+                if (document.getElementById(u.id).parentElement.id === 'map-content') forceReady(u.id);
             });
         }
 
         function init() {
-            renderConfigMenu();
             renderStagingMenu();
             units.forEach(u => {
                 const slot = document.createElement('div');
                 slot.className = 'unit-slot'; slot.id = `slot-${u.id}`;
                 availableList.appendChild(slot);
-
                 const div = document.createElement('div');
                 div.className = 'ambulance-icon'; div.id = u.id;
                 div.innerHTML = `<div class="unit-label">${u.id}</div><div class="unit-status-text"></div>`;
-                
                 div.oncontextmenu = (e) => {
                     e.preventDefault(); e.stopPropagation();
                     selectedUnitId = u.id;
@@ -287,10 +323,8 @@
                     ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px';
                     ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 450) + 'px';
                 };
-
                 const savedPos = localStorage.getItem(`pos-${u.id}`);
                 if (localStorage.getItem(`oos-${u.id}`) === 'true') div.classList.add('oos');
-
                 if (savedPos) {
                     const p = JSON.parse(savedPos);
                     div.style.position = 'absolute'; div.style.left = p.left; div.style.top = p.top;
@@ -333,24 +367,6 @@
             };
         }
 
-        function startTimer(min, hosp) {
-            const timerId = Date.now();
-            const card = document.createElement('div');
-            card.className = 'timer-card'; card.id = `card-${timerId}`; card.dataset.unit = selectedUnitId;
-            card.innerHTML = `<div style="font-weight:bold; font-size:18px; color:var(--hosp-orange);">${selectedUnitId}</div><div class="timer-display" id="time-${timerId}">--:--</div><button onclick="dismissTimer('${timerId}')" style="width:100%; font-size:10px; background:#333; color:white; border:none; padding:6px; cursor:pointer;">CLEAR</button>`;
-            timerGrid.appendChild(card);
-            ctxMenu.style.display = 'none';
-            updateStatus();
-            let sec = min * 60;
-            const run = setInterval(() => {
-                const el = document.getElementById(`time-${timerId}`);
-                if(!el) { clearInterval(run); return; }
-                sec--; const a = Math.abs(sec), m = Math.floor(a/60), s = a%60;
-                el.innerText = (sec < 0 ? "-" : "") + m + ":" + (s < 10 ? "0"+s : s);
-            }, 1000);
-        }
-
-        function dismissTimer(tId) { document.getElementById(`card-${tId}`).remove(); updateStatus(); }
         function toggleOOS() {
             const isOOS = document.getElementById(selectedUnitId).classList.toggle('oos');
             localStorage.setItem(`oos-${selectedUnitId}`, isOOS);
@@ -362,30 +378,12 @@
             postData.filter(p => p.isPrimary).forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'menu-item'; div.innerText = p.name;
-                div.onmousedown = () => { // Using mousedown to avoid window.onclick interference
+                div.onmousedown = () => {
                     localStorage.setItem(`staged-${selectedUnitId}`, p.name);
                     ctxMenu.style.display = 'none'; updateStatus();
                 };
                 list.appendChild(div);
             });
-        }
-
-        function toggleConfig(show) { document.getElementById('config-modal').style.display = show ? 'flex' : 'none'; }
-        function renderConfigMenu() {
-            const container = document.getElementById('config-list-content');
-            container.innerHTML = '';
-            units.forEach(u => {
-                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
-                const item = document.createElement('div');
-                item.className = 'config-item';
-                item.innerHTML = `<div><b>${u.id}</b></div><button onclick="toggleUnitActive('${u.id}')">${isInactive ? 'OFF' : 'ON'}</button>`;
-                container.appendChild(item);
-            });
-        }
-        function toggleUnitActive(uId) {
-            const current = localStorage.getItem(`inactive-${uId}`) === 'true';
-            localStorage.setItem(`inactive-${uId}`, !current);
-            renderConfigMenu(); updateStatus();
         }
 
         mapContainer.onwheel = e => {
