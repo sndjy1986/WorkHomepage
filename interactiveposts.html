@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v23</title>
+    <title>Priority Dispatch | Command Console v24</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -24,6 +24,9 @@
         #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid #333; }
         #gas-gauge { font-size: 52px; font-weight: 900; line-height: 1; margin: 5px 0; color: var(--neon-green); }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
+        .recall-btn { margin-top: 10px; padding: 6px; font-size: 9px; background: #222; border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; width: 100%; font-weight: bold; }
+        .recall-btn:hover { background: #333; color: white; border-color: var(--post-blue); }
+
         .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
         #available-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
 
@@ -94,6 +97,7 @@
             <div class="gauge-label">SYSTEM STATUS</div>
             <div id="gas-gauge">0</div>
             <div class="gauge-label">READY UNITS</div>
+            <button class="recall-btn" onclick="recallAllUnits()">RECALL ALL POSTED</button>
         </div>
         <div class="list-header">Stationed Units</div>
         <div id="available-list"></div>
@@ -131,9 +135,10 @@
 
     <div id="context-menu">
         <div id="menu-id" class="menu-header">UNIT</div>
-        <div class="menu-item" onclick="startTimer(20, 'GMH')">On Call: GMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'AMH')">On Call: AMH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'GMH')">Assign: GMH (20m)</div>
+        <div class="menu-item" onclick="startTimer(20, 'AMH')">Assign: AMH (20m)</div>
         <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); font-weight:bold;">OUT OF SERVICE (OOS)</div>
+        <div class="menu-item" onclick="returnToBase(selectedUnitId)" style="color:var(--post-blue); border-top:1px solid #333;">RETURN TO BASE (AVAILABLE)</div>
         <div id="staging-option" style="display:none;">
             <div class="menu-header" style="border-top:1px solid #333;">STAGE AT POST</div>
             <div class="submenu-container" id="staging-list"></div>
@@ -141,9 +146,8 @@
     </div>
 
     <script>
-        // GEOGRAPHIC DATA FOR ALL POSTS
         const postData = [
-            { id: 1, name: "Belton Station", home: "Med-2", lat: 34.4970557, long: -82.5237544, isPrimary: true },
+            { id: 1, name: "Rock Springs", home: "Med-2", lat: 34.4970557, long: -82.5237544, isPrimary: true },
             { id: 2, name: "Homeland Park", home: "Med-3", lat: 34.46718628, long: -82.65578639, isPrimary: true },
             { id: 3, name: "Honea Path", home: "Med-13", lat: 34.45442718, long: -82.40514863, isPrimary: true },
             { id: 4, name: "Wren FD", home: "Med-15", lat: 34.7114341, long: -82.5089313, isPrimary: true },
@@ -159,7 +163,6 @@
             { id: 16, name: "HQ (City)", home: "Med-12", lat: 34.5136613, long: -82.6486386, isPrimary: false }
         ];
 
-        // Mapped Unit list including night/city trucks
         const units = [
             { id: "Med-0", home: "City Truck", pId: 11 }, { id: "Med-1", home: "City Truck", pId: 11 },
             { id: "Med-2", home: "Belton", pId: 1 }, { id: "Med-3", home: "Homeland Park", pId: 2 },
@@ -184,9 +187,8 @@
         let selectedUnitId = null;
         let scale = 1, posX = 0, posY = 0;
 
-        // GEOGRAPHIC DISTANCE CALCULATION (Haversine)
         function getDist(lat1, lon1, lat2, lon2) {
-            const R = 3958.8; // Earth radius in Miles
+            const R = 3958.8;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -198,7 +200,6 @@
         function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
         function resetView() { scale = 1; posX = 0; posY = 0; updateTransform(); }
 
-        // MAP NAVIGATION
         mapContainer.onwheel = e => {
             e.preventDefault();
             const rect = mapContainer.getBoundingClientRect();
@@ -219,7 +220,6 @@
             }
         };
 
-        // CORE SYSTEM LOGIC
         function updateStatus() {
             let readyCount = 0;
             let criticalGaps = [];
@@ -268,10 +268,8 @@
             gauge.innerText = readyCount;
             gauge.style.color = readyCount <= 3 ? "var(--bright-red)" : "var(--neon-green)";
 
-            // STRINGENT MOVE-UP LOGIC
             recList.innerHTML = '';
             criticalGaps.forEach(gap => {
-                // Find the closest flexible truck to this specific gap station
                 const candidates = flexibleUnits.map(fu => {
                     const hq = postData.find(p => p.id === fu.pId);
                     return { id: fu.id, dist: getDist(hq.lat, hq.long, gap.lat, gap.long) };
@@ -279,25 +277,35 @@
 
                 const closest = candidates[0];
                 if (closest) {
-                    // Remove chosen truck from pool for next gap
                     flexibleUnits = flexibleUnits.filter(f => f.id !== closest.id);
                     const card = document.createElement('div');
                     card.className = 'rec-card';
-                    card.innerHTML = `
-                        <div class="rec-title">GAP: ${gap.name}</div>
-                        <div class="rec-instruction">Move <b>${closest.id}</b> to cover ${gap.name}</div>
-                        <div class="rec-dist">Approx. travel: ${closest.dist.toFixed(1)} miles</div>
-                    `;
+                    card.innerHTML = `<div class="rec-title">GAP: ${gap.name}</div><div class="rec-instruction">Move <b>${closest.id}</b> to cover</div><div class="rec-dist">Closest travel: ${closest.dist.toFixed(1)} mi</div>`;
                     recList.appendChild(card);
                 }
             });
 
-            if (recList.innerHTML === '') {
-                recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:30px;">SYSTEM BALANCED</div>';
-            }
+            if (recList.innerHTML === '') recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:30px;">SYSTEM BALANCED</div>';
         }
 
-        // INITIALIZE
+        function returnToBase(uId) {
+            const el = document.getElementById(uId);
+            const slot = document.getElementById(`slot-${uId}`);
+            slot.appendChild(el);
+            el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
+            localStorage.removeItem(`pos-${uId}`);
+            localStorage.removeItem(`staged-${uId}`);
+            ctxMenu.style.display = 'none';
+            updateStatus();
+        }
+
+        function recallAllUnits() {
+            units.forEach(u => {
+                const el = document.getElementById(u.id);
+                if (el.parentElement.id === 'map-content') returnToBase(u.id);
+            });
+        }
+
         function init() {
             renderConfigMenu();
             renderStagingMenu();
@@ -316,7 +324,6 @@
                     document.getElementById('menu-id').innerText = u.id;
                     const isOnMap = div.parentElement.id === 'map-content';
                     document.getElementById('staging-option').style.display = isOnMap ? 'block' : 'none';
-                    
                     ctxMenu.style.display = 'block';
                     ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px';
                     ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 400) + 'px';
@@ -359,11 +366,7 @@
                         mapContent.appendChild(el);
                         localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
                     } else {
-                        const slot = document.getElementById(`slot-${el.id}`);
-                        slot.appendChild(el);
-                        el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
-                        localStorage.removeItem(`pos-${el.id}`);
-                        localStorage.removeItem(`staged-${el.id}`);
+                        returnToBase(el.id);
                     }
                     updateStatus();
                 };
@@ -395,7 +398,6 @@
             ctxMenu.style.display = 'none'; updateStatus();
         }
 
-        // STAGING LOGIC
         function renderStagingMenu() {
             const list = document.getElementById('staging-list');
             postData.filter(p => p.isPrimary).forEach(p => {
@@ -411,7 +413,6 @@
             });
         }
 
-        // CONFIG MENU
         function toggleConfig(show) { document.getElementById('config-modal').style.display = show ? 'flex' : 'none'; }
         function renderConfigMenu() {
             const container = document.getElementById('config-list-content');
