@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v24</title>
+    <title>Priority Dispatch | Command Console v25</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -24,10 +24,15 @@
         #system-status-box { padding: 15px; text-align: center; background: #000; border-bottom: 2px solid #333; }
         #gas-gauge { font-size: 52px; font-weight: 900; line-height: 1; margin: 5px 0; color: var(--neon-green); }
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
-        .recall-btn { margin-top: 10px; padding: 6px; font-size: 9px; background: #222; border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; width: 100%; font-weight: bold; }
-        .recall-btn:hover { background: #333; color: white; border-color: var(--post-blue); }
+        
+        .recall-btn { 
+            margin-top: 10px; padding: 8px; font-size: 9px; background: #222; 
+            border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; 
+            width: 100%; font-weight: bold; text-transform: uppercase;
+        }
+        .recall-btn:hover { background: #333; color: var(--neon-green); border-color: var(--neon-green); }
 
-        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; }
         #available-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
 
         /* CENTER WORKSPACE */
@@ -44,18 +49,13 @@
         #right-sidebar { width: var(--sidebar-w); background: var(--panel-bg); display: flex; flex-direction: column; flex-shrink: 0; }
         #recommendation-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
         
-        .rec-card { 
-            background: #1a1a1a; border-left: 4px solid var(--post-blue); 
-            padding: 12px; margin-bottom: 10px; border-radius: 4px;
-            animation: pulse-border 2s infinite;
-        }
-        @keyframes pulse-border { 0% { border-left-color: #004c5b; } 50% { border-left-color: var(--post-blue); } 100% { border-left-color: #004c5b; } }
-        .rec-title { font-size: 9px; color: var(--post-blue); font-weight: bold; margin-bottom: 4px; text-transform: uppercase; }
-        .rec-instruction { font-size: 13px; font-weight: bold; color: #fff; line-height: 1.3; }
-        .rec-dist { font-size: 10px; color: #666; margin-top: 4px; }
+        .rec-card { background: #1a1a1a; border-left: 4px solid var(--post-blue); padding: 12px; margin-bottom: 10px; border-radius: 4px; animation: pulse-border 2s infinite; }
+        @keyframes pulse-border { 0%, 100% { border-left-color: #004c5b; } 50% { border-left-color: var(--post-blue); } }
+        .rec-title { font-size: 9px; color: var(--post-blue); font-weight: bold; margin-bottom: 4px; }
+        .rec-instruction { font-size: 13px; font-weight: bold; color: #fff; }
 
         /* UNIT CARDS */
-        .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); }
+        .unit-slot { min-height: 55px; border: 1px solid #222; margin-bottom: 8px; border-radius: 4px; background: rgba(0,0,0,0.2); position: relative; }
         .ambulance-icon { 
             padding: 10px; cursor: grab; display: flex; flex-direction: column; align-items: center; 
             background: #262626; border: 1px solid #444; border-radius: 4px; width: 100%;
@@ -65,9 +65,8 @@
 
         /* STATES */
         .state-map { width: 90px !important; border-color: var(--post-blue); border-width: 2px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.2); }
-        .state-map .unit-label { color: var(--post-blue); }
         .state-dest .unit-label { color: var(--hosp-orange); }
-        .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; }
+        .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border: 1px dashed #f00 !important; }
         .hidden-unit { display: none !important; }
 
         /* GEAR & CONFIG */
@@ -76,15 +75,12 @@
         #config-panel { background: #1a1a1a; width: 500px; max-height: 80vh; border-radius: 8px; border: 1px solid #444; display: flex; flex-direction: column; padding: 20px; }
         .config-list { flex-grow: 1; overflow-y: auto; margin: 15px 0; }
         .config-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; }
-        .toggle-btn { cursor: pointer; padding: 6px 12px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #333; color: #888; border: none; }
-        .toggle-on { background: var(--neon-green); color: #000; }
 
         /* CONTEXT MENU */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
         .menu-item { padding: 12px 15px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #222; }
         .menu-item:hover { background: #333; }
         .menu-header { padding: 10px; font-size: 11px; background: #000; color: #888; font-weight: bold; text-align: center; }
-        .submenu-container { max-height: 200px; overflow-y: auto; background: #111; }
 
         .timer-card { min-width: 170px; background: #1a1a1a; border-top: 4px solid var(--hosp-orange); padding: 12px; border-radius: 4px; border: 1px solid #333; }
         .timer-display { font-family: 'Courier New', monospace; font-size: 30px; margin: 5px 0; font-weight: bold; }
@@ -97,7 +93,7 @@
             <div class="gauge-label">SYSTEM STATUS</div>
             <div id="gas-gauge">0</div>
             <div class="gauge-label">READY UNITS</div>
-            <button class="recall-btn" onclick="recallAllUnits()">RECALL ALL POSTED</button>
+            <button class="recall-btn" onclick="recallAllUnits()">Recall All to Base</button>
         </div>
         <div class="list-header">Stationed Units</div>
         <div id="available-list"></div>
@@ -110,16 +106,13 @@
             </div>
         </div>
         <div id="timer-section">
-            <div class="list-header">
-                <span>Hospital / Call Timers</span>
-                <button onclick="resetView()" style="font-size:9px; cursor:pointer; background:#333; color:white; border:none; padding:3px 8px; border-radius:3px;">RESET MAP</button>
-            </div>
+            <div class="list-header">Active Call Timers</div>
             <div id="timer-grid"></div>
         </div>
     </div>
 
     <div id="right-sidebar">
-        <div class="list-header">Move-Up Logic (Geo-Stringent)</div>
+        <div class="list-header">Move-Up Logic</div>
         <div id="recommendation-list"></div>
     </div>
 
@@ -127,53 +120,49 @@
 
     <div id="config-modal">
         <div id="config-panel">
-            <h2 style="margin-top:0;">Fleet Configuration</h2>
+            <h2 style="margin-top:0;">Fleet Settings</h2>
             <div class="config-list" id="config-list-content"></div>
-            <button onclick="toggleConfig(false)" style="padding:10px; background:var(--post-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">SAVE & CLOSE</button>
+            <button onclick="localStorage.clear(); location.reload();" style="background:#400; color:white; border:none; padding:8px; margin-bottom:10px; cursor:pointer; border-radius:4px;">HARD RESET ALL DATA</button>
+            <button onclick="toggleConfig(false)" style="padding:10px; background:var(--post-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">CLOSE</button>
         </div>
     </div>
 
     <div id="context-menu">
         <div id="menu-id" class="menu-header">UNIT</div>
-        <div class="menu-item" onclick="startTimer(20, 'GMH')">Assign: GMH (20m)</div>
-        <div class="menu-item" onclick="startTimer(20, 'AMH')">Assign: AMH (20m)</div>
-        <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); font-weight:bold;">OUT OF SERVICE (OOS)</div>
-        <div class="menu-item" onclick="returnToBase(selectedUnitId)" style="color:var(--post-blue); border-top:1px solid #333;">RETURN TO BASE (AVAILABLE)</div>
-        <div id="staging-option" style="display:none;">
-            <div class="menu-header" style="border-top:1px solid #333;">STAGE AT POST</div>
-            <div class="submenu-container" id="staging-list"></div>
-        </div>
+        <div class="menu-item" onclick="startTimer(20, 'Hospital')">Assign Call (20m)</div>
+        <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red);">Toggle OOS</div>
+        <div class="menu-item" onclick="forceReady(selectedUnitId)" style="color:var(--neon-green); font-weight:bold; border-top:1px solid #333;">FORCE READY (RESET)</div>
+        <div class="menu-header" style="border-top:1px solid #333;">STAGING</div>
+        <div id="staging-list"></div>
     </div>
 
     <script>
         const postData = [
-            { id: 1, name: "Rock Springs", home: "Med-2", lat: 34.4970557, long: -82.5237544, isPrimary: true },
-            { id: 2, name: "Homeland Park", home: "Med-3", lat: 34.46718628, long: -82.65578639, isPrimary: true },
-            { id: 3, name: "Honea Path", home: "Med-13", lat: 34.45442718, long: -82.40514863, isPrimary: true },
-            { id: 4, name: "Wren FD", home: "Med-15", lat: 34.7114341, long: -82.5089313, isPrimary: true },
-            { id: 5, name: "Iva City", home: "Med-6", lat: 34.3024749, long: -82.6655562, isPrimary: true },
-            { id: 6, name: "Williamston", home: "Med-4", lat: 34.6163175, long: -82.49073195, isPrimary: true },
-            { id: 7, name: "Pendleton", home: "Med-7", lat: 34.64900461, long: -82.78013693, isPrimary: true },
-            { id: 8, name: "Powdersville", home: "Med-14", lat: 34.7747891, long: -82.4877423, isPrimary: true },
-            { id: 9, name: "Townville", home: "Med-8", lat: 34.5651501, long: -82.8895488, isPrimary: true },
-            { id: 10, name: "Centerville", home: "Med-9", lat: 34.5457262, long: -82.695841, isPrimary: true },
-            { id: 11, name: "HQ A", home: "Med-0", lat: 34.5136613, long: -82.6486386, isPrimary: false },
-            { id: 112, name: "HQ B", home: "Med-1", lat: 34.5136613, long: -82.6486386, isPrimary: false },
-            { id: 12, name: "Hopewell", home: "Med-5", lat: 34.596524, long: -82.6278652, isPrimary: true },
-            { id: 16, name: "HQ (City)", home: "Med-12", lat: 34.5136613, long: -82.6486386, isPrimary: false }
+            { id: 1, name: "Belton", home: "Med-2", lat: 34.49, long: -82.52, isPrimary: true },
+            { id: 2, name: "Homeland Park", home: "Med-3", lat: 34.46, long: -82.65, isPrimary: true },
+            { id: 3, name: "Honea Path", home: "Med-13", lat: 34.45, long: -82.40, isPrimary: true },
+            { id: 4, name: "Wren", home: "Med-15", lat: 34.71, long: -82.50, isPrimary: true },
+            { id: 5, name: "Iva", home: "Med-6", lat: 34.30, long: -82.66, isPrimary: true },
+            { id: 6, name: "Williamston", home: "Med-4", lat: 34.61, long: -82.49, isPrimary: true },
+            { id: 7, name: "Pendleton", home: "Med-7", lat: 34.64, long: -82.78, isPrimary: true },
+            { id: 8, name: "Powdersville", home: "Med-14", lat: 34.77, long: -82.48, isPrimary: true },
+            { id: 9, name: "Townville", home: "Med-8", lat: 34.56, long: -82.88, isPrimary: true },
+            { id: 10, name: "Centerville", home: "Med-9", lat: 34.54, long: -82.69, isPrimary: true },
+            { id: 12, name: "Hopewell", home: "Med-5", lat: 34.59, long: -82.62, isPrimary: true },
+            { id: 11, name: "HQ", home: "City", lat: 34.51, long: -82.64, isPrimary: false }
         ];
 
         const units = [
             { id: "Med-0", home: "City Truck", pId: 11 }, { id: "Med-1", home: "City Truck", pId: 11 },
-            { id: "Med-2", home: "Belton", pId: 1 }, { id: "Med-3", home: "Homeland Park", pId: 2 },
+            { id: "Med-2", home: "Belton", pId: 1 }, { id: "Med-3", home: "Homeland", pId: 2 },
             { id: "Med-4", home: "Williamston", pId: 6 }, { id: "Med-5", home: "Hopewell", pId: 12 },
             { id: "Med-6", home: "Iva", pId: 5 }, { id: "Med-7", home: "Pendleton", pId: 7 },
             { id: "Med-8", home: "Townville", pId: 9 }, { id: "Med-9", home: "Centerville", pId: 10 },
-            { id: "Med-10", home: "City / Night", pId: 11 }, { id: "Med-11", home: "City / Night", pId: 11 },
-            { id: "Med-12", home: "City Truck", pId: 16 }, { id: "Med-13", home: "Honea Path", pId: 3 },
+            { id: "Med-10", home: "City Truck", pId: 11 }, { id: "Med-11", home: "City Truck", pId: 11 },
+            { id: "Med-12", home: "City Truck", pId: 11 }, { id: "Med-13", home: "Honea Path", pId: 3 },
             { id: "Med-14", home: "Powdersville", pId: 8 }, { id: "Med-15", home: "Wren", pId: 4 },
-            { id: "Med-16", home: "City Truck", pId: 16 }, { id: "Med-17", home: "City Truck", pId: 16 },
-            { id: "Med-18", home: "City Truck", pId: 16 }, { id: "Med-19", home: "City Truck", pId: 16 }
+            { id: "Med-16", home: "City Truck", pId: 11 }, { id: "Med-17", home: "City Truck", pId: 11 },
+            { id: "Med-18", home: "City Truck", pId: 11 }, { id: "Med-19", home: "City Truck", pId: 11 }
         ];
 
         const mapContainer = document.getElementById('map-container');
@@ -187,38 +176,7 @@
         let selectedUnitId = null;
         let scale = 1, posX = 0, posY = 0;
 
-        function getDist(lat1, lon1, lat2, lon2) {
-            const R = 3958.8;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
         function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
-        function resetView() { scale = 1; posX = 0; posY = 0; updateTransform(); }
-
-        mapContainer.onwheel = e => {
-            e.preventDefault();
-            const rect = mapContainer.getBoundingClientRect();
-            const zoom = 1 + (-Math.sign(e.deltaY) * 0.1);
-            const newScale = scale * zoom;
-            if (newScale > 0.1 && newScale < 5) {
-                posX = (e.clientX - rect.left) - ((e.clientX - rect.left) - posX) * zoom;
-                posY = (e.clientY - rect.top) - ((e.clientY - rect.top) - posY) * zoom;
-                scale = newScale; updateTransform();
-            }
-        };
-
-        mapContainer.onmousedown = e => {
-            if (e.shiftKey || e.button === 1) {
-                let sX = e.clientX - posX, sY = e.clientY - posY;
-                document.onmousemove = ev => { posX = ev.clientX - sX; posY = ev.clientY - sY; updateTransform(); };
-                document.onmouseup = () => document.onmousemove = null;
-            }
-        };
 
         function updateStatus() {
             let readyCount = 0;
@@ -234,24 +192,21 @@
                     el.classList.add('hidden-unit');
                     document.getElementById(`slot-${u.id}`).classList.add('hidden-unit');
                     return;
-                } else {
-                    el.classList.remove('hidden-unit');
-                    document.getElementById(`slot-${u.id}`).classList.remove('hidden-unit');
                 }
 
-                el.classList.remove('state-map', 'state-dest');
+                el.classList.remove('state-map', 'state-dest', 'hidden-unit');
+                document.getElementById(`slot-${u.id}`).classList.remove('hidden-unit');
+
                 const hasTimer = document.querySelectorAll(`.timer-card[data-unit="${u.id}"]`).length > 0;
                 const isOOS = el.classList.contains('oos');
                 const isOnMap = el.parentElement.id === 'map-content';
                 const isStationed = el.parentElement.closest('#available-list');
-
-                const unitPostObj = postData.find(p => p.id === u.pId);
                 const statusLabel = el.querySelector('.unit-status-text');
 
                 if (hasTimer || isOOS) {
                     el.classList.add('state-dest');
                     statusLabel.innerText = isOOS ? "OOS" : "ON CALL";
-                    if (unitPostObj && unitPostObj.isPrimary) criticalGaps.push(unitPostObj);
+                    if (u.pId !== 11) criticalGaps.push(postData.find(p => p.id === u.pId));
                 } else {
                     readyCount++;
                     if (isOnMap) {
@@ -261,7 +216,7 @@
                     } else {
                         statusLabel.innerText = u.home;
                     }
-                    if (unitPostObj && !unitPostObj.isPrimary && isStationed) flexibleUnits.push(u);
+                    if (u.pId === 11 && isStationed) flexibleUnits.push(u.id);
                 }
             });
 
@@ -270,31 +225,37 @@
 
             recList.innerHTML = '';
             criticalGaps.forEach(gap => {
-                const candidates = flexibleUnits.map(fu => {
-                    const hq = postData.find(p => p.id === fu.pId);
-                    return { id: fu.id, dist: getDist(hq.lat, hq.long, gap.lat, gap.long) };
-                }).sort((a, b) => a.dist - b.dist);
-
-                const closest = candidates[0];
-                if (closest) {
-                    flexibleUnits = flexibleUnits.filter(f => f.id !== closest.id);
+                const helper = flexibleUnits.shift();
+                if (helper) {
                     const card = document.createElement('div');
                     card.className = 'rec-card';
-                    card.innerHTML = `<div class="rec-title">GAP: ${gap.name}</div><div class="rec-instruction">Move <b>${closest.id}</b> to cover</div><div class="rec-dist">Closest travel: ${closest.dist.toFixed(1)} mi</div>`;
+                    card.innerHTML = `<div class="rec-title">GAP: ${gap.name}</div><div class="rec-instruction">Move <b>${helper}</b> to cover</div>`;
                     recList.appendChild(card);
                 }
             });
-
-            if (recList.innerHTML === '') recList.innerHTML = '<div style="color:#444; font-size:11px; text-align:center; margin-top:30px;">SYSTEM BALANCED</div>';
         }
 
-        function returnToBase(uId) {
+        // THE FIX: MASTER RESET FUNCTION
+        function forceReady(uId) {
+            if (!uId) return;
             const el = document.getElementById(uId);
+            
+            // 1. Remove OOS
+            el.classList.remove('oos');
+            localStorage.removeItem(`oos-${uId}`);
+
+            // 2. Remove Timers
+            document.querySelectorAll(`.timer-card[data-unit="${uId}"]`).forEach(card => card.remove());
+
+            // 3. Move back to Sidebar
             const slot = document.getElementById(`slot-${uId}`);
             slot.appendChild(el);
             el.style.position = "relative"; el.style.left = "0"; el.style.top = "0"; el.style.width = "100%";
+            
+            // 4. Clear Storage
             localStorage.removeItem(`pos-${uId}`);
             localStorage.removeItem(`staged-${uId}`);
+
             ctxMenu.style.display = 'none';
             updateStatus();
         }
@@ -302,7 +263,7 @@
         function recallAllUnits() {
             units.forEach(u => {
                 const el = document.getElementById(u.id);
-                if (el.parentElement.id === 'map-content') returnToBase(u.id);
+                if (el.parentElement.id === 'map-content') forceReady(u.id);
             });
         }
 
@@ -322,15 +283,14 @@
                     e.preventDefault(); e.stopPropagation();
                     selectedUnitId = u.id;
                     document.getElementById('menu-id').innerText = u.id;
-                    const isOnMap = div.parentElement.id === 'map-content';
-                    document.getElementById('staging-option').style.display = isOnMap ? 'block' : 'none';
                     ctxMenu.style.display = 'block';
                     ctxMenu.style.left = Math.min(e.pageX, window.innerWidth - 220) + 'px';
-                    ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 400) + 'px';
+                    ctxMenu.style.top = Math.min(e.pageY, window.innerHeight - 450) + 'px';
                 };
 
-                if (localStorage.getItem(`oos-${u.id}`) === 'true') div.classList.add('oos');
                 const savedPos = localStorage.getItem(`pos-${u.id}`);
+                if (localStorage.getItem(`oos-${u.id}`) === 'true') div.classList.add('oos');
+
                 if (savedPos) {
                     const p = JSON.parse(savedPos);
                     div.style.position = 'absolute'; div.style.left = p.left; div.style.top = p.top;
@@ -366,7 +326,7 @@
                         mapContent.appendChild(el);
                         localStorage.setItem(`pos-${el.id}`, JSON.stringify({left: el.style.left, top: el.style.top}));
                     } else {
-                        returnToBase(el.id);
+                        forceReady(el.id);
                     }
                     updateStatus();
                 };
@@ -377,7 +337,7 @@
             const timerId = Date.now();
             const card = document.createElement('div');
             card.className = 'timer-card'; card.id = `card-${timerId}`; card.dataset.unit = selectedUnitId;
-            card.innerHTML = `<div style="font-weight:bold; font-size:18px; color:var(--hosp-orange);">${selectedUnitId}</div><div style="font-size:10px; color:#aaa;">DEST: ${hosp}</div><div class="timer-display" id="time-${timerId}">--:--</div><button onclick="dismissTimer('${timerId}')" style="width:100%; font-size:10px; background:#333; color:white; border:1px solid #444; padding:6px; cursor:pointer;">CLEAR CALL</button>`;
+            card.innerHTML = `<div style="font-weight:bold; font-size:18px; color:var(--hosp-orange);">${selectedUnitId}</div><div class="timer-display" id="time-${timerId}">--:--</div><button onclick="dismissTimer('${timerId}')" style="width:100%; font-size:10px; background:#333; color:white; border:none; padding:6px; cursor:pointer;">CLEAR</button>`;
             timerGrid.appendChild(card);
             ctxMenu.style.display = 'none';
             updateStatus();
@@ -387,7 +347,6 @@
                 if(!el) { clearInterval(run); return; }
                 sec--; const a = Math.abs(sec), m = Math.floor(a/60), s = a%60;
                 el.innerText = (sec < 0 ? "-" : "") + m + ":" + (s < 10 ? "0"+s : s);
-                if (sec < 0) el.style.color = "var(--bright-red)";
             }, 1000);
         }
 
@@ -402,12 +361,10 @@
             const list = document.getElementById('staging-list');
             postData.filter(p => p.isPrimary).forEach(p => {
                 const div = document.createElement('div');
-                div.className = 'menu-item';
-                div.innerText = p.name;
-                div.onclick = () => {
+                div.className = 'menu-item'; div.innerText = p.name;
+                div.onmousedown = () => { // Using mousedown to avoid window.onclick interference
                     localStorage.setItem(`staged-${selectedUnitId}`, p.name);
-                    ctxMenu.style.display = 'none';
-                    updateStatus();
+                    ctxMenu.style.display = 'none'; updateStatus();
                 };
                 list.appendChild(div);
             });
@@ -417,11 +374,11 @@
         function renderConfigMenu() {
             const container = document.getElementById('config-list-content');
             container.innerHTML = '';
-            units.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric:true})).forEach(u => {
+            units.forEach(u => {
                 const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
                 const item = document.createElement('div');
                 item.className = 'config-item';
-                item.innerHTML = `<div><b>${u.id}</b><br><small>${u.home}</small></div><button class="toggle-btn ${isInactive ? '' : 'toggle-on'}" onclick="toggleUnitActive('${u.id}')">${isInactive ? 'INACTIVE' : 'IN SERVICE'}</button>`;
+                item.innerHTML = `<div><b>${u.id}</b></div><button onclick="toggleUnitActive('${u.id}')">${isInactive ? 'OFF' : 'ON'}</button>`;
                 container.appendChild(item);
             });
         }
@@ -431,7 +388,19 @@
             renderConfigMenu(); updateStatus();
         }
 
-        window.onclick = () => ctxMenu.style.display = 'none';
+        mapContainer.onwheel = e => {
+            e.preventDefault();
+            const rect = mapContainer.getBoundingClientRect();
+            const zoom = 1 + (-Math.sign(e.deltaY) * 0.1);
+            const newScale = scale * zoom;
+            if (newScale > 0.1 && newScale < 5) {
+                posX = (e.clientX - rect.left) - ((e.clientX - rect.left) - posX) * zoom;
+                posY = (e.clientY - rect.top) - ((e.clientY - rect.top) - posY) * zoom;
+                scale = newScale; updateTransform();
+            }
+        };
+
+        window.onmousedown = (e) => { if (!ctxMenu.contains(e.target)) ctxMenu.style.display = 'none'; }
         window.onload = init;
     </script>
 </body>
