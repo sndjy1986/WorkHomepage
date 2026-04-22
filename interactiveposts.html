@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Priority Dispatch | Command Console v26</title>
+    <title>Priority Dispatch | Command Console v27</title>
     <style>
         :root {
             --neon-green: #00ff41;
@@ -25,7 +25,7 @@
         .gauge-label { font-size: 10px; color: #888; letter-spacing: 1px; font-weight: bold; }
         .recall-btn { margin-top: 10px; padding: 8px; font-size: 9px; background: #222; border: 1px solid #444; color: #aaa; cursor: pointer; border-radius: 3px; width: 100%; font-weight: bold; }
 
-        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; }
+        .list-header { font-size: 11px; padding: 10px; background: #1a1a1a; color: #aaa; text-transform: uppercase; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
         #available-list { flex-grow: 1; overflow-y: auto; padding: 10px; background: #0d0d0d; }
 
         /* CENTER WORKSPACE */
@@ -53,20 +53,27 @@
         .unit-status-text { font-size: 9px; color: #999; margin-top: 3px; text-transform: uppercase; font-weight: bold; }
 
         /* DYNAMIC STATES */
-        .state-call { border-color: var(--bright-red) !important; box-shadow: 0 0 10px rgba(255,0,0,0.3); }
         .state-call .unit-label { color: var(--bright-red); }
-        
-        .state-dest { border-color: var(--hosp-orange) !important; }
         .state-dest .unit-label { color: var(--hosp-orange); }
-
-        .state-logs { border-color: var(--logistics-blue) !important; }
         .state-logs .unit-label { color: var(--logistics-blue); }
-
         .state-map { width: 95px !important; border-color: var(--logistics-blue); border-width: 2px; }
         .state-map .unit-label { color: var(--logistics-blue); }
         
         .oos { filter: grayscale(1) brightness(0.4); opacity: 0.5 !important; border: 1px dashed #f00 !important; }
         .hidden-unit { display: none !important; }
+
+        /* CONFIG MODAL */
+        #system-gear { position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-size: 22px; cursor: pointer; background: #000; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #333; color: #666; }
+        #system-gear:hover { color: white; border-color: #666; }
+
+        #config-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        #config-panel { background: #1a1a1a; width: 500px; max-height: 85vh; border-radius: 8px; border: 1px solid #444; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .config-list { flex-grow: 1; overflow-y: auto; margin: 15px 0; border-top: 1px solid #222; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; }
+        
+        .toggle-btn { cursor: pointer; padding: 6px 15px; border-radius: 4px; font-size: 11px; font-weight: bold; border: none; min-width: 100px; }
+        .toggle-active { background: var(--neon-green); color: black; }
+        .toggle-inactive { background: #333; color: #777; }
 
         /* CONTEXT MENU */
         #context-menu { position: fixed; display: none; background: #1a1a1a; border: 1px solid #444; z-index: 10000; width: 220px; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
@@ -80,8 +87,6 @@
         .type-call { border-top-color: var(--bright-red); }
         .type-dest { border-top-color: var(--hosp-orange); }
         .type-logs { border-top-color: var(--logistics-blue); }
-
-        #system-gear { position: fixed; bottom: 20px; right: 20px; z-index: 1000; font-size: 22px; cursor: pointer; background: #000; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -114,18 +119,27 @@
         <div id="recommendation-list"></div>
     </div>
 
-    <div id="system-gear" onclick="localStorage.clear(); location.reload();" title="Hard Reset Logic">⚙️</div>
+    <div id="system-gear" onclick="toggleConfig(true)">⚙️</div>
+
+    <div id="config-modal">
+        <div id="config-panel">
+            <h2 style="margin:0 0 5px 0;">Fleet Configuration</h2>
+            <p style="font-size:11px; color:#777; margin-bottom:15px;">Deactivated trucks will be hidden and excluded from system status.</p>
+            <div class="config-list" id="config-list-content"></div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button onclick="toggleConfig(false)" style="flex:1; padding:12px; background:var(--logistics-blue); border:none; border-radius:4px; font-weight:bold; cursor:pointer;">CLOSE SETTINGS</button>
+                <button onclick="if(confirm('Clear all data and restart?')) { localStorage.clear(); location.reload(); }" style="padding:12px; background:#400; color:white; border:none; border-radius:4px; cursor:pointer; font-size:11px;">HARD RESET</button>
+            </div>
+        </div>
+    </div>
 
     <div id="context-menu">
         <div id="menu-id" class="menu-header">UNIT</div>
-        
-        <div id="opt-call" class="menu-item" onclick="startStatusTimer('CALL')">Assign: ON A CALL</div>
+        <div id="opt-call" class="menu-item" onclick="startStatusTimer('CALL')">Assign: ON A CALL (Count Up)</div>
         <div id="opt-dest" class="menu-item" onclick="startStatusTimer('DEST')" style="color:var(--hosp-orange);">Mark: AT DESTINATION (20m)</div>
         <div id="opt-logs" class="menu-item" onclick="startStatusTimer('LOGS')" style="color:var(--logistics-blue);">Mark: LOGISTICS (10m)</div>
-        
         <div class="menu-item" onclick="toggleOOS()" style="color:var(--bright-red); border-top:1px solid #333;">Toggle OOS</div>
         <div class="menu-item" onclick="forceReady(selectedUnitId)" style="color:var(--neon-green); font-weight:bold;">CLEAR / RETURN TO BASE</div>
-        
         <div class="menu-header" style="border-top:1px solid #333;">STAGING</div>
         <div id="staging-list"></div>
     </div>
@@ -169,7 +183,7 @@
         
         let selectedUnitId = null;
         let scale = 1, posX = 0, posY = 0;
-        let unitStates = {}; // Stores timer start times and types
+        let unitStates = {}; 
 
         function updateTransform() { mapContent.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
@@ -181,6 +195,17 @@
             units.forEach(u => {
                 const el = document.getElementById(u.id);
                 if (!el) return;
+
+                // CHECK CONFIG DEACTIVATION
+                const isDeactivated = localStorage.getItem(`inactive-${u.id}`) === 'true';
+                if (isDeactivated) {
+                    el.classList.add('hidden-unit');
+                    document.getElementById(`slot-${u.id}`).classList.add('hidden-unit');
+                    return;
+                } else {
+                    el.classList.remove('hidden-unit');
+                    document.getElementById(`slot-${u.id}`).classList.remove('hidden-unit');
+                }
 
                 el.classList.remove('state-call', 'state-dest', 'state-logs', 'state-map');
                 
@@ -227,8 +252,7 @@
 
         // TIMER CORE
         function startStatusTimer(type) {
-            const now = Date.now();
-            unitStates[selectedUnitId] = { type: type, start: now };
+            unitStates[selectedUnitId] = { type: type, start: Date.now() };
             renderTimerCards();
             ctxMenu.style.display = 'none';
             updateStatus();
@@ -259,23 +283,18 @@
             updateStatus();
         }
 
-        // GLOBAL TICKER
         setInterval(() => {
             Object.keys(unitStates).forEach(uId => {
                 const s = unitStates[uId];
                 const display = document.getElementById(`display-${uId}`);
                 if (!display) return;
-
                 const elapsedSec = Math.floor((Date.now() - s.start) / 1000);
-                
                 if (s.type === 'CALL') {
-                    // Count Up
                     const m = Math.floor(elapsedSec / 60);
                     const sec = elapsedSec % 60;
                     display.innerText = `${m}:${sec < 10 ? '0' + sec : sec}`;
                 } else {
-                    // Count Down
-                    const limit = s.type === 'DEST' ? 1200 : 600; // 20m or 10m
+                    const limit = s.type === 'DEST' ? 1200 : 600;
                     const remaining = limit - elapsedSec;
                     const absRem = Math.abs(remaining);
                     const m = Math.floor(absRem / 60);
@@ -304,6 +323,39 @@
             units.forEach(u => {
                 if (document.getElementById(u.id).parentElement.id === 'map-content') forceReady(u.id);
             });
+        }
+
+        // CONFIG MODAL LOGIC
+        function toggleConfig(show) { 
+            if (show) renderConfigList();
+            document.getElementById('config-modal').style.display = show ? 'flex' : 'none'; 
+        }
+
+        function renderConfigList() {
+            const container = document.getElementById('config-list-content');
+            container.innerHTML = '';
+            units.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach(u => {
+                const isInactive = localStorage.getItem(`inactive-${u.id}`) === 'true';
+                const item = document.createElement('div');
+                item.className = 'config-item';
+                item.innerHTML = `
+                    <div>
+                        <div style="font-weight:bold;">${u.id}</div>
+                        <div style="font-size:10px; color:#666;">Home: ${u.home}</div>
+                    </div>
+                    <button class="toggle-btn ${isInactive ? 'toggle-inactive' : 'toggle-active'}" onclick="toggleUnitActive('${u.id}')">
+                        ${isInactive ? 'DEACTIVATED' : 'IN SERVICE'}
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function toggleUnitActive(uId) {
+            const current = localStorage.getItem(`inactive-${uId}`) === 'true';
+            localStorage.setItem(`inactive-${uId}`, !current);
+            renderConfigList();
+            updateStatus();
         }
 
         function init() {
@@ -398,7 +450,7 @@
             }
         };
 
-        window.onmousedown = (e) => { if (!ctxMenu.contains(e.target)) ctxMenu.style.display = 'none'; }
+        window.onmousedown = (e) => { if (!ctxMenu.contains(e.target) && !document.getElementById('config-modal').contains(e.target)) ctxMenu.style.display = 'none'; }
         window.onload = init;
     </script>
 </body>
